@@ -1,155 +1,177 @@
-'use strict';
-var lrSnippet = require('grunt-contrib-livereload/lib/utils').livereloadSnippet;
-var mountFolder = function (connect, dir) {
-  return connect.static(require('path').resolve(dir));
-};
+var planarFiles = require('./planarFiles');
+var files = planarFiles.files;
 
 module.exports = function (grunt) {
+  // show elapsed time at the end
+  require('time-grunt')(grunt);
   // load all grunt tasks
-  require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
-
-  // configurable paths
-  var yeomanConfig = {
-    name: 'example',
-    src: 'src',
-    dist: 'dist'
-  };
-
-  try {
-    yeomanConfig.src = require('./component.json').appPath || yeomanConfig.src;
-  } catch (e) {}
+  require('load-grunt-tasks')(grunt);
 
   grunt.initConfig({
-    yeoman: yeomanConfig,
+    version: grunt.file.readJSON('package.json').version,
+
+    // configurable paths
+    planar: {
+      src: 'src',
+      dist: 'dist'
+    },
+
     watch: {
       livereload: {
-        files: [
-          '<%= yeoman.src %>/{,*/}*.html',
-          '{.tmp,<%= yeoman.src %>}/styles/{,*/}*.css',
-          '{.tmp,<%= yeoman.src %>}/scripts/{,*/}*.js',
-          '<%= yeoman.src %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
-        ],
-        tasks: ['livereload']
+        options: {
+          livereload: '<%= connect.options.livereload %>'
+        },
+        files: planarFiles.mergeFilesFor('liveReload')
       }
     },
+
     connect: {
       options: {
         port: 9000,
-        // Change this to '0.0.0.0' to access the server from outside.
+        livereload: 35729,
+        // change this to '0.0.0.0' to access the server from outside
         hostname: 'localhost'
       },
       livereload: {
         options: {
-          middleware: function (connect) {
-            return [
-              lrSnippet,
-              mountFolder(connect, '.tmp'),
-              mountFolder(connect, yeomanConfig.src)
-            ];
-          }
+          open: true,
+          base: [
+            '.tmp'
+          ]
         }
       },
       test: {
         options: {
-          middleware: function (connect) {
-            return [
-              mountFolder(connect, '.tmp'),
-              mountFolder(connect, 'test')
-            ];
-          }
+          base: [
+            '.tmp',
+            'test'
+          ]
+        }
+      },
+      dist: {
+        options: {
+          open: true,
+          base: '<%= planar.dist %>'
         }
       }
     },
-    open: {
-      server: {
-        url: 'http://localhost:<%= connect.options.port %>'
-      }
-    },
+
     clean: {
       dist: {
-        files: [{
-          dot: true,
-          src: [
-            '.tmp',
-            '<%= yeoman.dist %>/*',
-            '!<%= yeoman.dist %>/.git*'
-          ]
-        }]
+        files: [
+          {
+            dot: true,
+            src: [
+              '.tmp',
+              '<%= planar.dist %>/*'
+            ]
+          }
+        ]
       },
       server: '.tmp'
     },
+
     jshint: {
       options: {
         jshintrc: '.jshintrc'
       },
-      all: [
-        'Gruntfile.js',
-        '<%= yeoman.src %>/{,*/}*.js'
-      ]
+      src: files.planarSrc,
+      tests: files.planarUnitTests,
+      gruntfile: ['Gruntfile.js']
     },
-    karma: {
-      unit: {
-        configFile: 'karma.conf.js',
-        singleRun: true
-      }
-    },
-    concat: {
-      dist: {
-        files: {
-          '<%= yeoman.dist %>/<%= yeoman.name %>.js': [
-            '.tmp/{,*/}*.js',
-            '<%= yeoman.src %>/{,*/}*.js'
-          ]
-        }
-      }
-    },
+
     uglify: {
-      dist: {
-        files: {
-          '<%= yeoman.dist %>/<%= yeoman.name %>.min.js': [
-            '<%= yeoman.dist %>/<%= yeoman.name %>.js'
-          ]
-        }
+      options: {
+        wrap: 'planar'
+      },
+      js: {
+        options: {
+          mangle: false,
+          beautify: true,
+          compress: false
+        },
+        src: planarFiles.mergeFilesFor('planarDist'),
+        dest: '<%= planar.dist %>/planar.js'
+      },
+      jsmin: {
+        options: {
+          mangle: true,
+          compress: true
+        },
+        src: planarFiles.mergeFilesFor('planarDist'),
+        dest: '<%= planar.dist %>/planar.min.js'
       }
     },
-    copy: {
-      dist: {
-        files: [{
-          expand: true,
-          dot: true,
-          cwd: '<%= yeoman.src %>',
-          dest: '<%= yeoman.dist %>',
-          src: [
-          ]
-        }]
+
+    sed: {
+      version: {
+        pattern: '%VERSION%',
+        replacement: '<%= version %>',
+        path: ['<%= uglify.js.dest %>', '<%= uglify.jsmin.dest %>']
+      },
+      strict: {
+        pattern: '((!function|\\(function)\\([^)]*\\)\\s*\\{)',
+        replacement: '$1\'use strict\';',
+        path: ['<%= uglify.js.dest %>', '<%= uglify.jsmin.dest %>']
+      }
+    },
+
+    karma: {
+      options: {
+        singleRun: true,
+        frameworks: ['jasmine'],
+        port: 8080,
+        runnerPort: 9100,
+        browsers: ['Chrome'],
+        captureTimeout: 10000
+      },
+      unit: {
+        options: {
+          singleRun: true,
+          files: planarFiles.mergeFilesFor('karmaUnit')
+        }
+      },
+      dev: {
+        options: {
+          autoWatch: true,
+          singleRun: false,
+          files: planarFiles.mergeFilesFor('karmaUnit')
+        }
+      },
+      end2end: {
       }
     }
+
   });
 
-  grunt.renameTask('regarde', 'watch');
+  grunt.registerTask('server', function (target) {
+    if (target === 'dist') {
+      return grunt.task.run(['build', 'connect:dist:keepalive']);
+    }
 
-  grunt.registerTask('server', [
-    'clean:server',
-    'livereload-start',
-    'connect:livereload',
-    'open',
-    'watch'
-  ]);
+    grunt.task.run([
+      'clean:server',
+      'connect:livereload',
+      'watch'
+    ]);
+  });
 
   grunt.registerTask('test', [
     'clean:server',
     'connect:test',
-    'karma'
+    'karma:unit'
   ]);
 
   grunt.registerTask('build', [
     'clean:dist',
-    'jshint',
-    'test',
-    'concat',
-    'copy',
-    'uglify'
+    'uglify',
+    'sed:version',
+    'sed:strict'
   ]);
 
-  grunt.registerTask('default', ['build']);
+  grunt.registerTask('default', [
+    'jshint',
+    'test',
+    'build'
+  ]);
 };
