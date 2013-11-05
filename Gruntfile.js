@@ -141,7 +141,8 @@ module.exports = function (grunt) {
       },
       travis: {
         options: {
-          browsers: ['PhantomJS']
+          browsers: ['PhantomJS'],
+          files: planarFiles.mergeFilesFor('karmaUnit')
         }
       }
     }
