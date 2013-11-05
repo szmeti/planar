@@ -1,1 +1,1 @@
-Planar JS - Graph Visualization Library
+Planar JS - Graph Visualization Library [![Build Status](https://travis-ci.org/szmeti/planar.png?branch=master)](https://travis-ci.org/szmeti/planar)
