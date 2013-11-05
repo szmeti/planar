@@ -127,7 +127,6 @@ module.exports = function (grunt) {
       },
       unit: {
         options: {
-          singleRun: true,
           files: planarFiles.mergeFilesFor('karmaUnit')
         }
       },
@@ -139,6 +138,11 @@ module.exports = function (grunt) {
         }
       },
       end2end: {
+      },
+      travis: {
+        options: {
+           browsers: ['PhantomJS']
+        }
       }
     }
 
@@ -157,6 +161,8 @@ module.exports = function (grunt) {
   });
 
   grunt.registerTask('test', [
+    'clean:server',
+    'connect:test',
     'karma:unit'
   ]);
 
@@ -171,5 +177,10 @@ module.exports = function (grunt) {
     'jshint',
     'test',
     'build'
+  ]);
+
+  grunt.registerTask('travis', [
+    'jshint',
+    'karma:travis'
   ]);
 };

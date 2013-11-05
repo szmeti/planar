@@ -9,7 +9,7 @@
     "name": "Gabor Szmetanko",
     "email": ""
   },
-  "scripts": { "test": "grunt test" },
+  "scripts": { "test": "grunt travis" },
   "dependencies": {},
   "devDependencies": {
     "grunt": "~0.4.1",
