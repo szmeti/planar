@@ -8,8 +8,11 @@ planarFiles = {
     'src/model/Vertex.js',
     'src/model/Graph.js',
     'src/query/LabelFilter.js',
+    'src/query/Compare.js',
+    'src/query/HasFilter.js',
     'src/query/Query.js',
-    'src/query/VertexQuery.js'
+    'src/query/VertexQuery.js',
+    'src/query/GraphQuery.js'
   ],
 
   'planarApi': [

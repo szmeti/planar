@@ -218,8 +218,12 @@
                     delete this.vertices[storedVertex.id];
                 }
             },
-            getVertices: function() {
-                return utils.values(this.vertices);
+            getVertices: function(key, value) {
+                if (utils.isUndefined(key) || key === null) {
+                    return utils.values(this.vertices);
+                } else {
+                    return new GraphQuery(this).has(key, value).vertices();
+                }
             },
             addEdge: function(id, outVertex, inVertex, label) {
                 if (utils.isUndefined(id) || id === null) {
@@ -248,8 +252,12 @@
                     }
                 }
             },
-            getEdges: function() {
-                return utils.values(this.edges);
+            getEdges: function(key, value) {
+                if (utils.isUndefined(key) || key === null) {
+                    return utils.values(this.edges);
+                } else {
+                    return new GraphQuery(this).has(key, value).edges();
+                }
             },
             forEachNode: function(callback) {
                 if (utils.isFunction(callback)) {
@@ -288,6 +296,56 @@
         });
         return LabelFilter;
     }();
+    var Compare = function() {
+        return {
+            EQUAL: {
+                evaluate: function(first, second) {
+                    return first === second;
+                }
+            },
+            NOT_EQUAL: {
+                evaluate: function(first, second) {
+                    return first !== second;
+                }
+            },
+            GREATER_THAN: {
+                evaluate: function(first, second) {
+                    return first !== null && second !== null && first > second;
+                }
+            },
+            LESS_THAN: {
+                evaluate: function(first, second) {
+                    return first !== null && second !== null && first < second;
+                }
+            },
+            GREATER_THAN_EQUAL: {
+                evaluate: function(first, second) {
+                    return first !== null && second !== null && first >= second;
+                }
+            },
+            LESS_THAN_EQUAL: {
+                evaluate: function(first, second) {
+                    return first !== null && second !== null && first <= second;
+                }
+            }
+        };
+    }();
+    var HasFilter = function() {
+        function HasFilter(key, predicate, value) {
+            utils.checkExists("Key", key);
+            utils.checkExists("Predicate", predicate);
+            utils.checkExists("Value", value);
+            this.key = key;
+            this.value = value;
+            this.predicate = predicate;
+        }
+        utils.mixin(HasFilter.prototype, {
+            matches: function(element) {
+                return this.predicate.evaluate(element.getProperty(this.key), this.value);
+            }
+        });
+        return HasFilter;
+    }();
     var Query = function() {
         function filterElements(elements, filters, queryLimit, resultExtractor) {
             var count = 0;
@@ -324,19 +382,45 @@
         return {
             initQuery: function() {
                 this.queryLimit = Number.MAX_VALUE;
+                this.hasFilters = [];
             },
             limit: function(limit) {
                 this.queryLimit = limit;
                 return this;
             },
+            has: function(key, value1, value2) {
+                if (!utils.isUndefined(value2) && value2 !== null) {
+                    this.hasFilters.push(new HasFilter(key, value1, value2));
+                } else if (!utils.isUndefined(value1) && value1 !== null) {
+                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, value1));
+                } else {
+                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, null));
+                }
+                return this;
+            },
+            hasNot: function(key, value) {
+                if (utils.isUndefined(value) || value === null) {
+                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, null));
+                } else {
+                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, value));
+                }
+                return this;
+            },
+            interval: function(key, startValue, endValue) {
+                this.hasFilters.push(new HasFilter(key, Compare.GREATER_THAN_EQUAL, startValue));
+                this.hasFilters.push(new HasFilter(key, Compare.LESS_THAN, endValue));
+                return this;
+            },
             edges: function() {
                 var elements = this.getInitialEdges();
                 var filters = this.getBaseFilters();
+                filters = filters.concat(this.hasFilters);
                 return filterElements(elements, filters, this.queryLimit);
             },
             vertices: function() {
                 var elements = this.getInitialVertices();
                 var filters = this.getBaseFilters();
+                filters = filters.concat(this.hasFilters);
                 return filterElements(elements, filters, this.queryLimit, this.resultExtractor(this));
             }
         };
@@ -396,6 +480,31 @@
             return edges;
         }
         return VertexQuery;
+    }();
+    var GraphQuery = function() {
+        function GraphQuery(graph) {
+            utils.checkExists("Graph", graph);
+            this.initQuery();
+            this.graph = graph;
+        }
+        utils.mixin(GraphQuery.prototype, Query);
+        utils.mixin(GraphQuery.prototype, {
+            getInitialEdges: function() {
+                return this.graph.edges;
+            },
+            getInitialVertices: function() {
+                return this.graph.vertices;
+            },
+            getBaseFilters: function() {
+                return [];
+            },
+            resultExtractor: function() {
+                return function(vertex) {
+                    return vertex;
+                };
+            }
+        });
+        return GraphQuery;
     }();
     exports.Edge = Edge;
     exports.Vertex = Vertex;

@@ -106,7 +106,7 @@ describe('Vertex', function () {
 
     var v1 = graph.addVertex(null);
 
-    expect(graph.getVertex(1)).toBe(v1);
+    expect(graph.getVertex(v1.getId())).toBe(v1);
     expect(graph.getVertices().length).toBe(1);
     expect(graph.getEdges().length).toBe(0);
 

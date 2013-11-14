@@ -49,8 +49,12 @@ var Graph = (function () {
       }
     },
 
-    getVertices: function () {
-      return  utils.values(this.vertices);
+    getVertices: function (key, value) {
+      if (utils.isUndefined(key) || key === null) {
+        return  utils.values(this.vertices);
+      } else {
+        return new GraphQuery(this).has(key, value).vertices();
+      }
     },
 
     addEdge: function (id, outVertex, inVertex, label) {
@@ -86,8 +90,12 @@ var Graph = (function () {
       }
     },
 
-    getEdges: function () {
-      return utils.values(this.edges);
+    getEdges: function (key, value) {
+      if (utils.isUndefined(key) || key === null) {
+        return  utils.values(this.edges);
+      } else {
+        return new GraphQuery(this).has(key, value).edges();
+      }
     },
 
     forEachNode: function (callback) {

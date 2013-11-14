@@ -43,6 +43,7 @@ var Query = (function () {
 
     initQuery: function () {
       this.queryLimit = Number.MAX_VALUE;
+      this.hasFilters = [];
     },
 
     limit: function (limit) {
@@ -50,15 +51,44 @@ var Query = (function () {
       return this;
     },
 
+    has: function (key, value1, value2) {
+      if (!utils.isUndefined(value2) && value2 !== null) {
+        this.hasFilters.push(new HasFilter(key, value1, value2));
+      } else if (!utils.isUndefined(value1) && value1 !== null) {
+        this.hasFilters.push(new HasFilter(key, Compare.EQUAL, value1));
+      } else {
+        this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, null));
+
+      }
+      return this;
+    },
+
+    hasNot: function (key, value) {
+      if (utils.isUndefined(value) || value === null) {
+        this.hasFilters.push(new HasFilter(key, Compare.EQUAL, null));
+      } else {
+        this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, value));
+      }
+      return this;
+    },
+
+    interval: function (key, startValue, endValue) {
+      this.hasFilters.push(new HasFilter(key, Compare.GREATER_THAN_EQUAL, startValue));
+      this.hasFilters.push(new HasFilter(key, Compare.LESS_THAN, endValue));
+      return this;
+    },
+
     edges: function () {
       var elements = this.getInitialEdges();
       var filters = this.getBaseFilters();
+      filters = filters.concat(this.hasFilters);
       return filterElements(elements, filters, this.queryLimit);
     },
 
     vertices: function () {
       var elements = this.getInitialVertices();
       var filters = this.getBaseFilters();
+      filters = filters.concat(this.hasFilters);
       return filterElements(elements, filters, this.queryLimit, this.resultExtractor(this));
     }
 
