@@ -24,6 +24,7 @@
     "Element": false,
     "LabelFilter": false,
     "Compare": false,
+    "Contains": false,
     "HasFilter": false,
     "Query": false,
     "VertexQuery": false,

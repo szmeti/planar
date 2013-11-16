@@ -49,6 +49,10 @@ var VertexQuery = (function () {
           return edge.getOutVertex();
         }
       };
+    },
+
+    count: function() {
+      return this.edges().length;
     }
 
   });

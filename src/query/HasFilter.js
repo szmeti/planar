@@ -4,7 +4,6 @@ var HasFilter = (function () {
   function HasFilter(key, predicate, value) {
     utils.checkExists('Key', key);
     utils.checkExists('Predicate', predicate);
-    utils.checkExists('Value', value);
 
     this.key = key;
     this.value = value;

@@ -74,6 +74,14 @@ var utils = {
     }
   },
 
+  checkArray: function (name, array) {
+    if (!this.isArray(array)) {
+      throw {
+        message: name + ' must be an array'
+      };
+    }
+  },
+
   checkNotEmpty: function (name, obj) {
     if (obj === '') {
       throw {
@@ -89,7 +97,7 @@ var utils = {
     };
   })(),
 
-  convertVarArgs: function(args) {
+  convertVarArgs: function (args) {
     return args.length > 0 && utils.isArray(args[0]) ? args[0] : Array.prototype.slice.call(args);
   }
 

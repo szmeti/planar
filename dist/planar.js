@@ -62,6 +62,13 @@
                 };
             }
         },
+        checkArray: function(name, array) {
+            if (!this.isArray(array)) {
+                throw {
+                    message: name + " must be an array"
+                };
+            }
+        },
         checkNotEmpty: function(name, obj) {
             if (obj === "") {
                 throw {
@@ -176,6 +183,9 @@
             },
             remove: function() {
                 this.graph.removeVertex(this);
+            },
+            query: function() {
+                return new VertexQuery(this);
             }
         });
         return Vertex;
@@ -276,6 +286,9 @@
                         }
                     }
                 }
+            },
+            query: function() {
+                return new GraphQuery(this);
             }
         });
         return Graph;
@@ -330,11 +343,26 @@
             }
         };
     }();
+    var Contains = function() {
+        return {
+            IN: {
+                evaluate: function(first, second) {
+                    utils.checkArray("Second argument", second);
+                    return utils.indexOf(first, second) > -1;
+                }
+            },
+            NOT_IN: {
+                evaluate: function(first, second) {
+                    utils.checkArray("Second argument", second);
+                    return utils.indexOf(first, second) === -1;
+                }
+            }
+        };
+    }();
     var HasFilter = function() {
         function HasFilter(key, predicate, value) {
             utils.checkExists("Key", key);
             utils.checkExists("Predicate", predicate);
-            utils.checkExists("Value", value);
             this.key = key;
             this.value = value;
             this.predicate = predicate;
@@ -465,6 +493,9 @@
                         return edge.getOutVertex();
                     }
                 };
+            },
+            count: function() {
+                return this.edges().length;
             }
         });
         function filterByDirection(direction, vertex) {

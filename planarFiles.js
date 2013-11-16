@@ -9,6 +9,7 @@ planarFiles = {
     'src/model/Graph.js',
     'src/query/LabelFilter.js',
     'src/query/Compare.js',
+    'src/query/Contains.js',
     'src/query/HasFilter.js',
     'src/query/Query.js',
     'src/query/VertexQuery.js',

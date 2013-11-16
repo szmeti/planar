@@ -28,6 +28,10 @@ var Vertex = (function () {
 
     remove: function () {
       this.graph.removeVertex(this);
+    },
+
+    query: function() {
+      return new VertexQuery(this);
     }
 
   });

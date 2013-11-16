@@ -116,6 +116,10 @@ var Graph = (function () {
           }
         }
       }
+    },
+
+    query: function () {
+      return new GraphQuery(this);
     }
 
   });
