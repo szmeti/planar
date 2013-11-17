@@ -5,6 +5,7 @@ describe('Index', function () {
   it('should put, get, remove vertex', function () {
     var graph = new Graph();
     var index = graph.createIndex('basic', Vertex);
+    expect(index.getIndexName()).toEqual('basic');
     var v1 = graph.addVertex(null);
     var v2 = graph.addVertex(null);
     expect(graph.getVertices().length).toBe(2);
@@ -78,6 +79,17 @@ describe('Index', function () {
     expect(index.get('dog', 'puppy').length).toBe(0);
     expect(index.get('dog', 'mama').length).toBe(0);
     expect(graph.getEdges().length).toBe(0);
+  });
+
+  it('should return nothing for non existent keys and values', function () {
+    var graph = new Graph();
+    var index = graph.createIndex('basic', Vertex);
+    var v1 = graph.addVertex(null);
+
+    expect(index.get('key', 'value').length).toBe(0);
+
+    index.put('key', 'value', v1);
+    expect(index.get('key', 'value2').length).toBe(0);
   });
 
 });

@@ -123,11 +123,16 @@ module.exports = function (grunt) {
         port: 8080,
         runnerPort: 9100,
         browsers: ['Chrome'],
-        captureTimeout: 10000
+        captureTimeout: 10000,
+        basePath: __dirname
       },
       unit: {
         options: {
-          files: planarFiles.mergeFilesFor('karmaUnit')
+          files: planarFiles.mergeFilesFor('karmaUnit'),
+          preprocessors: {
+            '**/src/**/*.js': 'coverage'
+          },
+          reporters: ['progress', 'coverage']
         }
       },
       dev: {
@@ -154,7 +159,7 @@ module.exports = function (grunt) {
       return grunt.task.run(['build', 'connect:dist:keepalive']);
     }
 
-    grunt.task.run([
+    return grunt.task.run([
       'clean:server',
       'connect:livereload',
       'watch'
