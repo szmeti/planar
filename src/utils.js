@@ -57,6 +57,10 @@ var utils = {
     return Object.prototype.toString.apply(value) === '[object Array]';
   },
 
+  isOfType: function (obj, type) {
+    return obj.constructor === type;
+  },
+
   checkExists: function (name, obj) {
     if (utils.isUndefined(obj) || obj === null) {
       throw {
@@ -86,6 +90,14 @@ var utils = {
     if (obj === '') {
       throw {
         message: name + ' must not be empty'
+      };
+    }
+  },
+
+  checkType: function (name, obj, type) {
+    if (!this.isOfType(obj, type)) {
+      throw {
+        message: name + ' must be of type ' + type
       };
     }
   },

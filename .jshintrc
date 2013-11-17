@@ -21,6 +21,8 @@
     "Edge": false,
     "Vertex": false,
     "Graph": false,
+    "Index": false,
+    "IndexManager": false,
     "Element": false,
     "LabelFilter": false,
     "Compare": false,

@@ -4,6 +4,7 @@ var Graph = (function () {
   function Graph() {
     this.vertices = {};
     this.edges = {};
+    this.indexManager = new IndexManager(this);
   }
 
   utils.mixin(Graph.prototype, {
@@ -45,6 +46,7 @@ var Graph = (function () {
           this.removeEdge(storedVertex.outEdges[id]);
         }
 
+        this.indexManager.removeElement(storedVertex);
         delete this.vertices[storedVertex.id];
       }
     },
@@ -83,6 +85,7 @@ var Graph = (function () {
       if (edge) {
         var edgeToDelete = this.edges[edge.id];
         if (edgeToDelete) {
+          this.indexManager.removeElement(edgeToDelete);
           delete this.edges[edgeToDelete.id];
           delete edgeToDelete.outVertex.outEdges[edgeToDelete.id];
           delete edgeToDelete.inVertex.inEdges[edgeToDelete.id];
@@ -120,6 +123,22 @@ var Graph = (function () {
 
     query: function () {
       return new GraphQuery(this);
+    },
+
+    createIndex: function (name, type) {
+      return this.indexManager.createIndex(name, type);
+    },
+
+    getIndex: function (name, type) {
+      return this.indexManager.getIndex(name, type);
+    },
+
+    getIndices: function () {
+      return this.indexManager.getIndices();
+    },
+
+    dropIndex: function (name) {
+      this.indexManager.dropIndex(name);
     }
 
   });

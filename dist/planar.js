@@ -47,6 +47,9 @@
         isArray: function(value) {
             return Object.prototype.toString.apply(value) === "[object Array]";
         },
+        isOfType: function(obj, type) {
+            return obj.constructor === type;
+        },
         checkExists: function(name, obj) {
             if (utils.isUndefined(obj) || obj === null) {
                 throw {
@@ -73,6 +76,13 @@
             if (obj === "") {
                 throw {
                     message: name + " must not be empty"
+                };
+            }
+        },
+        checkType: function(name, obj, type) {
+            if (!this.isOfType(obj, type)) {
+                throw {
+                    message: name + " must be of type " + type
                 };
             }
         },
@@ -194,6 +204,7 @@
         function Graph() {
             this.vertices = {};
             this.edges = {};
+            this.indexManager = new IndexManager(this);
         }
         utils.mixin(Graph.prototype, {
             addVertex: function(id) {
@@ -225,6 +236,7 @@
                     for (id in storedVertex.outEdges) {
                         this.removeEdge(storedVertex.outEdges[id]);
                     }
+                    this.indexManager.removeElement(storedVertex);
                     delete this.vertices[storedVertex.id];
                 }
             },
@@ -256,6 +268,7 @@
                 if (edge) {
                     var edgeToDelete = this.edges[edge.id];
                     if (edgeToDelete) {
+                        this.indexManager.removeElement(edgeToDelete);
                         delete this.edges[edgeToDelete.id];
                         delete edgeToDelete.outVertex.outEdges[edgeToDelete.id];
                         delete edgeToDelete.inVertex.inEdges[edgeToDelete.id];
@@ -289,9 +302,121 @@
             },
             query: function() {
                 return new GraphQuery(this);
+            },
+            createIndex: function(name, type) {
+                return this.indexManager.createIndex(name, type);
+            },
+            getIndex: function(name, type) {
+                return this.indexManager.getIndex(name, type);
+            },
+            getIndices: function() {
+                return this.indexManager.getIndices();
+            },
+            dropIndex: function(name) {
+                this.indexManager.dropIndex(name);
             }
         });
         return Graph;
+    }();
+    var Index = function() {
+        function Index(name, type) {
+            utils.checkExists("Name", name);
+            utils.checkExists("Type", type);
+            this.name = name;
+            this.type = type;
+            this.index = {};
+        }
+        utils.mixin(Index.prototype, {
+            getIndexName: function() {
+                return this.name;
+            },
+            getIndexType: function() {
+                return this.type;
+            },
+            put: function(key, value, element) {
+                utils.checkExists("Key", key);
+                utils.checkExists("Value", value);
+                utils.checkType("Element", element, this.type);
+                var keyHash = this.index[key] = this.index[key] || {};
+                var elements = keyHash[value] = keyHash[value] || {};
+                elements[element.getId()] = element;
+            },
+            get: function(key, value) {
+                var keyHash = this.index[key] || {};
+                var elements = keyHash[value] || {};
+                return utils.values(elements);
+            },
+            count: function(key, value) {
+                return this.get(key, value).length;
+            },
+            remove: function(key, value, element) {
+                utils.checkType("Element", element, this.type);
+                var keyHash = this.index[key];
+                if (keyHash) {
+                    var elements = keyHash[value];
+                    if (elements) {
+                        delete elements[element.getId()];
+                    }
+                }
+            },
+            removeElement: function(element) {
+                utils.checkType("Element", element, this.type);
+                for (var key in this.index) {
+                    var elements = this.index[key];
+                    if (elements) {
+                        for (var value in elements) {
+                            delete elements[value][element.getId()];
+                        }
+                    }
+                }
+            }
+        });
+        return Index;
+    }();
+    var IndexManager = function() {
+        function IndexManager(graph) {
+            utils.checkExists("Graph", graph);
+            this.graph = graph;
+            this.indices = {};
+        }
+        utils.mixin(IndexManager.prototype, {
+            createIndex: function(name, type) {
+                utils.checkExists("Name", name);
+                utils.checkExists("Type", type);
+                if (this.indices.hasOwnProperty(name)) {
+                    throw {
+                        message: "Index already exists"
+                    };
+                }
+                var index = new Index(name, type);
+                this.indices[name] = index;
+                return index;
+            },
+            getIndex: function(name, type) {
+                var index = this.indices[name];
+                if (utils.isUndefined(index)) {
+                    return null;
+                }
+                utils.checkType("Type", type, index.getIndexType());
+                return index;
+            },
+            getIndices: function() {
+                return utils.values(this.indices);
+            },
+            dropIndex: function(name) {
+                delete this.indices[name];
+            },
+            removeElement: function(element) {
+                var indices = utils.values(this.indices);
+                for (var i = 0; i < indices.length; i++) {
+                    var index = indices[i];
+                    if (utils.isOfType(element, index.getIndexType())) {
+                        index.removeElement(element);
+                    }
+                }
+            }
+        });
+        return IndexManager;
     }();
     var LabelFilter = function() {
         function LabelFilter() {
