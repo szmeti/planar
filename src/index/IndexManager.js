@@ -32,7 +32,11 @@ var IndexManager = (function () {
         return null;
       }
 
-      utils.checkType('Type', type, index.getIndexType());
+      if (type !== index.getIndexType()) {
+        throw {
+          message: 'Invalid index type'
+        };
+      }
 
       return index;
     },

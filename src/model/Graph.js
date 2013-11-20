@@ -101,7 +101,7 @@ var Graph = (function () {
       }
     },
 
-    forEachNode: function (callback) {
+    forEachVertex: function (callback) {
       if (utils.isFunction(callback)) {
         for (var id in this.vertices) {
           if (callback(this.vertices[id])) {

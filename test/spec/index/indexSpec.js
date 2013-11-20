@@ -16,6 +16,16 @@ describe('Index', function () {
     expect(v2).toBe(index.get('dog', 'mama')[0]);
     expect(index.count('dog', 'puppy')).toBe(1);
 
+    index.remove('cat', 'mama', v1);
+    expect(v1).toBe(index.get('dog', 'puppy')[0]);
+    expect(v2).toBe(index.get('dog', 'mama')[0]);
+    expect(index.count('dog', 'puppy')).toBe(1);
+
+    index.remove('dog', 'doggy', v1);
+    expect(v1).toBe(index.get('dog', 'puppy')[0]);
+    expect(v2).toBe(index.get('dog', 'mama')[0]);
+    expect(index.count('dog', 'puppy')).toBe(1);
+
     v1.removeProperty('dog');
     expect(v1).toBe(index.get('dog', 'puppy')[0]);
     expect(v2).toBe(index.get('dog', 'mama')[0]);

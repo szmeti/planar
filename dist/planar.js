@@ -282,7 +282,7 @@
                     return new GraphQuery(this).has(key, value).edges();
                 }
             },
-            forEachNode: function(callback) {
+            forEachVertex: function(callback) {
                 if (utils.isFunction(callback)) {
                     for (var id in this.vertices) {
                         if (callback(this.vertices[id])) {
@@ -397,7 +397,11 @@
                 if (utils.isUndefined(index)) {
                     return null;
                 }
-                utils.checkType("Type", type, index.getIndexType());
+                if (type !== index.getIndexType()) {
+                    throw {
+                        message: "Invalid index type"
+                    };
+                }
                 return index;
             },
             getIndices: function() {

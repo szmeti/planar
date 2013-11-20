@@ -39,7 +39,7 @@ describe('Vertex', function () {
 
     try {
       graph.getVertex(null);
-      fail('Should not allow null IDs');
+      this.fail('Should not allow null IDs');
     } catch (e) {
       expect(e.message).toEqual('ID must be specified');
     }
@@ -305,7 +305,7 @@ describe('Vertex', function () {
 
     try {
       x.getVertex(BOTH);
-      fail('Getting edge vertex with direction BOTH should fail');
+      this.fail('Getting edge vertex with direction BOTH should fail');
     } catch (e) {
       expect(e.message).toEqual('Invalid direction. Must be either IN or OUT');
     }
@@ -358,14 +358,14 @@ describe('Vertex', function () {
 
     try {
       v.setProperty('', 'value');
-      fail('Setting a vertex property with an empty string key should fail');
+      this.fail('Setting a vertex property with an empty string key should fail');
     } catch (e) {
       expect(e.message).toEqual('Property key must not be empty');
     }
 
     try {
       v.setProperty(null, 'value');
-      fail('Setting a vertex property with a null key should fail');
+      this.fail('Setting a vertex property with a null key should fail');
     } catch (e) {
       expect(e.message).toEqual('Property key must be specified');
     }
@@ -373,14 +373,14 @@ describe('Vertex', function () {
     try {
       var key;
       v.setProperty(key, 'value');
-      fail('Setting a vertex property with an undefined key should fail');
+      this.fail('Setting a vertex property with an undefined key should fail');
     } catch (e) {
       expect(e.message).toEqual('Property key must be specified');
     }
 
     try {
       v.setProperty('good', null);
-      fail('Setting a vertex property with a null value should fail');
+      this.fail('Setting a vertex property with a null value should fail');
     } catch (e) {
       expect(e.message).toEqual('Property value must be specified');
     }

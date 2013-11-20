@@ -311,4 +311,102 @@ describe('Graph', function () {
     expect(graph.getEdges().length).toBe(totalVertices - 1);
   });
 
+  it('should iterate vertices', function () {
+    var graph = new Graph();
+
+    var a = graph.addVertex('1');
+    var b = graph.addVertex('2');
+    var c = graph.addVertex('3');
+    var d = graph.addVertex('4');
+
+    var vertices = [];
+    graph.forEachVertex(function (vertex) {
+      vertices.push(vertex);
+    });
+
+    expect(vertices.length).toBe(4);
+    expect(vertices).toContain(a);
+    expect(vertices).toContain(b);
+    expect(vertices).toContain(c);
+    expect(vertices).toContain(d);
+
+    vertices = [];
+    graph.forEachVertex(function () {
+      return true;
+    });
+
+    expect(vertices.length).toBe(0);
+  });
+
+  it('should iterate vertices', function () {
+    var graph = new Graph();
+
+    var a = graph.addVertex('1');
+    var b = graph.addVertex('2');
+    var c = graph.addVertex('3');
+    var d = graph.addVertex('4');
+
+    var e1 = graph.addEdge(null, a, b, 'knows');
+    var e2 = graph.addEdge(null, b, c, 'knows');
+    var e3 = graph.addEdge(null, c, d, 'knows');
+    var e4 = graph.addEdge(null, d, a, 'knows');
+
+    var edges = [];
+    graph.forEachEdge(function (edge) {
+      edges.push(edge);
+    });
+
+    expect(edges.length).toBe(4);
+    expect(edges).toContain(e1);
+    expect(edges).toContain(e2);
+    expect(edges).toContain(e3);
+    expect(edges).toContain(e4);
+
+    edges = [];
+    graph.forEachEdge(function () {
+      return true;
+    });
+
+    expect(edges.length).toBe(0);
+  });
+
+  it('should handle indices', function () {
+    var graph = new Graph();
+    var index = graph.createIndex('basic', Vertex);
+    expect(index.getIndexName()).toEqual('basic');
+    expect(graph.getIndex('basic', Vertex)).toBe(index);
+    expect(graph.getIndex('invalid', Vertex)).toBeNull();
+    expect(graph.getIndices().length).toBe(1);
+    expect(graph.getIndices()[0]).toBe(index);
+
+    try {
+      graph.getIndex('basic', Edge);
+      this.fail('Should not allow index retrieval if the type is incorrect');
+    } catch (e) {
+      expect(e.message).toEqual('Invalid index type');
+    }
+
+    try {
+      graph.createIndex('basic', Vertex);
+      this.fail('Should not allow duplicate indices');
+    } catch (e) {
+      expect(e.message).toEqual('Index already exists');
+    }
+
+    var index2 = graph.createIndex('basic2', Vertex);
+    expect(index2.getIndexName()).toEqual('basic2');
+    expect(graph.getIndex('basic', Vertex)).toBe(index);
+    expect(graph.getIndex('basic2', Vertex)).toBe(index2);
+    expect(graph.getIndices().length).toBe(2);
+    expect(graph.getIndices()).toContain(index);
+    expect(graph.getIndices()).toContain(index2);
+
+    graph.dropIndex('basic2');
+    expect(graph.getIndex('basic', Vertex)).toBe(index);
+    expect(graph.getIndices().length).toBe(1);
+    expect(graph.getIndices()[0]).toBe(index);
+    graph.dropIndex('basic');
+    expect(graph.getIndices().length).toBe(0);
+  });
+
 });

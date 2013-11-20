@@ -108,7 +108,7 @@ describe('Edge', function () {
 
     try {
       graph.getEdge(null);
-      fail('Getting an element with a null identifier must throw exception');
+      this.fail('Getting an element with a null identifier must throw exception');
     } catch (e) {
       expect(e.message).toEqual('ID must be specified');
     }
@@ -116,7 +116,7 @@ describe('Edge', function () {
     try {
       var id;
       graph.getEdge(id);
-      fail('Getting an element with an undefined identifier must throw exception');
+      this.fail('Getting an element with an undefined identifier must throw exception');
     } catch (e) {
       expect(e.message).toEqual('ID must be specified');
     }
@@ -411,7 +411,7 @@ describe('Edge', function () {
         expect(edge.getVertex(OUT), v3);
         expect(edge.getVertex(IN), v1);
       } else {
-        fail('invalid id');
+        this.fail('invalid id');
       }
     }
 
@@ -456,14 +456,14 @@ describe('Edge', function () {
 
     try {
       edge.setProperty('', 'value');
-      fail('Setting an edge property with an empty string key should fail');
+      this.fail('Setting an edge property with an empty string key should fail');
     } catch (e) {
       expect(e.message).toEqual('Property key must not be empty');
     }
 
     try {
       edge.setProperty(null, 'value');
-      fail('Setting an edge property with a null key should fail');
+      this.fail('Setting an edge property with a null key should fail');
     } catch (e) {
       expect(e.message).toEqual('Property key must be specified');
     }
@@ -471,14 +471,14 @@ describe('Edge', function () {
     try {
       var key;
       edge.setProperty(key, 'value');
-      fail('Setting an edge property with an undefined key should fail');
+      this.fail('Setting an edge property with an undefined key should fail');
     } catch (e) {
       expect(e.message).toEqual('Property key must be specified');
     }
 
     try {
       edge.setProperty('good', null);
-      fail('Setting an edge property with a null value should fail');
+      this.fail('Setting an edge property with a null value should fail');
     } catch (e) {
       expect(e.message).toEqual('Property value must be specified');
     }
