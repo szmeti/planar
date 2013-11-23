@@ -10,9 +10,13 @@ var Query = (function () {
 
     var result = [];
     for (var i = 0; i < elements.length; i++) {
-      var elementsByIds = elements[i];
-      for (var id in elementsByIds) {
-        var element = elementsByIds[id];
+      var currentElements = elements[i];
+      if (utils.isOfType(elements[i], Vertex) || utils.isOfType(elements[i], Edge)) {
+        currentElements = [currentElements];
+      }
+
+      for (var id in currentElements) {
+        var element = currentElements[id];
         var filtered = false;
 
         for (var j = 0; j < filters.length; j++) {

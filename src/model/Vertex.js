@@ -4,8 +4,7 @@ var Vertex = (function () {
     this.id = id;
     this.inEdges = {};
     this.outEdges = {};
-    this.graph = graph;
-    this.initProperties();
+    this.initProperties(graph);
   }
 
   utils.mixin(Vertex.prototype, Element);

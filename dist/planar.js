@@ -29,6 +29,15 @@
             }
             return removed;
         },
+        keys: function(obj) {
+            var keys = [];
+            for (var key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    keys.push(key);
+                }
+            }
+            return keys;
+        },
         values: function(obj) {
             var values = [];
             for (var key in obj) {
@@ -101,28 +110,28 @@
     var BOTH = 3;
     var Element = function() {
         return {
-            initProperties: function() {
+            initProperties: function(graph) {
                 this.properties = [];
+                this.graph = graph;
             },
             setProperty: function(key, value) {
                 utils.checkExists("Property key", key);
                 utils.checkExists("Property value", value);
                 utils.checkNotEmpty("Property key", key);
+                var oldValue = this.properties[key];
                 this.properties[key] = value;
+                this.graph.indexManager.updateKeyIndexValue(key, value, oldValue, this);
             },
             getProperty: function(key) {
                 return utils.isUndefined(this.properties[key]) ? null : this.properties[key];
             },
             getPropertyKeys: function() {
-                var keys = [];
-                for (var key in this.properties) {
-                    keys.push(key);
-                }
-                return keys;
+                return utils.keys(this.properties);
             },
             removeProperty: function(key) {
                 var value = this.getProperty(key);
                 delete this.properties[key];
+                this.graph.indexManager.removeKeyIndexValue(key, value, this);
                 return value;
             },
             getId: function() {
@@ -139,8 +148,7 @@
             this.outVertex = outVertex;
             this.inVertex = inVertex;
             this.label = label;
-            this.graph = graph;
-            this.initProperties();
+            this.initProperties(graph);
         }
         utils.mixin(Edge.prototype, Element);
         utils.mixin(Edge.prototype, {
@@ -175,8 +183,7 @@
             this.id = id;
             this.inEdges = {};
             this.outEdges = {};
-            this.graph = graph;
-            this.initProperties();
+            this.initProperties(graph);
         }
         utils.mixin(Vertex.prototype, Element);
         utils.mixin(Vertex.prototype, {
@@ -314,6 +321,15 @@
             },
             dropIndex: function(name) {
                 this.indexManager.dropIndex(name);
+            },
+            createKeyIndex: function(key, type) {
+                return this.indexManager.createKeyIndex(key, type);
+            },
+            getIndexedKeys: function(type) {
+                return this.indexManager.getIndexedKeys(type);
+            },
+            dropKeyIndex: function(key, type) {
+                this.indexManager.dropKeyIndex(key, type);
             }
         });
         return Graph;
@@ -340,6 +356,18 @@
                 var keyHash = this.index[key] = this.index[key] || {};
                 var elements = keyHash[value] = keyHash[value] || {};
                 elements[element.getId()] = element;
+            },
+            putAll: function(key, elements) {
+                utils.checkExists("Key", key);
+                utils.checkArray("Elements", elements);
+                for (var i = 0; i < elements.length; i++) {
+                    var element = elements[i];
+                    utils.checkType("Element " + i, element, this.type);
+                    var value = element.getProperty(key);
+                    if (value) {
+                        this.put(key, value, element);
+                    }
+                }
             },
             get: function(key, value) {
                 var keyHash = this.index[key] || {};
@@ -369,6 +397,20 @@
                         }
                     }
                 }
+            },
+            removeKey: function(key) {
+                delete this.index[key];
+            },
+            getIndexedKeys: function() {
+                return utils.keys(this.index);
+            },
+            update: function(key, newValue, oldValue, element) {
+                if (utils.indexOf(key, this.getIndexedKeys()) > -1) {
+                    if (!utils.isUndefined(oldValue)) {
+                        this.remove(key, oldValue, element);
+                    }
+                    this.put(key, newValue, element);
+                }
             }
         });
         return Index;
@@ -378,6 +420,8 @@
             utils.checkExists("Graph", graph);
             this.graph = graph;
             this.indices = {};
+            this.vertexKeyIndex = new Index(name, Vertex);
+            this.edgeKeyIndex = new Index(name, Edge);
         }
         utils.mixin(IndexManager.prototype, {
             createIndex: function(name, type) {
@@ -391,6 +435,17 @@
                 var index = new Index(name, type);
                 this.indices[name] = index;
                 return index;
+            },
+            createKeyIndex: function(key, type) {
+                if (type === Vertex) {
+                    return indexElementsByKey(this.vertexKeyIndex, this.graph.getVertices(), key);
+                } else if (type === Edge) {
+                    return indexElementsByKey(this.edgeKeyIndex, this.graph.getEdges(), key);
+                } else {
+                    throw {
+                        message: "Invalid type"
+                    };
+                }
             },
             getIndex: function(name, type) {
                 var index = this.indices[name];
@@ -407,8 +462,14 @@
             getIndices: function() {
                 return utils.values(this.indices);
             },
+            getIndexedKeys: function(type) {
+                return this._getKeyIndex(type).getIndexedKeys();
+            },
             dropIndex: function(name) {
                 delete this.indices[name];
+            },
+            dropKeyIndex: function(key, type) {
+                this._getKeyIndex(type).removeKey(key);
             },
             removeElement: function(element) {
                 var indices = utils.values(this.indices);
@@ -418,8 +479,42 @@
                         index.removeElement(element);
                     }
                 }
+                this._getKeyIndex(element.constructor).removeElement(element);
+            },
+            updateKeyIndexValue: function(key, newValue, oldValue, element) {
+                this._getKeyIndex(element.constructor).update(key, newValue, oldValue, element);
+            },
+            removeKeyIndexValue: function(key, oldValue, element) {
+                this._getKeyIndex(element.constructor).remove(key, oldValue, element);
+            },
+            fetchFirstMatching: function(type, filters) {
+                var keys = this.getIndexedKeys(type);
+                for (var i = 0; i < filters.length; i++) {
+                    var filter = filters[i];
+                    if (filter.predicate === Compare.EQUAL && utils.indexOf(filter.key, keys) > -1) {
+                        return this._getKeyIndex(type).get(filter.key, filter.value);
+                    }
+                }
+                return null;
+            },
+            _getKeyIndex: function(type) {
+                if (type === Vertex) {
+                    return this.vertexKeyIndex;
+                } else if (type === Edge) {
+                    return this.edgeKeyIndex;
+                } else {
+                    throw {
+                        message: "Invalid type"
+                    };
+                }
             }
         });
+        function indexElementsByKey(index, elements, key) {
+            index.removeKey(key);
+            index.index[key] = {};
+            index.putAll(key, elements);
+            return index;
+        }
         return IndexManager;
     }();
     var LabelFilter = function() {
@@ -511,9 +606,12 @@
             }
             var result = [];
             for (var i = 0; i < elements.length; i++) {
-                var elementsByIds = elements[i];
-                for (var id in elementsByIds) {
-                    var element = elementsByIds[id];
+                var currentElements = elements[i];
+                if (utils.isOfType(elements[i], Vertex) || utils.isOfType(elements[i], Edge)) {
+                    currentElements = [ currentElements ];
+                }
+                for (var id in currentElements) {
+                    var element = currentElements[id];
                     var filtered = false;
                     for (var j = 0; j < filters.length; j++) {
                         if (!filters[j].matches(element)) {
@@ -650,10 +748,18 @@
         utils.mixin(GraphQuery.prototype, Query);
         utils.mixin(GraphQuery.prototype, {
             getInitialEdges: function() {
-                return this.graph.edges;
+                var edges = this.graph.indexManager.fetchFirstMatching(Edge, this.hasFilters);
+                if (!edges) {
+                    edges = this.graph.edges;
+                }
+                return edges;
             },
             getInitialVertices: function() {
-                return this.graph.vertices;
+                var vertices = this.graph.indexManager.fetchFirstMatching(Vertex, this.hasFilters);
+                if (!vertices) {
+                    vertices = this.graph.vertices;
+                }
+                return vertices;
             },
             getBaseFilters: function() {
                 return [];
@@ -670,6 +776,8 @@
     exports.Vertex = Vertex;
     exports.Graph = Graph;
     exports.VertexQuery = VertexQuery;
+    exports.GraphQuery = VertexQuery;
+    exports.Index = Index;
     exports.OUT = OUT;
     exports.IN = IN;
     exports.BOTH = BOTH;

@@ -10,8 +10,7 @@ var Edge = (function () {
     this.outVertex = outVertex;
     this.inVertex = inVertex;
     this.label = label;
-    this.graph = graph;
-    this.initProperties();
+    this.initProperties(graph);
   }
 
   utils.mixin(Edge.prototype, Element);

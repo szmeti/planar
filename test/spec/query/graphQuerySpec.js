@@ -54,6 +54,7 @@ describe('GraphQuery', function () {
     expect(vertices[0].getProperty('name'), 'matthias');
 
     expect(graph.query().hasNot('age').vertices().length).toBe(1);
+    expect(graph.query().hasNot('age', 33).vertices().length).toBe(2);
     expect(graph.query().has('age', 28).has('name', 'matthias').vertices().length).toBe(1);
     expect(graph.query().has('age', 28).has('name', 'matthias').has('name', 'matthias').vertices().length).toBe(1);
     expect(graph.query().interval('age', 28, 32).has('name', 'marko').vertices().length).toBe(0);

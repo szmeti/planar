@@ -29,6 +29,20 @@ var Index = (function () {
       elements[element.getId()] = element;
     },
 
+    putAll: function (key, elements) {
+      utils.checkExists('Key', key);
+      utils.checkArray('Elements', elements);
+
+      for (var i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        utils.checkType('Element ' + i, element, this.type);
+        var value = element.getProperty(key);
+        if (value) {
+          this.put(key, value, element);
+        }
+      }
+    },
+
     get: function (key, value) {
       var keyHash = this.index[key] || {};
       var elements = keyHash[value] || {};
@@ -59,6 +73,23 @@ var Index = (function () {
             delete elements[value][element.getId()];
           }
         }
+      }
+    },
+
+    removeKey: function (key) {
+      delete this.index[key];
+    },
+
+    getIndexedKeys: function () {
+      return utils.keys(this.index);
+    },
+
+    update: function (key, newValue, oldValue, element) {
+      if (utils.indexOf(key, this.getIndexedKeys()) > -1) {
+        if (!utils.isUndefined(oldValue)) {
+          this.remove(key, oldValue, element);
+        }
+        this.put(key, newValue, element);
       }
     }
 

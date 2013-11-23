@@ -53,7 +53,7 @@ var Graph = (function () {
 
     getVertices: function (key, value) {
       if (utils.isUndefined(key) || key === null) {
-        return  utils.values(this.vertices);
+        return utils.values(this.vertices);
       } else {
         return new GraphQuery(this).has(key, value).vertices();
       }
@@ -139,6 +139,18 @@ var Graph = (function () {
 
     dropIndex: function (name) {
       this.indexManager.dropIndex(name);
+    },
+
+    createKeyIndex: function (key, type) {
+      return this.indexManager.createKeyIndex(key, type);
+    },
+
+    getIndexedKeys: function (type) {
+      return this.indexManager.getIndexedKeys(type);
+    },
+
+    dropKeyIndex: function (key, type) {
+      this.indexManager.dropKeyIndex(key, type);
     }
 
   });

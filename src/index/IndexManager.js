@@ -6,6 +6,8 @@ var IndexManager = (function () {
 
     this.graph = graph;
     this.indices = {};
+    this.vertexKeyIndex = new Index(name, Vertex);
+    this.edgeKeyIndex = new Index(name, Edge);
   }
 
   utils.mixin(IndexManager.prototype, {
@@ -24,6 +26,18 @@ var IndexManager = (function () {
       this.indices[name] = index;
 
       return index;
+    },
+
+    createKeyIndex: function (key, type) {
+      if (type === Vertex) {
+        return indexElementsByKey(this.vertexKeyIndex, this.graph.getVertices(), key);
+      } else if (type === Edge) {
+        return indexElementsByKey(this.edgeKeyIndex, this.graph.getEdges(), key);
+      } else {
+        throw {
+          message: 'Invalid type'
+        };
+      }
     },
 
     getIndex: function (name, type) {
@@ -45,8 +59,16 @@ var IndexManager = (function () {
       return utils.values(this.indices);
     },
 
+    getIndexedKeys: function (type) {
+      return this._getKeyIndex(type).getIndexedKeys();
+    },
+
     dropIndex: function (name) {
       delete this.indices[name];
+    },
+
+    dropKeyIndex: function (key, type) {
+      this._getKeyIndex(type).removeKey(key);
     },
 
     removeElement: function (element) {
@@ -57,9 +79,50 @@ var IndexManager = (function () {
           index.removeElement(element);
         }
       }
+      this._getKeyIndex(element.constructor).removeElement(element);
+    },
+
+    updateKeyIndexValue: function(key, newValue, oldValue, element) {
+      this._getKeyIndex(element.constructor).update(key, newValue, oldValue, element);
+    },
+
+    removeKeyIndexValue: function(key, oldValue, element) {
+      this._getKeyIndex(element.constructor).remove(key, oldValue, element);
+    },
+
+    fetchFirstMatching: function(type, filters) {
+      var keys = this.getIndexedKeys(type);
+
+      for (var i = 0; i < filters.length; i++) {
+        var filter = filters[i];
+        if (filter.predicate === Compare.EQUAL && utils.indexOf(filter.key, keys) > -1) {
+          return this._getKeyIndex(type).get(filter.key, filter.value);
+        }
+      }
+
+      return null;
+    },
+
+    _getKeyIndex: function (type) {
+      if (type === Vertex) {
+        return this.vertexKeyIndex;
+      } else if (type === Edge) {
+        return this.edgeKeyIndex;
+      } else {
+        throw {
+          message: 'Invalid type'
+        };
+      }
     }
 
   });
+
+  function indexElementsByKey(index, elements, key) {
+    index.removeKey(key);
+    index.index[key] = {};
+    index.putAll(key, elements);
+    return index;
+  }
 
   return IndexManager;
 

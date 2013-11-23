@@ -12,11 +12,23 @@ var GraphQuery = (function () {
   utils.mixin(GraphQuery.prototype, {
 
     getInitialEdges: function () {
-      return this.graph.edges;
+      var edges = this.graph.indexManager.fetchFirstMatching(Edge, this.hasFilters);
+
+      if (!edges) {
+        edges = this.graph.edges;
+      }
+
+      return edges;
     },
 
     getInitialVertices: function () {
-      return this.graph.vertices;
+      var vertices = this.graph.indexManager.fetchFirstMatching(Vertex, this.hasFilters);
+
+      if (!vertices) {
+        vertices = this.graph.vertices;
+      }
+
+      return vertices;
     },
 
     getBaseFilters: function () {

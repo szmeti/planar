@@ -3,15 +3,18 @@ var Element = (function () {
 
   return {
 
-    initProperties: function () {
+    initProperties: function (graph) {
       this.properties = [];
+      this.graph = graph;
     },
 
     setProperty: function (key, value) {
       utils.checkExists('Property key', key);
       utils.checkExists('Property value', value);
       utils.checkNotEmpty('Property key', key);
+      var oldValue = this.properties[key];
       this.properties[key] = value;
+      this.graph.indexManager.updateKeyIndexValue(key, value, oldValue, this);
     },
 
     getProperty: function (key) {
@@ -19,18 +22,13 @@ var Element = (function () {
     },
 
     getPropertyKeys: function () {
-      var keys = [];
-
-      for (var key in this.properties) {
-        keys.push(key);
-      }
-
-      return keys;
+      return utils.keys(this.properties);
     },
 
     removeProperty: function (key) {
       var value = this.getProperty(key);
       delete this.properties[key];
+      this.graph.indexManager.removeKeyIndexValue(key, value, this);
       return value;
     },
 
