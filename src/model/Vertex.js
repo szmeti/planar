@@ -4,6 +4,7 @@ var Vertex = (function () {
     this.id = id;
     this.inEdges = {};
     this.outEdges = {};
+    this.ui = {};
     this.initProperties(graph);
   }
 

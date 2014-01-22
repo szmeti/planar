@@ -38,6 +38,20 @@
             }
             return keys;
         },
+        get: function() {
+            var args = this.convertVarArgs(arguments);
+            var current = args[0];
+            args.shift();
+            var keys = args;
+            for (var i = 0; i < keys.length; ++i) {
+                if (this.isUndefined(current[keys[i]])) {
+                    return undefined;
+                } else {
+                    current = current[keys[i]];
+                }
+            }
+            return current;
+        },
         values: function(obj) {
             var values = [];
             for (var key in obj) {
@@ -108,6 +122,7 @@
     var OUT = 1;
     var IN = 2;
     var BOTH = 3;
+    var PROP_TYPE = "_type";
     var Element = function() {
         return {
             initProperties: function(graph) {
@@ -183,6 +198,7 @@
             this.id = id;
             this.inEdges = {};
             this.outEdges = {};
+            this.ui = {};
             this.initProperties(graph);
         }
         utils.mixin(Vertex.prototype, Element);
@@ -208,10 +224,11 @@
         return Vertex;
     }();
     var Graph = function() {
-        function Graph() {
+        function Graph(container, engine) {
             this.vertices = {};
             this.edges = {};
             this.indexManager = new IndexManager(this);
+            this.renderer = new Renderer(this, container, engine);
         }
         utils.mixin(Graph.prototype, {
             addVertex: function(id) {
@@ -330,6 +347,9 @@
             },
             dropKeyIndex: function(key, type) {
                 this.indexManager.dropKeyIndex(key, type);
+            },
+            render: function() {
+                this.renderer.render();
             }
         });
         return Graph;
@@ -772,12 +792,101 @@
         });
         return GraphQuery;
     }();
+    var RaphaelEngine = function() {
+        function RaphaelEngine() {}
+        utils.mixin(RaphaelEngine.prototype, {
+            init: function(container, width, height) {
+                utils.checkExists("Container", container);
+                this.paper = new Raphael(container, width, height);
+            },
+            initVertex: function(vertex) {
+                var renderer = ElementRendererProvider.getVertexRenderer(vertex, "raphael");
+                utils.checkExists("Renderer", renderer);
+                renderer.init(vertex, this.paper);
+            },
+            renderVertex: function(vertex) {
+                var renderer = ElementRendererProvider.getVertexRenderer(vertex, "raphael");
+                utils.checkExists("Renderer", renderer);
+                renderer.render(vertex, this.paper);
+            }
+        });
+        return RaphaelEngine;
+    }();
+    var RaphaelRectangleVertexRenderer = function() {
+        return {
+            init: function(vertex, paper) {
+                vertex.ui.element = paper.rect(0, 0, 60, 40, 10);
+            },
+            render: function(vertex) {
+                vertex.ui.element.attr(vertex.ui.position);
+            }
+        };
+    }();
+    var ElementRendererProvider = function() {
+        return {
+            getVertexRenderer: function(vertex, engine) {
+                var renderer;
+                var vertexType = vertex.getProperty(PROP_TYPE);
+                if (vertexType !== null) {
+                    renderer = utils.get(settings, engine, "vertexRenderers", vertexType);
+                }
+                if (utils.isUndefined(renderer)) {
+                    renderer = utils.get(settings, engine, "defaultVertexRenderer");
+                }
+                return renderer;
+            }
+        };
+    }();
+    var Renderer = function() {
+        function Renderer(graph, container, engine) {
+            utils.checkExists("Graph", graph);
+            this.graph = graph;
+            this.container = container;
+            this.engine = utils.isUndefined(engine) ? settings.engine : engine;
+            this.width = settings.width;
+            this.height = settings.height;
+            this.initialized = false;
+        }
+        utils.mixin(Renderer.prototype, {
+            render: function() {
+                if (!this.initialized) {
+                    this.init();
+                }
+                var self = this;
+                this.graph.forEachVertex(function(vertex) {'use strict';
+                    self.engine.renderVertex(vertex);
+                });
+            },
+            init: function() {
+                this.engine.init(this.container, this.width, this.height);
+                var self = this;
+                this.graph.forEachVertex(function(vertex) {'use strict';
+                    self.engine.initVertex(vertex);
+                });
+                this.initialized = true;
+            }
+        });
+        return Renderer;
+    }();
+    var settings = {
+        engine: new RaphaelEngine(),
+        raphael: {
+            defaultVertexRenderer: RaphaelRectangleVertexRenderer,
+            vertexRenderers: {}
+        },
+        width: 640,
+        height: 480
+    };
+    exports.settings = settings;
     exports.Edge = Edge;
     exports.Vertex = Vertex;
     exports.Graph = Graph;
     exports.VertexQuery = VertexQuery;
     exports.GraphQuery = VertexQuery;
     exports.Index = Index;
+    exports.RaphaelEngine = RaphaelEngine;
+    exports.RaphaelRectangleVertexRenderer = RaphaelRectangleVertexRenderer;
+    exports.Renderer = Renderer;
     exports.OUT = OUT;
     exports.IN = IN;
     exports.BOTH = BOTH;

@@ -35,7 +35,7 @@ var utils = {
     return removed;
   },
 
-  keys: function(obj) {
+  keys: function (obj) {
     var keys = [];
     for (var key in obj) {
       if (obj.hasOwnProperty(key)) {
@@ -43,6 +43,23 @@ var utils = {
       }
     }
     return keys;
+  },
+
+  get: function () {
+    var args = this.convertVarArgs(arguments);
+    var current = args[0];
+    args.shift();
+    var keys = args;
+
+    for (var i = 0; i < keys.length; ++i) {
+      if (this.isUndefined(current[keys[i]])) {
+        return undefined;
+      } else {
+        current = current[keys[i]];
+      }
+    }
+
+    return current;
   },
 
   values: function (obj) {

@@ -1,10 +1,11 @@
 /* global Graph: true */
 var Graph = (function () {
 
-  function Graph() {
+  function Graph(container, engine) {
     this.vertices = {};
     this.edges = {};
     this.indexManager = new IndexManager(this);
+    this.renderer = new Renderer(this, container, engine);
   }
 
   utils.mixin(Graph.prototype, {
@@ -151,6 +152,10 @@ var Graph = (function () {
 
     dropKeyIndex: function (key, type) {
       this.indexManager.dropKeyIndex(key, type);
+    },
+
+    render: function() {
+      this.renderer.render();
     }
 
   });

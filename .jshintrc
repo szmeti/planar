@@ -18,6 +18,7 @@
   "smarttabs": true,
   "globals": {
     "utils": false,
+    "settings": false,
     "Edge": false,
     "Vertex": false,
     "Graph": false,
@@ -31,9 +32,15 @@
     "Query": false,
     "VertexQuery": false,
     "GraphQuery": false,
+    "RaphaelEngine": false,
+    "RaphaelRectangleVertexRenderer": false,
+    "ElementRendererProvider": false,
+    "Renderer": false,
+    "Raphael": false,
     "IN": false,
     "OUT": false,
     "BOTH": false,
+    "PROP_TYPE": false,
 
     "describe": false,
     "it": false,

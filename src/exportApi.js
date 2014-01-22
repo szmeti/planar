@@ -1,9 +1,13 @@
+exports.settings = settings;
 exports.Edge = Edge;
 exports.Vertex = Vertex;
 exports.Graph = Graph;
 exports.VertexQuery = VertexQuery;
 exports.GraphQuery = VertexQuery;
 exports.Index = Index;
+exports.RaphaelEngine = RaphaelEngine;
+exports.RaphaelRectangleVertexRenderer = RaphaelRectangleVertexRenderer;
+exports.Renderer = Renderer;
 exports.OUT = OUT;
 exports.IN = IN;
 exports.BOTH = BOTH;

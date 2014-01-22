@@ -1,0 +1,21 @@
+{
+  "name": "planarjs",
+  "version": "0.0.1",
+  "homepage": "https://github.com/szmeti/planar",
+  "authors": [
+    "szmeti <gabor.szmetanko@gmail.com>"
+  ],
+  "description": "JavaScript graph visualization library",
+  "license": "MIT",
+  "dependencies": {
+    "raphael": "2.1.2"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "components",
+    "test",
+    "tests"
+  ]
+}

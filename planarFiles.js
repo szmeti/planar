@@ -15,7 +15,12 @@ planarFiles = {
     'src/query/HasFilter.js',
     'src/query/Query.js',
     'src/query/VertexQuery.js',
-    'src/query/GraphQuery.js'
+    'src/query/GraphQuery.js',
+    'src/view/raphael/RaphaelEngine.js',
+    'src/view/raphael/RaphaelRectangleVertexRenderer.js',
+    'src/view/ElementRendererProvider.js',
+    'src/view/Renderer.js',
+    'src/settings.js'
   ],
 
   'planarApi': [
