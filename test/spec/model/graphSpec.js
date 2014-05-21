@@ -412,35 +412,79 @@ describe('Graph', function () {
   it('should send events', function () {
     var graph = new Graph();
 
-    var createdIds = [];
+    var createdVertexIds = [];
+    var createdEdgeIds = [];
+    var removedVertexIds = [];
+    var removedEdgeIds = [];
 
-    graph.on('vertexAdded', function(event, vertex) {
-       createdIds.push(vertex.getId());
+    graph.off('vertexAdded');
+
+    graph.on('vertexAdded', function (event, vertex) {
+      createdVertexIds.push(vertex.getId());
     });
 
-    graph.on('edgeAdded', function(event, edge) {
-       createdIds.push(vertex.getId());
+    graph.on('edgeAdded', function (event, edge) {
+      createdEdgeIds.push(edge.getId());
+    });
+
+    graph.on('vertexRemoved', function (event, vertex) {
+      removedVertexIds.push(vertex.getId());
+    });
+
+    graph.on('edgeRemoved', function (event, edge) {
+      removedEdgeIds.push(edge.getId());
     });
 
     var a = graph.addVertex();
     var b = graph.addVertex();
+    var c = graph.addVertex();
 
-    expect(createdIds).toContain(a.getId());
-    expect(createdIds).toContain(b.getId());
-//    var edge = graph.addEdge(null, a, b, 'knows');
-//
-//    expect(graph.getEdges().length).toBe(1);
-//    expect(graph.getVertices().length).toBe(2);
-//
-//    graph.removeVertex(a);
-//
-//    expect(graph.getEdges().length).toBe(0);
-//    expect(graph.getVertices().length).toBe(1);
-//
-//    graph.removeEdge(edge);
-//
-//    expect(graph.getEdges().length).toBe(0);
-//    expect(graph.getVertices().length).toBe(1);
+    var edge1 = graph.addEdge(null, a, b, 'knows');
+    var edge2 = graph.addEdge(null, b, a, 'knows');
+    var edge3 = graph.addEdge(null, c, a, 'knows');
+
+    expect(createdVertexIds.length).toBe(3);
+    expect(createdVertexIds).toContain(a.getId());
+    expect(createdVertexIds).toContain(b.getId());
+    expect(createdVertexIds).toContain(c.getId());
+
+    expect(createdEdgeIds.length).toBe(3);
+    expect(createdEdgeIds).toContain(edge1.getId());
+    expect(createdEdgeIds).toContain(edge2.getId());
+    expect(createdEdgeIds).toContain(edge3.getId());
+
+    graph.removeVertex(c);
+
+    expect(removedVertexIds.length).toBe(1);
+    expect(removedVertexIds).toContain(c.getId());
+
+    expect(removedEdgeIds.length).toBe(1);
+    expect(removedEdgeIds).toContain(edge3.getId());
+
+    graph.removeEdge(edge2);
+
+    expect(removedVertexIds.length).toBe(1);
+    expect(removedVertexIds).toContain(c.getId());
+
+    expect(removedEdgeIds.length).toBe(2);
+    expect(removedEdgeIds).toContain(edge2.getId());
+    expect(removedEdgeIds).toContain(edge3.getId());
+
+    graph.removeVertex(a);
+
+    expect(removedVertexIds.length).toBe(2);
+    expect(removedVertexIds).toContain(a.getId());
+    expect(removedVertexIds).toContain(c.getId());
+
+    expect(removedEdgeIds.length).toBe(3);
+    expect(removedEdgeIds).toContain(edge1.getId());
+    expect(removedEdgeIds).toContain(edge2.getId());
+    expect(removedEdgeIds).toContain(edge3.getId());
+
+    graph.off('vertexAdded');
+
+    graph.addVertex();
+    expect(createdVertexIds.length).toBe(3);
   });
 
 });
