@@ -37,6 +37,7 @@
     "ElementRendererProvider": false,
     "Renderer": false,
     "Raphael": false,
+    "d3": false,
     "IN": false,
     "OUT": false,
     "BOTH": false,

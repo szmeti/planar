@@ -409,4 +409,38 @@ describe('Graph', function () {
     expect(graph.getIndices().length).toBe(0);
   });
 
+  it('should send events', function () {
+    var graph = new Graph();
+
+    var createdIds = [];
+
+    graph.on('vertexAdded', function(event, vertex) {
+       createdIds.push(vertex.getId());
+    });
+
+    graph.on('edgeAdded', function(event, edge) {
+       createdIds.push(vertex.getId());
+    });
+
+    var a = graph.addVertex();
+    var b = graph.addVertex();
+
+    expect(createdIds).toContain(a.getId());
+    expect(createdIds).toContain(b.getId());
+//    var edge = graph.addEdge(null, a, b, 'knows');
+//
+//    expect(graph.getEdges().length).toBe(1);
+//    expect(graph.getVertices().length).toBe(2);
+//
+//    graph.removeVertex(a);
+//
+//    expect(graph.getEdges().length).toBe(0);
+//    expect(graph.getVertices().length).toBe(1);
+//
+//    graph.removeEdge(edge);
+//
+//    expect(graph.getEdges().length).toBe(0);
+//    expect(graph.getVertices().length).toBe(1);
+  });
+
 });

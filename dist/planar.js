@@ -792,6 +792,18 @@
         });
         return GraphQuery;
     }();
+    var D3Engine = function() {
+        function D3Engine() {}
+        utils.mixin(D3Engine.prototype, {
+            init: function(container, width, height) {
+                utils.checkExists("Container", container);
+                this.svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
+            },
+            initVertex: function(vertex) {},
+            renderVertex: function(vertex) {}
+        });
+        return D3Engine;
+    }();
     var RaphaelEngine = function() {
         function RaphaelEngine() {}
         utils.mixin(RaphaelEngine.prototype, {

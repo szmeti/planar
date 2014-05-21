@@ -8,6 +8,8 @@ var Graph = (function () {
     this.renderer = new Renderer(this, container, engine);
   }
 
+  utils.mixin(Graph.prototype, EventEmitter);
+
   utils.mixin(Graph.prototype, {
 
     addVertex: function (id) {
@@ -19,11 +21,16 @@ var Graph = (function () {
       }
 
       var vertex = this.getVertex(id);
-      if (!vertex) {
+      if (vertex) {
+        throw {
+          message: 'Vertex already exists with the given ID'
+        };
+      } else {
         vertex = new Vertex(id, this);
       }
 
       this.vertices[id] = vertex;
+      this.trigger('vertexAdded', vertex);
 
       return vertex;
     },
@@ -49,6 +56,7 @@ var Graph = (function () {
 
         this.indexManager.removeElement(storedVertex);
         delete this.vertices[storedVertex.id];
+        this.trigger('vertexRemoved', storedVertex);
       }
     },
 
@@ -69,10 +77,19 @@ var Graph = (function () {
       }
 
       var edge = new Edge(id, outVertex, inVertex, label, this);
-      this.edges[id] = edge;
+
+      if (this.edges[id]) {
+        throw {
+          message: 'Edge already exists with the given ID'
+        };
+      } else {
+        this.edges[id] = edge;
+      }
 
       outVertex.outEdges[edge.id] = edge;
       inVertex.inEdges[edge.id] = edge;
+
+      this.trigger('edgeAdded', edge);
 
       return edge;
     },
@@ -90,6 +107,7 @@ var Graph = (function () {
           delete this.edges[edgeToDelete.id];
           delete edgeToDelete.outVertex.outEdges[edgeToDelete.id];
           delete edgeToDelete.inVertex.inEdges[edgeToDelete.id];
+          this.trigger('edgeRemoved', edge);
         }
       }
     },
@@ -154,7 +172,7 @@ var Graph = (function () {
       this.indexManager.dropKeyIndex(key, type);
     },
 
-    render: function() {
+    render: function () {
       this.renderer.render();
     }
 

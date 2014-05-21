@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Raphael test</title>
+
+    <script type="text/javascript" src="http://codeorigin.jquery.com/jquery-1.10.2.js"></script>
+    <script type="text/javascript" src="../bower_components/d3/d3.js"></script>
+    <script type="text/javascript" src="../dist/planar.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var graph = new planar.Graph($('#container'), new planar.D3Engine());
+
+            var v1 = graph.addVertex();
+            v1.ui.position = {x: 100, y: 100};
+            var v2 = graph.addVertex();
+            var v3 = graph.addVertex();
+
+            graph.render();
+        });
+    </script>
+</head>
+<body>
+
+<div id="container"></div>
+
+</body>
+</html>

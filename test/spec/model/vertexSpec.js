@@ -5,20 +5,30 @@ describe('Vertex', function () {
   it('should return equal objects', function () {
     var graph = new Graph();
 
-    var v = graph.addVertex(1);
-    var u = graph.addVertex(1);
+    graph.addVertex(1);
 
-    expect(v).toBe(u);
-
-    v = graph.addVertex(2);
+    var v = graph.addVertex(2);
     expect(v).toBeDefined();
-    u = graph.getVertex(v.getId());
+    var u = graph.getVertex(v.getId());
     expect(u).toBeDefined();
     expect(v).toBe(u);
 
     expect(graph.getVertex(u.getId())).toBe(graph.getVertex(u.getId()));
     expect(graph.getVertex(u.getId())).toBe(graph.getVertex(v.getId()));
     expect(graph.getVertex(v.getId())).toBe(graph.getVertex(v.getId()));
+  });
+
+  it('should not allow duplicate IDs', function () {
+    var graph = new Graph();
+
+    graph.addVertex(1);
+
+    try {
+      graph.addVertex(1);
+      this.fail('Should not allow duplicate IDs');
+    } catch (e) {
+      expect(e.message).toEqual('Vertex already exists with the given ID');
+    }
   });
 
   it('should add vertex', function () {
