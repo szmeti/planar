@@ -5,7 +5,11 @@ var Graph = (function () {
     this.vertices = {};
     this.edges = {};
     this.indexManager = new IndexManager(this);
-    this.renderer = new Renderer(this, container, engine);
+
+    if (utils.exists(container) && utils.exists(engine)) {
+      this.renderer = new Renderer(this, container, engine);
+      this.renderer.init();
+    }
   }
 
   utils.mixin(Graph.prototype, EventEmitter);

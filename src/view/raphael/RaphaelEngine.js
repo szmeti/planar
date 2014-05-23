@@ -4,11 +4,11 @@ var RaphaelEngine = (function () {
   function RaphaelEngine() {
   }
 
+  utils.mixin(RaphaelEngine.prototype, Engine);
+
   utils.mixin(RaphaelEngine.prototype, {
 
-    init: function (container, width, height) {
-      utils.checkExists('Container', container);
-
+    initEngine: function (container, width, height) {
       this.paper = new Raphael(container, width, height);
     },
 

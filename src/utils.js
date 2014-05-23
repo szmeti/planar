@@ -23,10 +23,34 @@ var utils = {
     return -1;
   },
 
+  indexOfById: function (id, haystack) {
+    if (id) {
+      for (var i = 0; i < haystack.length; i++) {
+        if (haystack[i].id === id) {
+          return i;
+        }
+      }
+    }
+
+    return -1;
+  },
+
   remove: function (needle, haystack) {
     var removed = false;
 
     var index = this.indexOf(needle, haystack);
+    if (index >= 0) {
+      haystack.splice(index, 1);
+      removed = true;
+    }
+
+    return removed;
+  },
+
+  removeById: function (id, haystack) {
+    var removed = false;
+
+    var index = this.indexOfById(id, haystack);
     if (index >= 0) {
       haystack.splice(index, 1);
       removed = true;
@@ -89,11 +113,15 @@ var utils = {
   },
 
   checkExists: function (name, obj) {
-    if (utils.isUndefined(obj) || obj === null) {
+    if (!utils.exists(obj)) {
       throw {
         message: name + ' must be specified'
       };
     }
+  },
+
+  exists: function (obj) {
+    return !utils.isUndefined(obj) && obj !== null;
   },
 
   checkInArray: function (name, obj, array) {
@@ -138,6 +166,10 @@ var utils = {
 
   convertVarArgs: function (args) {
     return args.length > 0 && utils.isArray(args[0]) ? args[0] : Array.prototype.slice.call(args);
+  },
+
+  randomInteger: function (lower, upper) {
+    return Math.floor(Math.random() * upper) + lower;
   }
 
 };

@@ -1,28 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Raphael test</title>
+    <title>D3 sample</title>
 
-    <script type="text/javascript" src="http://codeorigin.jquery.com/jquery-1.10.2.js"></script>
-    <script type="text/javascript" src="../bower_components/d3/d3.js"></script>
-    <script type="text/javascript" src="../dist/planar.js"></script>
+    <meta http-equiv="content-type" content="text/html; charset=UTF8">
 
-    <script type="text/javascript">
-        $(document).ready(function() {
-            var graph = new planar.Graph($('#container'), new planar.D3Engine());
-
-            var v1 = graph.addVertex();
-            v1.ui.position = {x: 100, y: 100};
-            var v2 = graph.addVertex();
-            var v3 = graph.addVertex();
-
-            graph.render();
-        });
-    </script>
+    <style type="text/css">
+        .edge {
+            stroke: #999;
+            stroke-width: 2;
+        }
+    </style>
 </head>
 <body>
 
 <div id="container"></div>
+
+<script type="text/javascript" src="http://codeorigin.jquery.com/jquery-1.10.2.js"></script>
+<script type="text/javascript" src="../bower_components/d3/d3.js"></script>
+<script type="text/javascript" src="../dist/planar.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        var graph = new planar.Graph('#container', new planar.D3Engine());
+
+        var v1 = graph.addVertex();
+        v1.setProperty(planar.PROP_TYPE, "circle");
+
+        var v2 = graph.addVertex();
+        v2.setProperty(planar.PROP_TYPE, "diamond");
+
+        var v3 = graph.addVertex();
+        v3.setProperty(planar.PROP_TYPE, "triangle-up");
+
+        graph.addEdge(null, v1, v2, "knows");
+        graph.addEdge(null, v2, v3, "knows");
+        graph.addEdge(null, v3, v1, "knows");
+
+        graph.render();
+    });
+</script>
 
 </body>
 </html>

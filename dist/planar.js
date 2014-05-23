@@ -20,9 +20,28 @@
             }
             return -1;
         },
+        indexOfById: function(id, haystack) {
+            if (id) {
+                for (var i = 0; i < haystack.length; i++) {
+                    if (haystack[i].id === id) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        },
         remove: function(needle, haystack) {
             var removed = false;
             var index = this.indexOf(needle, haystack);
+            if (index >= 0) {
+                haystack.splice(index, 1);
+                removed = true;
+            }
+            return removed;
+        },
+        removeById: function(id, haystack) {
+            var removed = false;
+            var index = this.indexOfById(id, haystack);
             if (index >= 0) {
                 haystack.splice(index, 1);
                 removed = true;
@@ -74,11 +93,14 @@
             return obj.constructor === type;
         },
         checkExists: function(name, obj) {
-            if (utils.isUndefined(obj) || obj === null) {
+            if (!utils.exists(obj)) {
                 throw {
                     message: name + " must be specified"
                 };
             }
+        },
+        exists: function(obj) {
+            return !utils.isUndefined(obj) && obj !== null;
         },
         checkInArray: function(name, obj, array) {
             this.checkExists(name, obj);
@@ -117,12 +139,45 @@
         }(),
         convertVarArgs: function(args) {
             return args.length > 0 && utils.isArray(args[0]) ? args[0] : Array.prototype.slice.call(args);
+        },
+        randomInteger: function(lower, upper) {
+            return Math.floor(Math.random() * upper) + lower;
         }
     };
     var OUT = 1;
     var IN = 2;
     var BOTH = 3;
     var PROP_TYPE = "_type";
+    var EventEmitter = function() {
+        return {
+            on: function(eventType, callback) {
+                utils.checkExists("Event", eventType);
+                utils.checkExists("Callback", callback);
+                this.eventCallbacks = this.eventCallbacks || {};
+                this.eventCallbacks[eventType] = this.eventCallbacks[eventType] || [];
+                this.eventCallbacks[eventType].push(callback);
+            },
+            off: function(eventType) {
+                utils.checkExists("Event", eventType);
+                if (!this.eventCallbacks) {
+                    return;
+                }
+                delete this.eventCallbacks[eventType];
+            },
+            trigger: function(eventType) {
+                utils.checkExists("Event", eventType);
+                var callbacks, args, cancelled;
+                if (!this.eventCallbacks || !this.eventCallbacks[eventType]) {
+                    return;
+                }
+                args = [].slice.call(arguments, 1);
+                callbacks = this.eventCallbacks[eventType];
+                for (var i = 0; !cancelled && i < callbacks.length; i++) {
+                    cancelled = callbacks[i].apply(this, [ eventType ].concat(args)) === false;
+                }
+            }
+        };
+    }();
     var Element = function() {
         return {
             initProperties: function(graph) {
@@ -228,8 +283,12 @@
             this.vertices = {};
             this.edges = {};
             this.indexManager = new IndexManager(this);
-            this.renderer = new Renderer(this, container, engine);
+            if (utils.exists(container) && utils.exists(engine)) {
+                this.renderer = new Renderer(this, container, engine);
+                this.renderer.init();
+            }
         }
+        utils.mixin(Graph.prototype, EventEmitter);
         utils.mixin(Graph.prototype, {
             addVertex: function(id) {
                 if (utils.isUndefined(id) || id === null) {
@@ -239,10 +298,15 @@
                     }
                 }
                 var vertex = this.getVertex(id);
-                if (!vertex) {
+                if (vertex) {
+                    throw {
+                        message: "Vertex already exists with the given ID"
+                    };
+                } else {
                     vertex = new Vertex(id, this);
                 }
                 this.vertices[id] = vertex;
+                this.trigger("vertexAdded", vertex);
                 return vertex;
             },
             getVertex: function(id) {
@@ -262,6 +326,7 @@
                     }
                     this.indexManager.removeElement(storedVertex);
                     delete this.vertices[storedVertex.id];
+                    this.trigger("vertexRemoved", storedVertex);
                 }
             },
             getVertices: function(key, value) {
@@ -279,9 +344,16 @@
                     }
                 }
                 var edge = new Edge(id, outVertex, inVertex, label, this);
-                this.edges[id] = edge;
+                if (this.edges[id]) {
+                    throw {
+                        message: "Edge already exists with the given ID"
+                    };
+                } else {
+                    this.edges[id] = edge;
+                }
                 outVertex.outEdges[edge.id] = edge;
                 inVertex.inEdges[edge.id] = edge;
+                this.trigger("edgeAdded", edge);
                 return edge;
             },
             getEdge: function(id) {
@@ -296,6 +368,7 @@
                         delete this.edges[edgeToDelete.id];
                         delete edgeToDelete.outVertex.outEdges[edgeToDelete.id];
                         delete edgeToDelete.inVertex.inEdges[edgeToDelete.id];
+                        this.trigger("edgeRemoved", edge);
                     }
                 }
             },
@@ -792,23 +865,155 @@
         });
         return GraphQuery;
     }();
+    var Timer = function() {
+        var lastTime = 0;
+        var vendors = [ "ms", "moz", "webkit", "o" ];
+        for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+            window.requestAnimationFrame = window[vendors[x] + "RequestAnimationFrame"];
+            window.cancelAnimationFrame = window[vendors[x] + "CancelAnimationFrame"] || window[vendors[x] + "CancelRequestAnimationFrame"];
+        }
+        if (!window.requestAnimationFrame) {
+            window.requestAnimationFrame = function(callback) {
+                var currTime = new Date().getTime();
+                var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+                var id = window.setTimeout(function() {'use strict';
+                    callback(currTime + timeToCall);
+                }, timeToCall);
+                lastTime = currTime + timeToCall;
+                return id;
+            };
+        }
+        if (!window.cancelAnimationFrame) {
+            window.cancelAnimationFrame = function(id) {
+                clearTimeout(id);
+            };
+        }
+        function Timer(callback, scope) {
+            utils.checkExists("Callback", callback);
+            this.callback = callback;
+            this.scope = scope;
+            var id;
+            var start = function() {
+                id = window.requestAnimationFrame(start);
+                if (!callback.apply(scope)) {
+                    stop();
+                }
+            };
+            var stop = function() {
+                window.cancelAnimationFrame(id);
+            };
+            return {
+                start: start,
+                stop: stop
+            };
+        }
+        return Timer;
+    }();
+    var RandomLayout = function() {
+        function RandomLayout() {}
+        utils.mixin(RandomLayout.prototype, {
+            step: function(vertices, edges, width, height) {
+                for (var i = 0; i < vertices.length; i++) {
+                    var vertex = vertices[i];
+                    vertex.x = utils.randomInteger(0, width + 1);
+                    vertex.y = utils.randomInteger(0, height + 1);
+                }
+                return true;
+            }
+        });
+        return RandomLayout;
+    }();
+    var ForceDirectedLayout = function() {
+        function ForceDirectedLayout() {}
+        utils.mixin(ForceDirectedLayout.prototype, {
+            step: function(vertices, edges, width, height) {
+                return true;
+            }
+        });
+        return ForceDirectedLayout;
+    }();
+    var Engine = function() {
+        return {
+            init: function(container, width, height, graph) {
+                utils.checkExists("Container", container);
+                utils.checkExists("Graph", graph);
+                if (utils.isFunction(this.initEngine)) {
+                    this.initEngine(container, width, height, graph);
+                }
+            },
+            beforeRender: function() {},
+            initVertex: function() {},
+            renderVertex: function() {}
+        };
+    }();
     var D3Engine = function() {
         function D3Engine() {}
+        utils.mixin(D3Engine.prototype, Engine);
         utils.mixin(D3Engine.prototype, {
-            init: function(container, width, height) {
-                utils.checkExists("Container", container);
+            initEngine: function(container, width, height) {
                 this.svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
             },
-            initVertex: function(vertex) {},
-            renderVertex: function(vertex) {}
+            beforeRender: function(vertices, edges) {
+                this.addElements("edge", edges);
+                this.addElements("vertex", vertices);
+            },
+            addElements: function(type, elements) {
+                var elementSet = this.svg.selectAll("." + type).data(elements, function(uiElement) {
+                    return uiElement.id;
+                });
+                var element = elementSet.enter().append("g");
+                element.attr("class", function(uiElement) {
+                    var elementType = uiElement[type].getProperty(PROP_TYPE);
+                    return type + " " + elementType;
+                });
+                element.each(function(uiElement) {'use strict';
+                    var elementRenderer = ElementRendererProvider.getRenderer(uiElement[type], "d3", type);
+                    elementRenderer.render(uiElement, d3.select(this));
+                });
+            }
         });
         return D3Engine;
     }();
+    var D3LineEdgeRenderer = function() {
+        return {
+            render: function(edge, element) {
+                var line = element.append("line");
+                line.attr("x1", function(uiEdge) {
+                    return uiEdge.inVertex.x;
+                });
+                line.attr("y1", function(uiEdge) {
+                    return uiEdge.inVertex.y;
+                });
+                line.attr("x2", function(uiEdge) {
+                    return uiEdge.outVertex.x;
+                });
+                line.attr("y2", function(uiEdge) {
+                    return uiEdge.outVertex.y;
+                });
+            }
+        };
+    }();
+    var D3SymbolVertexRenderer = function() {
+        function D3SymbolVertexRenderer(type) {
+            utils.checkExists("Type", type);
+            this.type = type;
+        }
+        utils.mixin(D3SymbolVertexRenderer.prototype, {
+            render: function(vertex, element) {
+                var path = element.append("path");
+                path.attr("transform", function(uiVertex) {
+                    return "translate(" + uiVertex.x + "," + uiVertex.y + ")";
+                });
+                path.attr("d", d3.svg.symbol().type(this.type).size(200));
+            }
+        });
+        return D3SymbolVertexRenderer;
+    }();
     var RaphaelEngine = function() {
         function RaphaelEngine() {}
+        utils.mixin(RaphaelEngine.prototype, Engine);
         utils.mixin(RaphaelEngine.prototype, {
-            init: function(container, width, height) {
-                utils.checkExists("Container", container);
+            initEngine: function(container, width, height) {
                 this.paper = new Raphael(container, width, height);
             },
             initVertex: function(vertex) {
@@ -836,16 +1041,22 @@
     }();
     var ElementRendererProvider = function() {
         return {
-            getVertexRenderer: function(vertex, engine) {
+            getRenderer: function(element, engine, type) {
                 var renderer;
-                var vertexType = vertex.getProperty(PROP_TYPE);
-                if (vertexType !== null) {
-                    renderer = utils.get(settings, engine, "vertexRenderers", vertexType);
+                var elementType = element.getProperty(PROP_TYPE);
+                if (elementType !== null) {
+                    renderer = utils.get(settings, engine, type === "vertex" ? "vertexRenderers" : "edgeRenderers", elementType);
                 }
                 if (utils.isUndefined(renderer)) {
-                    renderer = utils.get(settings, engine, "defaultVertexRenderer");
+                    renderer = utils.get(settings, engine, type === "vertex" ? "defaultVertexRenderer" : "defaultEdgeRenderer");
                 }
                 return renderer;
+            },
+            getVertexRenderer: function(vertex, engine) {
+                return this.getRenderer(vertex, engine, "vertex");
+            },
+            getEdgeRenderer: function(edge, engine) {
+                return this.getRenderer(edge, engine, "edge");
             }
         };
     }();
@@ -858,19 +1069,70 @@
             this.width = settings.width;
             this.height = settings.height;
             this.initialized = false;
+            this.layout = settings.layout;
+            this.vertices = [];
+            this.verticesById = {};
+            this.edges = [];
+            this.edgesById = {};
+        }
+        function setUpEventHandlers(graph, renderer) {
+            graph.on("vertexAdded", function(event, vertex) {
+                var uiVertex = {
+                    id: vertex.getId(),
+                    vertex: vertex
+                };
+                renderer.vertices.push(uiVertex);
+                renderer.verticesById[uiVertex.id] = uiVertex;
+            });
+            graph.on("edgeAdded", function(event, edge) {
+                var inId = edge.getInVertex().getId();
+                var outId = edge.getOutVertex().getId();
+                var uiEdge = {
+                    id: edge.getId(),
+                    edge: edge,
+                    inVertex: renderer.verticesById[inId],
+                    outVertex: renderer.verticesById[outId]
+                };
+                renderer.edges.push(uiEdge);
+                renderer.edgesById[uiEdge.id] = uiEdge;
+            });
+            graph.on("vertexRemoved", function(event, vertex) {
+                var uiVertex = renderer.verticesById[vertex.getId()];
+                utils.remove(uiVertex, renderer.vertices);
+                delete renderer.verticesById[uiVertex.id];
+            });
+            graph.on("edgeRemoved", function(event, edge) {
+                var uiEdge = renderer.edgesById[edge.getId()];
+                utils.remove(uiEdge, renderer.edges);
+                delete renderer.edgesById[uiEdge.id];
+            });
         }
         utils.mixin(Renderer.prototype, {
-            render: function() {
+            render: function(steps) {
                 if (!this.initialized) {
                     this.init();
                 }
+                if (this.timer) {
+                    return;
+                }
+                this.timer = new Timer(this.onAnimationFrame, this);
+                this.timer.start();
+            },
+            onAnimationFrame: function() {
+                var finished = this.layout.step(this.vertices, this.edges, this.width, this.height);
+                this.renderFrame();
+                return finished;
+            },
+            renderFrame: function() {
+                this.engine.beforeRender(this.vertices, this.edges);
                 var self = this;
                 this.graph.forEachVertex(function(vertex) {'use strict';
                     self.engine.renderVertex(vertex);
                 });
             },
             init: function() {
-                this.engine.init(this.container, this.width, this.height);
+                setUpEventHandlers(this.graph, this);
+                this.engine.init(this.container, this.width, this.height, this.graph);
                 var self = this;
                 this.graph.forEachVertex(function(vertex) {'use strict';
                     self.engine.initVertex(vertex);
@@ -882,9 +1144,25 @@
     }();
     var settings = {
         engine: new RaphaelEngine(),
+        layout: new RandomLayout(),
         raphael: {
             defaultVertexRenderer: RaphaelRectangleVertexRenderer,
             vertexRenderers: {}
+        },
+        d3: {
+            defaultVertexRenderer: new D3SymbolVertexRenderer("circle"),
+            defaultEdgeRenderer: D3LineEdgeRenderer,
+            vertexRenderers: {
+                circle: new D3SymbolVertexRenderer("circle"),
+                cross: new D3SymbolVertexRenderer("cross"),
+                diamond: new D3SymbolVertexRenderer("diamond"),
+                square: new D3SymbolVertexRenderer("square"),
+                "triangle-down": new D3SymbolVertexRenderer("triangle-down"),
+                "triangle-up": new D3SymbolVertexRenderer("triangle-up")
+            },
+            edgeRenderers: {
+                line: D3LineEdgeRenderer
+            }
         },
         width: 640,
         height: 480
@@ -896,12 +1174,18 @@
     exports.VertexQuery = VertexQuery;
     exports.GraphQuery = VertexQuery;
     exports.Index = Index;
+    exports.RandomLayout = RandomLayout;
+    exports.ForceDirectedLayout = ForceDirectedLayout;
+    exports.D3Engine = D3Engine;
+    exports.D3SymbolVertexRenderer = D3SymbolVertexRenderer;
+    exports.D3LineEdgeRenderer = D3LineEdgeRenderer;
     exports.RaphaelEngine = RaphaelEngine;
     exports.RaphaelRectangleVertexRenderer = RaphaelRectangleVertexRenderer;
     exports.Renderer = Renderer;
     exports.OUT = OUT;
     exports.IN = IN;
     exports.BOTH = BOTH;
+    exports.PROP_TYPE = PROP_TYPE;
 })({}, function() {
     return this;
 }());
