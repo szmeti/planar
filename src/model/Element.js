@@ -34,6 +34,10 @@ var Element = (function () {
 
     getId: function () {
       return this.id;
+    },
+
+    getGraph: function() {
+      return this.graph;
     }
 
   };

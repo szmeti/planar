@@ -66,9 +66,9 @@ var Renderer = (function () {
     },
 
     onAnimationFrame: function () {
-      var finished = this.layout.step(this.vertices, this.edges, this.width, this.height);
+      var running = this.layout.step(this.vertices, this.edges, this.width, this.height);
       this.renderFrame();
-      return finished;
+      return running;
     },
 
     renderFrame: function () {

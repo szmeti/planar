@@ -206,6 +206,9 @@
             },
             getId: function() {
                 return this.id;
+            },
+            getGraph: function() {
+                return this.graph;
             }
         };
     }();
@@ -895,9 +898,7 @@
             var id;
             var start = function() {
                 id = window.requestAnimationFrame(start);
-                if (!callback.apply(scope)) {
-                    stop();
-                }
+                callback.apply(scope);
             };
             var stop = function() {
                 window.cancelAnimationFrame(id);
@@ -910,15 +911,20 @@
         return Timer;
     }();
     var RandomLayout = function() {
-        function RandomLayout() {}
+        function RandomLayout() {
+            this.running = true;
+        }
         utils.mixin(RandomLayout.prototype, {
             step: function(vertices, edges, width, height) {
-                for (var i = 0; i < vertices.length; i++) {
-                    var vertex = vertices[i];
-                    vertex.x = utils.randomInteger(0, width + 1);
-                    vertex.y = utils.randomInteger(0, height + 1);
+                if (this.running) {
+                    for (var i = 0; i < vertices.length; i++) {
+                        var vertex = vertices[i];
+                        vertex.x = utils.randomInteger(0, width + 1);
+                        vertex.y = utils.randomInteger(0, height + 1);
+                    }
                 }
-                return true;
+                this.running = false;
+                return this.running;
             }
         });
         return RandomLayout;
@@ -951,33 +957,87 @@
         utils.mixin(D3Engine.prototype, Engine);
         utils.mixin(D3Engine.prototype, {
             initEngine: function(container, width, height) {
-                this.svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
+                function zoom() {
+                    svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+                }
+                var svg = this.svg = d3.select(container).append("svg").attr("width", width).attr("height", height).append("g").call(d3.behavior.zoom().scaleExtent([ 1, 8 ]).on("zoom", zoom)).append("g");
+                svg.append("rect").attr("class", "overlay").attr("width", width).attr("height", height);
             },
             beforeRender: function(vertices, edges) {
-                this.addElements("edge", edges);
-                this.addElements("vertex", vertices);
-            },
-            addElements: function(type, elements) {
-                var elementSet = this.svg.selectAll("." + type).data(elements, function(uiElement) {
-                    return uiElement.id;
-                });
-                var element = elementSet.enter().append("g");
-                element.attr("class", function(uiElement) {
-                    var elementType = uiElement[type].getProperty(PROP_TYPE);
-                    return type + " " + elementType;
-                });
-                element.each(function(uiElement) {'use strict';
-                    var elementRenderer = ElementRendererProvider.getRenderer(uiElement[type], "d3", type);
-                    elementRenderer.render(uiElement, d3.select(this));
-                });
+                var edgeSet = bindData(this.svg, "edge", edges);
+                addEnterSection("edge", edgeSet);
+                var vertexSet = bindData(this.svg, "vertex", vertices);
+                var vertexEnter = addEnterSection("vertex", vertexSet);
+                translateVertices(vertexSet);
+                addDragToVertices(vertexEnter);
+                updateEdgePositions(edgeSet);
             }
         });
+        function bindData(svg, type, elements) {
+            return svg.selectAll("." + type).data(elements, function(uiElement) {
+                return uiElement.id;
+            });
+        }
+        function addEnterSection(type, elementSet) {
+            var element = elementSet.enter().append("g");
+            element.attr("class", function(uiElement) {
+                var elementType = uiElement[type].getProperty(PROP_TYPE);
+                var clazz = type;
+                if (elementType) {
+                    clazz += " " + elementType;
+                }
+                return clazz;
+            });
+            element.each(function(uiElement) {'use strict';
+                var elementRenderer = ElementRendererProvider.getRenderer(uiElement[type], "d3", type);
+                elementRenderer.init(uiElement, d3.select(this));
+            });
+            element.on("click", function(uiElement) {
+                var graph = uiElement[type].getGraph();
+                graph.trigger(type + "Clicked", uiElement);
+            });
+            elementSet.exit().remove();
+            return element;
+        }
+        function translateVertices(vertexSet) {
+            vertexSet.attr("transform", function(uiVertex) {
+                return "translate(" + uiVertex.x + "," + uiVertex.y + ")";
+            });
+        }
+        function addDragToVertices(element) {
+            var drag = d3.behavior.drag();
+            drag.on("dragstart", function(uiVertex) {
+                d3.event.sourceEvent.stopPropagation();
+                var graph = uiVertex.vertex.getGraph();
+                graph.trigger("vertexDragStart", uiVertex);
+            });
+            drag.on("drag", function(uiVertex) {
+                uiVertex.x = d3.event.x;
+                uiVertex.y = d3.event.y;
+                var graph = uiVertex.vertex.getGraph();
+                graph.trigger("vertexDrag", uiVertex);
+            });
+            drag.on("dragend", function(uiVertex) {
+                var graph = uiVertex.vertex.getGraph();
+                graph.trigger("vertexDragEnd", uiVertex);
+            });
+            element.call(drag);
+        }
+        function updateEdgePositions(edgeSet) {
+            edgeSet.each(function(uiEdge) {'use strict';
+                var edgeRenderer = ElementRendererProvider.getRenderer(uiEdge.edge, "d3", "edge");
+                edgeRenderer.updatePosition(uiEdge);
+            });
+        }
         return D3Engine;
     }();
     var D3LineEdgeRenderer = function() {
         return {
-            render: function(edge, element) {
-                var line = element.append("line");
+            init: function(edge, element) {
+                edge.uiElement = element.append("line");
+            },
+            updatePosition: function(edge) {
+                var line = edge.uiElement;
                 line.attr("x1", function(uiEdge) {
                     return uiEdge.inVertex.x;
                 });
@@ -999,11 +1059,8 @@
             this.type = type;
         }
         utils.mixin(D3SymbolVertexRenderer.prototype, {
-            render: function(vertex, element) {
+            init: function(vertex, element) {
                 var path = element.append("path");
-                path.attr("transform", function(uiVertex) {
-                    return "translate(" + uiVertex.x + "," + uiVertex.y + ")";
-                });
                 path.attr("d", d3.svg.symbol().type(this.type).size(200));
             }
         });
@@ -1119,9 +1176,9 @@
                 this.timer.start();
             },
             onAnimationFrame: function() {
-                var finished = this.layout.step(this.vertices, this.edges, this.width, this.height);
+                var running = this.layout.step(this.vertices, this.edges, this.width, this.height);
                 this.renderFrame();
-                return finished;
+                return running;
             },
             renderFrame: function() {
                 this.engine.beforeRender(this.vertices, this.edges);

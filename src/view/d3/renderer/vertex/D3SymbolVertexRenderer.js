@@ -8,13 +8,8 @@ var D3SymbolVertexRenderer = (function () {
 
   utils.mixin(D3SymbolVertexRenderer.prototype, {
 
-    render: function (vertex, element) {
+    init: function (vertex, element) {
       var path = element.append('path');
-
-      path.attr('transform', function (uiVertex) {
-        return 'translate(' + uiVertex.x + ',' + uiVertex.y + ')';
-      });
-
       path.attr('d', d3.svg.symbol().type(this.type).size(200));
     }
 

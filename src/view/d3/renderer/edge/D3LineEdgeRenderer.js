@@ -3,8 +3,12 @@ var D3LineEdgeRenderer = (function () {
 
   return {
 
-    render: function (edge, element) {
-      var line = element.append('line');
+    init: function (edge, element) {
+      edge.uiElement = element.append('line');
+    },
+
+    updatePosition: function(edge) {
+      var line = edge.uiElement;
 
       line.attr('x1', function (uiEdge) {
         return uiEdge.inVertex.x;

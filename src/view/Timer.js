@@ -44,9 +44,10 @@ var Timer = (function () {
     var id;
     var start = function () {
       id = window.requestAnimationFrame(start);
-      if (!callback.apply(scope)) {
-        stop();
-      }
+      callback.apply(scope);
+//      if (!callback.apply(scope)) {
+//        stop();
+//      }
     };
 
     var stop = function () {
