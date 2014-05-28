@@ -28,6 +28,11 @@
             fill: none;
             pointer-events: all;
         }
+
+        .query-vertex-box {
+            fill: white;
+            stroke: #999;
+        }
     </style>
 </head>
 <body>
@@ -39,17 +44,39 @@
 <script type="text/javascript" src="../dist/planar.js"></script>
 
 <script type="text/javascript">
-    $(document).ready(function() {
+    $(document).ready(function () {
         var graph = new planar.Graph('#container', new planar.D3Engine());
 
         var v1 = graph.addVertex();
-        v1.setProperty(planar.PROP_TYPE, "circle");
+        v1.setProperty(planar.PROP_TYPE, "query-vertex");
+        v1.setProperty('alias', 'P1');
+
+        var v1Filters = [
+            {
+                propertyKey: 'age',
+                value: 22,
+                predicate: 'LESS_THAN'
+            }            ,
+            {
+                propertyKey: 'firstName',
+                value: 'peter',
+                predicate: 'EQUAL'
+            },
+            {
+                propertyKey: 'surname',
+                value: 'Smi',
+                predicate: 'CONTAINS'
+            }
+        ];
+        v1.setProperty('filters', v1Filters);
 
         var v2 = graph.addVertex();
-        v2.setProperty(planar.PROP_TYPE, "diamond");
+        v2.setProperty(planar.PROP_TYPE, "query-vertex");
+        v2.setProperty('alias', 'P2');
 
         var v3 = graph.addVertex();
-        v3.setProperty(planar.PROP_TYPE, "triangle-up");
+        v3.setProperty(planar.PROP_TYPE, "query-vertex");
+        v3.setProperty('alias', 'P3');
 
         graph.addEdge(null, v1, v2, "knows");
         graph.addEdge(null, v2, v3, "knows");
