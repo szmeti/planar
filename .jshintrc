@@ -34,6 +34,7 @@
     "VertexQuery": false,
     "GraphQuery": false,
     "Timer": false,
+    "BoundingBoxCalculator": false,
     "RandomLayout": false,
     "ForceDirectedLayout": false,
     "Engine": false,

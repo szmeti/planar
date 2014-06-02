@@ -18,6 +18,7 @@ planarFiles = {
     'src/query/VertexQuery.js',
     'src/query/GraphQuery.js',
     'src/view/Timer.js',
+    'src/view/BoundingBoxCalculator.js',
     'src/view/layout/RandomLayout.js',
     'src/view/layout/ForceDirectedLayout.js',
     'src/view/Engine.js',
