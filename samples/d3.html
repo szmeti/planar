@@ -6,6 +6,17 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF8">
 
     <style type="text/css">
+        body{
+            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+            font-size: 14px;
+            color: #666666;
+            text-shadow: 0 1px 0 #ffffff;
+        }
+
+        #container {
+            background-color: #eceaf3;
+        }
+
         .edge {
             stroke: #999;
             stroke-width: 2;
@@ -30,8 +41,10 @@
         }
 
         .query-vertex-box {
-            fill: white;
-            stroke: #999;
+            fill:url(#queryVertexDefaultFillScheme);
+            fill-opacity:1;
+            stroke: #d5d5d5;
+            stroke-width:1;
         }
     </style>
 </head>
@@ -56,7 +69,7 @@
                 propertyKey: 'age',
                 value: 22,
                 predicate: 'LESS_THAN'
-            }            ,
+            },
             {
                 propertyKey: 'firstName',
                 value: 'peter',
@@ -66,16 +79,100 @@
                 propertyKey: 'surname',
                 value: 'Smi',
                 predicate: 'CONTAINS'
+            },
+            {
+                propertyKey: 'surname',
+                referencedAlias: 'P3',
+                value: 'surname',
+                predicate: 'CONTAINS'
             }
         ];
-        v1.setProperty('filters', v1Filters);
+//        v1.setProperty('filters', v1Filters);
 
         var v2 = graph.addVertex();
+        var v2Filters = [
+            {
+                propertyKey: 'make',
+                value: 'Apple',
+                predicate: 'EQUAL'
+            },
+            {
+                propertyKey: 'model',
+                value: 'iPhone S5',
+                predicate: 'EQUAL'
+            },
+            {
+                propertyKey: 'price',
+                value: 199,
+                predicate: 'GREATER_THAN_EQUAL'
+            },
+            {
+                propertyKey: 'price2',
+                value: 199,
+                predicate: 'GREATER_THAN'
+            },
+            {
+                propertyKey: 'price3',
+                value: 199,
+                predicate: 'LESS_THAN_EQUAL'
+            },
+            {
+                propertyKey: 'price4',
+                value: 199,
+                predicate: 'LESS_THAN'
+            },
+            {
+                propertyKey: 'text',
+                value: 15,
+                predicate: 'IN'
+            },
+            {
+                propertyKey: 'text2',
+                value: 15,
+                predicate: 'NOT_IN'
+            },
+            {
+                propertyKey: 'color',
+                value: 'green',
+                predicate: 'CONTAINS'
+            },
+            {
+                propertyKey: 'color',
+                value: 'gre',
+                predicate: 'CONTAINS_PREFIX'
+            },
+            {
+                propertyKey: 'email',
+                value: '^[A-Z0-9._%+-]+@[A-Z0-9.-]+[A-Z]{2,4}$',
+                predicate: 'CONTAINS_REGEX'
+            },
+            {
+                propertyKey: 'email',
+                value: '^[A-Z0-9._%+-]+@[A-Z0-9.-]+[A-Z]{2,4}$',
+                predicate: 'REGEX'
+            },
+            {
+                propertyKey: 'email',
+                value: 'abc',
+                predicate: 'PREFIX'
+            }
+        ];
+
+        var v3Filters = [
+            {
+                propertyKey: 'surname',
+                value: 'John',
+                predicate: 'EQUAL'
+            }
+        ];
+
         v2.setProperty(planar.PROP_TYPE, "query-vertex");
+        v2.setProperty('filters', v2Filters);
         v2.setProperty('alias', 'P2');
 
         var v3 = graph.addVertex();
         v3.setProperty(planar.PROP_TYPE, "query-vertex");
+//        v3.setProperty('filters', v3Filters);
         v3.setProperty('alias', 'P3');
 
         graph.addEdge(null, v1, v2, "knows");

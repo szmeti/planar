@@ -25,6 +25,14 @@ var D3Engine = (function () {
         .attr('class', 'overlay')
         .attr('width', width)
         .attr('height', height);
+
+      var defs = svg.append('defs');
+
+      var d3Renderers = ElementRendererProvider.getAll('d3');
+
+      for (var name in d3Renderers){
+        d3Renderers[name].initDefs(defs);
+      }
     },
 
     beforeRender: function (vertices, edges) {
@@ -63,7 +71,8 @@ var D3Engine = (function () {
 
     element.each(function (uiElement) {
       var elementRenderer = ElementRendererProvider.getRenderer(uiElement[type], 'd3', type);
-      elementRenderer.init(uiElement, d3.select(this));
+      uiElement.g = d3.select(this);
+      elementRenderer.init(uiElement,  uiElement.g);
     });
 
     element.on('click', function (uiElement) {

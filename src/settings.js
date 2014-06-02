@@ -16,7 +16,7 @@ var settings = {
 
   d3: {
     defaultVertexRenderer: new D3SymbolVertexRenderer('circle'),
-    defaultEdgeRenderer: D3LineEdgeRenderer,
+    defaultEdgeRenderer: D3DirectedLineEdgeRenderer,
 
     vertexRenderers: {
       'circle': new D3SymbolVertexRenderer('circle'),
@@ -29,11 +29,11 @@ var settings = {
     },
 
     edgeRenderers: {
-      'line': D3LineEdgeRenderer
+      'line': D3DirectedLineEdgeRenderer
     }
   },
 
-  width: 640,
-  height: 480
+  width: 1280,
+  height: 768
 
 };

@@ -962,6 +962,11 @@
                 }
                 var svg = this.svg = d3.select(container).append("svg").attr("width", width).attr("height", height).append("g").call(d3.behavior.zoom().scaleExtent([ 1, 8 ]).on("zoom", zoom)).append("g");
                 svg.append("rect").attr("class", "overlay").attr("width", width).attr("height", height);
+                var defs = svg.append("defs");
+                var d3Renderers = ElementRendererProvider.getAll("d3");
+                for (var name in d3Renderers) {
+                    d3Renderers[name].initDefs(defs);
+                }
             },
             beforeRender: function(vertices, edges) {
                 var edgeSet = bindData(this.svg, "edge", edges);
@@ -990,7 +995,8 @@
             });
             element.each(function(uiElement) {'use strict';
                 var elementRenderer = ElementRendererProvider.getRenderer(uiElement[type], "d3", type);
-                elementRenderer.init(uiElement, d3.select(this));
+                uiElement.g = d3.select(this);
+                elementRenderer.init(uiElement, uiElement.g);
             });
             element.on("click", function(uiElement) {
                 var graph = uiElement[type].getGraph();
@@ -1031,11 +1037,84 @@
         }
         return D3Engine;
     }();
+    var D3DirectedLineEdgeRenderer = function() {
+        var Point = function(x, y) {
+            return {
+                x: x,
+                y: y
+            };
+        };
+        var Rect = function(x, y, w, h) {
+            return {
+                x: x,
+                y: y,
+                width: w,
+                height: h
+            };
+        };
+        var isLeftOf = function(pt1, pt2) {
+            return pt1.x < pt2.x;
+        };
+        var isAbove = function(pt1, pt2) {
+            return pt1.y < pt2.y;
+        };
+        var centerOf = function(rect) {
+            return new Point(rect.x + rect.width / 2, rect.y + rect.height / 2);
+        };
+        var gradient = function(pt1, pt2) {
+            return (pt2.y - pt1.y) / (pt2.x - pt1.x);
+        };
+        var aspectRatio = function(rect) {
+            return rect.height / rect.width;
+        };
+        var widthOf = function(element) {
+            return element.g[0][0].getBBox().width;
+        };
+        var heightOf = function(element) {
+            return element.g[0][0].getBBox().height;
+        };
+        var distanceOfPoints = function(p1, p2) {
+            return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+        };
+        var pointOnEdge = function(fromRect, toRect) {
+            var centerA = centerOf(fromRect), centerB = centerOf(toRect), gradA2B = gradient(centerA, centerB), aspectA = aspectRatio(fromRect), h05 = fromRect.width / 2, w05 = fromRect.height / 2, normA2B = Math.abs(gradA2B / aspectA), add = new Point((isLeftOf(centerA, centerB) ? 1 : -1) * h05, (isAbove(centerA, centerB) ? 1 : -1) * w05);
+            if (normA2B < 1) {
+                add.y *= normA2B;
+            } else {
+                add.x /= normA2B;
+            }
+            return new Point(centerA.x + add.x, centerA.y + add.y);
+        };
+        return {
+            init: function(edge, element) {
+                edge.uiElement = element.append("path").attr("class", "directed-edge arrow").attr("marker-end", "url(#arrow)").attr("style", "fill: none;stroke: #666;stroke-width: 1.5px;");
+            },
+            initDefs: function(defs) {
+                defs.append("marker").attr("id", "arrow").attr("viewBox", "0 -5 10 10").attr("refX", 15).attr("refY", -1.5).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto").append("path").attr("d", "M0,-5L10,0L0,5");
+            },
+            linkCurve: function(sourceX, sourceY, targetX, targetY) {
+                var dx = targetX - sourceX, dy = targetY - sourceY, dr = Math.sqrt(dx * dx + dy * dy);
+                return "M" + sourceX + "," + sourceY + "Q " + dr + " " + dy + " " + targetX + " " + targetY;
+            },
+            updatePosition: function(edge) {
+                var line = edge.uiElement, inWidth = widthOf(edge.inVertex), inHeight = heightOf(edge.inVertex), outWidth = widthOf(edge.outVertex), outHeight = heightOf(edge.outVertex);
+                var inVertexRect = new Rect(edge.inVertex.x - inWidth / 2, edge.inVertex.y - inHeight / 2, inWidth, inHeight);
+                var outVertexRect = new Rect(edge.outVertex.x - outWidth / 2, edge.outVertex.y - outHeight / 2, outWidth, outHeight);
+                var intersectionOnOutVertex = pointOnEdge(outVertexRect, inVertexRect);
+                var intersectionOnInVertex = pointOnEdge(inVertexRect, outVertexRect);
+                edge.inVertex.vertex.getEdges(OUT).forEach(function(vertexEdge) {'use strict';
+                    console.log(vertexEdge.id);
+                });
+                line.attr("d", "M" + intersectionOnOutVertex.x + "," + intersectionOnOutVertex.y + "L" + intersectionOnInVertex.x + " " + intersectionOnInVertex.y);
+            }
+        };
+    }();
     var D3LineEdgeRenderer = function() {
         return {
             init: function(edge, element) {
                 edge.uiElement = element.append("line");
             },
+            initDefs: function(defs) {},
             updatePosition: function(edge) {
                 var line = edge.uiElement;
                 line.attr("x1", function(uiEdge) {
@@ -1060,7 +1139,7 @@
                 var filters = vertex.getProperty("filters") || [];
                 var alias = vertex.getProperty("alias");
                 var lineHeight = 25;
-                var boxPadding = 20;
+                var boxPadding = 10;
                 var totalHeight = (1 + filters.length) * lineHeight;
                 var currentHeight = -totalHeight / 2 + lineHeight / 2;
                 var aliasText = element.append("text").attr("class", "alias-label").attr("text-anchor", "middle").attr("x", 0).attr("y", currentHeight).text(alias);
@@ -1068,10 +1147,70 @@
                 for (var i = 0; i < filters.length; i++) {
                     var filter = filters[i];
                     currentHeight += lineHeight;
-                    var filterText = element.append("text").attr("text-anchor", "middle").attr("x", 0).attr("y", currentHeight).text(filter.propertyKey);
+                    var propertyKey = D3QueryVertexRenderer.formatText(filter, alias, filter.propertyKey);
+                    var value = D3QueryVertexRenderer.formatText(filter, alias, filter.value);
+                    var text = D3QueryVertexRenderer.translateTextWithPredicate(filter.predicate, propertyKey, value);
+                    var filterText = element.append("text").attr("text-anchor", "middle").attr("x", 0).attr("y", currentHeight).text(text);
                     width = filterText[0][0].getBBox().width > width ? filterText[0][0].getBBox().width : width;
                 }
-                element.insert("rect", ".alias-label").attr("class", "query-vertex-box").attr("width", width + boxPadding * 2).attr("height", totalHeight + boxPadding * 2).attr("x", -width / 2 - boxPadding).attr("y", -totalHeight / 2 - boxPadding);
+                var linePadding = 5;
+                element.append("line").attr("x1", -(width + boxPadding * 2) / 2).attr("y1", -((totalHeight + boxPadding * 2) / 2 - lineHeight) + linePadding).attr("x2", (width + boxPadding * 2) / 2).attr("y2", -((totalHeight + boxPadding * 2) / 2 - lineHeight) + linePadding).attr("style", "stroke: #d5d5d5;");
+                element.insert("rect", ".alias-label").attr("class", "query-vertex-box").attr("rx", "4").attr("width", width + boxPadding * 2).attr("height", totalHeight + boxPadding * 2).attr("x", -width / 2 - boxPadding).attr("y", -totalHeight / 2 - boxPadding);
+            },
+            initDefs: function(defs) {
+                var whiteGradient = defs.append("linearGradient").attr("id", "White");
+                whiteGradient.append("stop").attr("id", "stop3225").attr("offset", "0").attr("style", "stop-color:#edebf4;stop-opacity:1");
+                whiteGradient.append("stop").attr("id", "stop3227").attr("offset", "1").attr("style", "stop-color:#f9f9f9;stop-opacity:1");
+                defs.append("linearGradient").attr("inkscape:collect", "always").attr("xlink:href", "#White").attr("id", "queryVertexDefaultFillScheme").attr("gradientUnits", "userSpaceOnUse").attr("gradientTransform", "translate(-348,22)").attr("x1", "445.06186").attr("y1", "109").attr("x2", "463").attr("y2", "45");
+            },
+            formatText: function(filter, alias, text) {
+                if (filter.hasOwnProperty("referencedAlias")) {
+                    return alias + "." + text;
+                } else {
+                    return text;
+                }
+            },
+            translateTextWithPredicate: function(predicate, propertyKey, value) {
+                switch (predicate) {
+                  case "LESS_THAN":
+                    return propertyKey + " < " + value;
+
+                  case "LESS_THAN_EQUAL":
+                    return propertyKey + " <= " + value;
+
+                  case "GREATER_THAN":
+                    return propertyKey + " > " + value;
+
+                  case "GREATER_THAN_EQUAL":
+                    return propertyKey + " >= " + value;
+
+                  case "CONTAINS":
+                    return "CONTAINS(" + propertyKey + "," + value + ")";
+
+                  case "CONTAINS_PREFIX":
+                    return "CONTAINS_PREFIX(" + propertyKey + "," + value + ")";
+
+                  case "CONTAINS_REGEX":
+                    return "CONTAINS_REGEX(" + propertyKey + "," + value + ")";
+
+                  case "PREFIX":
+                    return "PREFIX(" + propertyKey + "," + value + ")";
+
+                  case "REGEX":
+                    return "REGEX(" + propertyKey + "," + value + ")";
+
+                  case "EQUAL":
+                    return propertyKey + " = " + value;
+
+                  case "NOT_EQUAL":
+                    return propertyKey + decodeURI(" ≠ ") + value;
+
+                  case "IN":
+                    return propertyKey + decodeURI(" ∈ ") + value;
+
+                  case "NOT_IN":
+                    return propertyKey + decodeURI(" ∉ ") + value;
+                }
             }
         };
     }();
@@ -1084,7 +1223,8 @@
             init: function(vertex, element) {
                 var path = element.append("path");
                 path.attr("d", d3.svg.symbol().type(this.type).size(200));
-            }
+            },
+            initDefs: function(defs) {}
         });
         return D3SymbolVertexRenderer;
     }();
@@ -1130,6 +1270,13 @@
                     renderer = utils.get(settings, engine, type === "vertex" ? "defaultVertexRenderer" : "defaultEdgeRenderer");
                 }
                 return renderer;
+            },
+            getAll: function(engine) {
+                var renderers = {};
+                var engineSetting = utils.get(settings, engine);
+                utils.mixin(renderers, engineSetting.vertexRenderers);
+                utils.mixin(renderers, engineSetting.edgeRenderers);
+                return renderers;
             },
             getVertexRenderer: function(vertex, engine) {
                 return this.getRenderer(vertex, engine, "vertex");
@@ -1230,7 +1377,7 @@
         },
         d3: {
             defaultVertexRenderer: new D3SymbolVertexRenderer("circle"),
-            defaultEdgeRenderer: D3LineEdgeRenderer,
+            defaultEdgeRenderer: D3DirectedLineEdgeRenderer,
             vertexRenderers: {
                 circle: new D3SymbolVertexRenderer("circle"),
                 cross: new D3SymbolVertexRenderer("cross"),
@@ -1241,11 +1388,11 @@
                 "query-vertex": D3QueryVertexRenderer
             },
             edgeRenderers: {
-                line: D3LineEdgeRenderer
+                line: D3DirectedLineEdgeRenderer
             }
         },
-        width: 640,
-        height: 480
+        width: 1280,
+        height: 768
     };
     exports.settings = settings;
     exports.Edge = Edge;
@@ -1259,6 +1406,7 @@
     exports.D3Engine = D3Engine;
     exports.D3SymbolVertexRenderer = D3SymbolVertexRenderer;
     exports.D3LineEdgeRenderer = D3LineEdgeRenderer;
+    exports.D3DirectedLineEdgeRenderer = D3DirectedLineEdgeRenderer;
     exports.RaphaelEngine = RaphaelEngine;
     exports.RaphaelRectangleVertexRenderer = RaphaelRectangleVertexRenderer;
     exports.Renderer = Renderer;

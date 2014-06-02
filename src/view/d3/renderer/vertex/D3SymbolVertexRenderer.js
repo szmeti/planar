@@ -11,7 +11,9 @@ var D3SymbolVertexRenderer = (function () {
     init: function (vertex, element) {
       var path = element.append('path');
       path.attr('d', d3.svg.symbol().type(this.type).size(200));
-    }
+    },
+
+    initDefs: function (defs) {}
 
   });
 

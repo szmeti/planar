@@ -7,6 +7,8 @@ var D3LineEdgeRenderer = (function () {
       edge.uiElement = element.append('line');
     },
 
+    initDefs: function (defs) {},
+
     updatePosition: function(edge) {
       var line = edge.uiElement;
 

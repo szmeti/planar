@@ -18,6 +18,15 @@ var ElementRendererProvider = (function () {
       return renderer;
     },
 
+    getAll: function(engine) {
+      var renderers = {};
+      var engineSetting = utils.get(settings, engine);
+      utils.mixin(renderers, engineSetting.vertexRenderers);
+      utils.mixin(renderers, engineSetting.edgeRenderers);
+
+      return renderers;
+    },
+
     getVertexRenderer: function (vertex, engine) {
       return this.getRenderer(vertex, engine, 'vertex');
     },

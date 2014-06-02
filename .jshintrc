@@ -39,6 +39,7 @@
     "Engine": false,
     "D3Engine": false,
     "D3LineEdgeRenderer": false,
+    "D3DirectedLineEdgeRenderer": false,
     "D3SymbolVertexRenderer": false,
     "D3QueryVertexRenderer": false,
     "RaphaelEngine": false,
