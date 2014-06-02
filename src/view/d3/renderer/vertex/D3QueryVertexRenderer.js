@@ -7,12 +7,12 @@ var D3QueryVertexRenderer = (function () {
       var vertex = uiVertex.vertex;
       var filters = vertex.getProperty('filters') || [];
       var alias = vertex.getProperty('alias');
-      var boundingBoxCalculator = new BoundingBoxCalculator();
 
       var lineHeight = 25;
       var boxPadding = 10;
-      var totalHeight = (1 + filters.length) * lineHeight;
-      var currentHeight = -totalHeight / 2 + lineHeight / 2;
+      var numberOfLines = 1 + filters.length;
+      var currentHeight = -(numberOfLines * lineHeight) / 2 + lineHeight / 2;
+      var boundingBoxCalculator = new BoundingBoxCalculator(boxPadding, lineHeight, numberOfLines);
 
       var aliasText = element.append('text').
         attr('class', 'alias-label').
@@ -27,8 +27,8 @@ var D3QueryVertexRenderer = (function () {
         var filter = filters[i];
         currentHeight += lineHeight;
 
-        var propertyKey = D3QueryVertexRenderer.formatText(filter,alias, filter.propertyKey);
-        var value = D3QueryVertexRenderer.formatText(filter,alias, filter.value);
+        var propertyKey = D3QueryVertexRenderer.formatText(filter, alias, filter.propertyKey);
+        var value = D3QueryVertexRenderer.formatText(filter, alias, filter.value);
         var text = D3QueryVertexRenderer.translateTextWithPredicate(filter.predicate, propertyKey, value);
 
         var filterText = element.
@@ -42,36 +42,39 @@ var D3QueryVertexRenderer = (function () {
       }
 
       var linePadding = 5;
+      var leftEdge = boundingBoxCalculator.leftEdge();
+      var totalHeight = (boundingBoxCalculator.totalHeight());
+      var dividerY = -(totalHeight / 2 - lineHeight) + linePadding;
 
       element.append('line')
-        .attr('x1', -(boundingBoxCalculator.getWidth() + boxPadding * 2) / 2)
-        .attr('y1', -((totalHeight + boxPadding * 2) / 2 - lineHeight) + linePadding)
-        .attr('x2', (boundingBoxCalculator.getWidth() + boxPadding * 2) / 2)
-        .attr('y2', -((totalHeight + boxPadding * 2) / 2 - lineHeight) + linePadding)
+        .attr('x1', leftEdge)
+        .attr('y1', dividerY)
+        .attr('x2', boundingBoxCalculator.rightEdge())
+        .attr('y2', dividerY)
         .attr('style', 'stroke: #d5d5d5;');
 
       element.
         insert('rect', '.alias-label').
         attr('class', 'query-vertex-box').
         attr('rx', '4').
-        attr('width', boundingBoxCalculator.getWidth() + boxPadding * 2).
-        attr('height', totalHeight + boxPadding * 2).
-        attr('x', -boundingBoxCalculator.getWidth() / 2 - boxPadding).
-        attr('y', -totalHeight / 2 - boxPadding);
+        attr('width', boundingBoxCalculator.totalWidth()).
+        attr('height', totalHeight).
+        attr('x', leftEdge).
+        attr('y', boundingBoxCalculator.topEdge());
     },
 
     initDefs: function (defs) {
       var whiteGradient = defs.append('linearGradient').attr('id', 'White');
 
       whiteGradient.append('stop')
-          .attr('id','stop3225')
-          .attr('offset','0')
-          .attr('style','stop-color:#edebf4;stop-opacity:1');
+        .attr('id', 'stop3225')
+        .attr('offset', '0')
+        .attr('style', 'stop-color:#edebf4;stop-opacity:1');
 
       whiteGradient.append('stop')
-          .attr('id','stop3227')
-          .attr('offset','1')
-          .attr('style','stop-color:#f9f9f9;stop-opacity:1');
+        .attr('id', 'stop3227')
+        .attr('offset', '1')
+        .attr('style', 'stop-color:#f9f9f9;stop-opacity:1');
 
       defs.append('linearGradient')
         .attr('inkscape:collect', 'always')
@@ -85,16 +88,16 @@ var D3QueryVertexRenderer = (function () {
         .attr('y2', '45');
     },
 
-    formatText: function(filter, alias, text) {
-      if(filter.hasOwnProperty('referencedAlias')) {
+    formatText: function (filter, alias, text) {
+      if (filter.hasOwnProperty('referencedAlias')) {
         return alias + '.' + text;
       } else {
         return text;
       }
     },
 
-    translateTextWithPredicate: function(predicate, propertyKey, value) {
-      switch(predicate) {
+    translateTextWithPredicate: function (predicate, propertyKey, value) {
+      switch (predicate) {
       case 'LESS_THAN' :
         return propertyKey + ' < ' + value;
       case 'LESS_THAN_EQUAL' :
@@ -104,15 +107,15 @@ var D3QueryVertexRenderer = (function () {
       case 'GREATER_THAN_EQUAL' :
         return propertyKey + ' >= ' + value;
       case 'CONTAINS' :
-        return 'CONTAINS('+ propertyKey + ',' + value + ')';
+        return 'CONTAINS(' + propertyKey + ',' + value + ')';
       case 'CONTAINS_PREFIX' :
-        return 'CONTAINS_PREFIX('+ propertyKey + ',' + value + ')';
+        return 'CONTAINS_PREFIX(' + propertyKey + ',' + value + ')';
       case 'CONTAINS_REGEX' :
-        return 'CONTAINS_REGEX('+ propertyKey + ',' + value + ')';
+        return 'CONTAINS_REGEX(' + propertyKey + ',' + value + ')';
       case 'PREFIX' :
-        return 'PREFIX('+ propertyKey + ',' + value + ')';
+        return 'PREFIX(' + propertyKey + ',' + value + ')';
       case 'REGEX' :
-        return 'REGEX('+ propertyKey + ',' + value + ')';
+        return 'REGEX(' + propertyKey + ',' + value + ')';
       case 'EQUAL' :
         return propertyKey + ' = ' + value;
       case 'NOT_EQUAL' :
@@ -122,7 +125,6 @@ var D3QueryVertexRenderer = (function () {
       case 'NOT_IN' :
         return propertyKey + decodeURI(' \u2209 ') + value;
       }
-
     }
 
   };

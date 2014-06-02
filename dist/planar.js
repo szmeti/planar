@@ -911,16 +911,35 @@
         return Timer;
     }();
     var BoundingBoxCalculator = function() {
-        function BoundingBoxCalculator() {
+        function BoundingBoxCalculator(padding, lineHeight, numberOfLines) {
             this.width = 0;
+            this.padding = padding || 0;
+            this.lineHeight = lineHeight || 0;
+            this.numberLines = numberOfLines || 0;
+            this.heightWithPadding = lineHeight * numberOfLines + 2 * padding;
         }
         utils.mixin(BoundingBoxCalculator.prototype, {
             addElement: function(element) {
                 var elementWidth = element.getBBox().width;
                 this.width = elementWidth > this.width ? elementWidth : this.width;
             },
-            getWidth: function() {
-                return this.width;
+            leftEdge: function() {
+                return -this.totalWidth() / 2;
+            },
+            rightEdge: function() {
+                return this.totalWidth() / 2;
+            },
+            topEdge: function() {
+                return -this.heightWithPadding / 2;
+            },
+            bottomEdge: function() {
+                return this.heightWithPadding / 2;
+            },
+            totalWidth: function() {
+                return this.width + this.padding * 2;
+            },
+            totalHeight: function() {
+                return this.heightWithPadding;
             }
         });
         return BoundingBoxCalculator;
@@ -1153,11 +1172,11 @@
                 var vertex = uiVertex.vertex;
                 var filters = vertex.getProperty("filters") || [];
                 var alias = vertex.getProperty("alias");
-                var boundingBoxCalculator = new BoundingBoxCalculator();
                 var lineHeight = 25;
                 var boxPadding = 10;
-                var totalHeight = (1 + filters.length) * lineHeight;
-                var currentHeight = -totalHeight / 2 + lineHeight / 2;
+                var numberOfLines = 1 + filters.length;
+                var currentHeight = -(numberOfLines * lineHeight) / 2 + lineHeight / 2;
+                var boundingBoxCalculator = new BoundingBoxCalculator(boxPadding, lineHeight, numberOfLines);
                 var aliasText = element.append("text").attr("class", "alias-label").attr("text-anchor", "middle").attr("x", 0).attr("y", currentHeight).text(alias);
                 boundingBoxCalculator.addElement(aliasText[0][0]);
                 for (var i = 0; i < filters.length; i++) {
@@ -1170,8 +1189,11 @@
                     boundingBoxCalculator.addElement(filterText[0][0]);
                 }
                 var linePadding = 5;
-                element.append("line").attr("x1", -(boundingBoxCalculator.getWidth() + boxPadding * 2) / 2).attr("y1", -((totalHeight + boxPadding * 2) / 2 - lineHeight) + linePadding).attr("x2", (boundingBoxCalculator.getWidth() + boxPadding * 2) / 2).attr("y2", -((totalHeight + boxPadding * 2) / 2 - lineHeight) + linePadding).attr("style", "stroke: #d5d5d5;");
-                element.insert("rect", ".alias-label").attr("class", "query-vertex-box").attr("rx", "4").attr("width", boundingBoxCalculator.getWidth() + boxPadding * 2).attr("height", totalHeight + boxPadding * 2).attr("x", -boundingBoxCalculator.getWidth() / 2 - boxPadding).attr("y", -totalHeight / 2 - boxPadding);
+                var leftEdge = boundingBoxCalculator.leftEdge();
+                var totalHeight = boundingBoxCalculator.totalHeight();
+                var dividerY = -(totalHeight / 2 - lineHeight) + linePadding;
+                element.append("line").attr("x1", leftEdge).attr("y1", dividerY).attr("x2", boundingBoxCalculator.rightEdge()).attr("y2", dividerY).attr("style", "stroke: #d5d5d5;");
+                element.insert("rect", ".alias-label").attr("class", "query-vertex-box").attr("rx", "4").attr("width", boundingBoxCalculator.totalWidth()).attr("height", totalHeight).attr("x", leftEdge).attr("y", boundingBoxCalculator.topEdge());
             },
             initDefs: function(defs) {
                 var whiteGradient = defs.append("linearGradient").attr("id", "White");
