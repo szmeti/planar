@@ -1192,14 +1192,13 @@
                 var leftEdge = boundingBoxCalculator.leftEdge();
                 var totalHeight = boundingBoxCalculator.totalHeight();
                 var dividerY = -(totalHeight / 2 - lineHeight) + linePadding;
-                element.append("line").attr("x1", leftEdge).attr("y1", dividerY).attr("x2", boundingBoxCalculator.rightEdge()).attr("y2", dividerY).attr("style", "stroke: #d5d5d5;");
+                element.append("line").attr("class", "divider").attr("x1", leftEdge).attr("y1", dividerY).attr("x2", boundingBoxCalculator.rightEdge()).attr("y2", dividerY);
                 element.insert("rect", ".alias-label").attr("class", "query-vertex-box").attr("rx", "4").attr("width", boundingBoxCalculator.totalWidth()).attr("height", totalHeight).attr("x", leftEdge).attr("y", boundingBoxCalculator.topEdge());
             },
             initDefs: function(defs) {
-                var whiteGradient = defs.append("linearGradient").attr("id", "White");
-                whiteGradient.append("stop").attr("id", "stop3225").attr("offset", "0").attr("style", "stop-color:#edebf4;stop-opacity:1");
-                whiteGradient.append("stop").attr("id", "stop3227").attr("offset", "1").attr("style", "stop-color:#f9f9f9;stop-opacity:1");
-                defs.append("linearGradient").attr("inkscape:collect", "always").attr("xlink:href", "#White").attr("id", "queryVertexDefaultFillScheme").attr("gradientUnits", "userSpaceOnUse").attr("gradientTransform", "translate(-348,22)").attr("x1", "445.06186").attr("y1", "109").attr("x2", "463").attr("y2", "45");
+                var whiteGradient = defs.append("linearGradient").attr("id", "queryVertexDefaultFillScheme").attr("x1", "0%").attr("y1", "0%").attr("x2", "0%").attr("y2", "100%");
+                whiteGradient.append("stop").attr("offset", "0%").attr("style", "stop-color:#f9f9f9;stop-opacity:1");
+                whiteGradient.append("stop").attr("offset", "100%").attr("style", "stop-color:#edebf4;stop-opacity:1");
             },
             formatText: function(filter, alias, text) {
                 if (filter.hasOwnProperty("referencedAlias")) {
