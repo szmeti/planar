@@ -487,4 +487,327 @@ describe('Graph', function () {
     expect(createdVertexIds.length).toBe(3);
   });
 
+  it('should filter vertex properties', function () {
+    var graph = new Graph();
+
+    var v1 = graph.addVertex();
+    v1.setProperty('name', 'marko');
+    v1.setProperty('location', 'everywhere');
+    v1.setProperty('firstName', 'john');
+    var v2 = graph.addVertex();
+    v2.setProperty('name', 'stephen');
+    v2.setProperty('location', 'everywhere');
+    v2.setProperty('firstName', 'james');
+
+    expect(v1.getPropertyKeys()).toEqual(['name', 'location', 'firstName']);
+    expect(v1.getPropertyKeysUnfiltered()).toEqual(['name', 'location', 'firstName']);
+    expect(v2.getPropertyKeys()).toEqual(['name', 'location', 'firstName']);
+    expect(v2.getPropertyKeysUnfiltered()).toEqual(['name', 'location', 'firstName']);
+
+    graph.addVertexPropertyFilter('allVisible', {
+      isVisible: function () {
+        return true;
+      }
+    });
+
+    expect(graph.getVertices('location', 'everywhere').length).toBe(2);
+    expect(graph.getVertices('name', 'marko').length).toBe(1);
+    expect(graph.getVertices('name', 'stephen').length).toBe(1);
+    expect(graph.getVertices('name', 'marko')).toContain(v1);
+    expect(graph.getVertices('name', 'stephen')).toContain(v2);
+    expect(v1.getProperty('name')).toBe('marko');
+    expect(v1.getPropertyUnfiltered('name')).toBe('marko');
+    expect(v1.getProperty('location')).toBe('everywhere');
+    expect(v1.getPropertyUnfiltered('location')).toBe('everywhere');
+    expect(v2.getProperty('name')).toBe('stephen');
+    expect(v2.getProperty('location')).toBe('everywhere');
+    expect(v1.getPropertyKeys()).toEqual(['name', 'location', 'firstName']);
+    expect(v2.getPropertyKeys()).toEqual(['name', 'location', 'firstName']);
+
+    var namePredicate = {
+      isVisible: function (vertex, propertyKey) {
+        return propertyKey !== 'name';
+      }
+    };
+    graph.addVertexPropertyFilter('namePredicate', namePredicate);
+
+    expect(graph.getVertices('location', 'everywhere').length).toBe(2);
+    expect(graph.getVertices('name', 'marko').length).toBe(0);
+    expect(graph.getVertices('name', 'marko', ['namePredicate']).length).toBe(1);
+    expect(graph.getVertices('name', 'stephen').length).toBe(0);
+    expect(graph.getVertices('name', 'stephen', ['namePredicate']).length).toBe(1);
+    expect(v1.getProperty('name')).toBeNull();
+    expect(v2.getProperty('name')).toBeNull();
+    expect(v1.getProperty('name', 'namePredicate')).toBe('marko');
+    expect(v1.getPropertyUnfiltered('name')).toBe('marko');
+    expect(v1.getProperty('name', ['namePredicate'])).toBe('marko');
+    expect(v2.getProperty('name', 'namePredicate')).toBe('stephen');
+    expect(v1.getProperty('location')).toBe('everywhere');
+    expect(v2.getProperty('location')).toBe('everywhere');
+    expect(v1.getPropertyKeys()).toEqual(['location', 'firstName']);
+    expect(v1.getPropertyKeys('namePredicate')).toEqual(['name', 'location', 'firstName']);
+    expect(v1.getPropertyKeys(['namePredicate'])).toEqual(['name', 'location', 'firstName']);
+    expect(v2.getPropertyKeys()).toEqual(['location', 'firstName']);
+    expect(v2.getPropertyKeys('namePredicate')).toEqual(['name', 'location', 'firstName']);
+
+    var locationPredicate = {
+      isVisible: function (vertex, propertyKey) {
+        return propertyKey !== 'location';
+      }
+    };
+    graph.addVertexPropertyFilter('locationPredicate', locationPredicate);
+
+    expect(graph.getVertices('location', 'everywhere').length).toBe(0);
+    expect(graph.getVertices('location', 'everywhere', ['namePredicate']).length).toBe(0);
+    expect(graph.getVertices('location', 'everywhere', ['locationPredicate']).length).toBe(2);
+    expect(graph.getVertices('location', 'everywhere', ['locationPredicate', 'namePredicate']).length).toBe(2);
+    expect(graph.getVertices('name', 'marko').length).toBe(0);
+    expect(graph.getVertices('name', 'marko', ['namePredicate']).length).toBe(1);
+    expect(graph.getVertices('name', 'marko', ['namePredicate', 'locationPredicate']).length).toBe(1);
+    expect(graph.getVertices('name', 'stephen').length).toBe(0);
+    expect(graph.getVertices('name', 'stephen', ['namePredicate']).length).toBe(1);
+    expect(graph.getVertices('name', 'stephen', ['namePredicate', 'locationPredicate']).length).toBe(1);
+    expect(v1.getProperty('name')).toBeNull();
+    expect(v2.getProperty('name')).toBeNull();
+    expect(v1.getProperty('name', 'namePredicate')).toBe('marko');
+    expect(v2.getProperty('name', 'namePredicate')).toBe('stephen');
+    expect(v1.getProperty('name', 'namePredicate', 'locationPredicate')).toBe('marko');
+    expect(v2.getProperty('name', 'namePredicate', 'locationPredicate')).toBe('stephen');
+    expect(v1.getProperty('name', ['namePredicate', 'locationPredicate'])).toBe('marko');
+    expect(v2.getProperty('name', ['namePredicate', 'locationPredicate'])).toBe('stephen');
+    expect(v2.getPropertyUnfiltered('name')).toBe('stephen');
+    expect(v1.getProperty('location')).toBeNull();
+    expect(v2.getProperty('location')).toBeNull();
+    expect(v1.getProperty('location', 'namePredicate')).toBeNull();
+    expect(v2.getProperty('location', 'namePredicate')).toBeNull();
+    expect(v1.getProperty('location', 'locationPredicate')).toBe('everywhere');
+    expect(v2.getProperty('location', 'locationPredicate')).toBe('everywhere');
+    expect(v1.getProperty('location', 'namePredicate', 'locationPredicate')).toBe('everywhere');
+    expect(v2.getProperty('location', 'namePredicate', 'locationPredicate')).toBe('everywhere');
+    expect(v1.getProperty('location', ['namePredicate', 'locationPredicate'])).toBe('everywhere');
+    expect(v2.getProperty('location', ['namePredicate', 'locationPredicate'])).toBe('everywhere');
+    expect(v1.getPropertyKeys()).toEqual(['firstName']);
+    expect(v2.getPropertyKeys()).toEqual(['firstName']);
+    expect(v1.getPropertyKeys('namePredicate')).toEqual(['name', 'firstName']);
+    expect(v2.getPropertyKeys('namePredicate')).toEqual(['name', 'firstName']);
+    expect(v1.getPropertyKeys('locationPredicate')).toEqual(['location', 'firstName']);
+    expect(v2.getPropertyKeys('locationPredicate')).toEqual(['location', 'firstName']);
+    expect(v1.getPropertyKeys('namePredicate', 'locationPredicate')).toEqual(['name', 'location', 'firstName']);
+    expect(v2.getPropertyKeys('namePredicate', 'locationPredicate')).toEqual(['name', 'location', 'firstName']);
+    expect(v1.getPropertyKeys(['namePredicate', 'locationPredicate'])).toEqual(['name', 'location', 'firstName']);
+    expect(v2.getPropertyKeys(['namePredicate', 'locationPredicate'])).toEqual(['name', 'location', 'firstName']);
+
+    v1.setProperty('name', 'newName');
+    v1.setProperty('name', 'newName', 'locationPredicate');
+    v1.setProperty('name', 'newName', ['locationPredicate']);
+    v2.setProperty('name', 'newName2', 'namePredicate');
+
+    v1.setPropertyUnfiltered('name', 'newName');
+    expect(v1.getPropertyUnfiltered('name')).toBe('newName');
+    v1.setPropertyUnfiltered('name', 'marko');
+
+    v1.removeProperty('location', 'locationPredicate');
+    v2.removeProperty('location');
+    v2.removeProperty('location', 'namePredicate');
+    v2.removeProperty('location', ['namePredicate']);
+    v2.removePropertyUnfiltered('location');
+    expect(v2.getPropertyUnfiltered('location')).toBeNull();
+    v2.setPropertyUnfiltered('location', 'everywhere');
+
+    expect(v1.getProperty('name')).toBeNull();
+    expect(v1.getProperty('name', 'namePredicate')).toBe('marko');
+    expect(v2.getProperty('name')).toBeNull();
+    expect(v2.getProperty('name', 'namePredicate')).toBe('newName2');
+    expect(v1.getProperty('location')).toBeNull();
+    expect(v1.getProperty('location', 'locationPredicate')).toBeNull();
+    expect(v2.getProperty('location')).toBeNull();
+    expect(v2.getProperty('location', 'locationPredicate')).toBe('everywhere');
+
+    graph.removeVertexPropertyFilter('locationPredicate');
+
+    expect(graph.getVertices('location', 'everywhere').length).toBe(1);
+    expect(graph.getVertices('name', 'marko').length).toBe(0);
+    expect(graph.getVertices('name', 'newName2').length).toBe(0);
+    expect(v1.getProperty('name')).toBeNull();
+    expect(v2.getProperty('name')).toBeNull();
+    expect(v2.getProperty('name', ['namePredicate'])).toBe('newName2');
+    expect(v1.getProperty('location')).toBeNull();
+    expect(v2.getProperty('location')).toBe('everywhere');
+    expect(v1.getPropertyKeys()).toEqual(['firstName']);
+    expect(v2.getPropertyKeys()).toEqual(['firstName', 'location']);
+    expect(v1.getPropertyKeys('namePredicate')).toEqual(['name', 'firstName']);
+    expect(v2.getPropertyKeys('namePredicate')).toEqual(['name', 'firstName', 'location']);
+
+    graph.removeAllVertexPropertyFilters();
+
+    expect(graph.getVertices('location', 'everywhere').length).toBe(1);
+    expect(graph.getVertices('name', 'marko').length).toBe(1);
+    expect(graph.getVertices('name', 'newName2').length).toBe(1);
+    expect(v1.getProperty('name')).toBe('marko');
+    expect(v1.getProperty('name', 'namePredicate')).toBe('marko');
+    expect(v2.getProperty('name')).toBe('newName2');
+    expect(v2.getProperty('name', 'namePredicate')).toBe('newName2');
+    expect(v1.getProperty('location')).toBeNull();
+    expect(v2.getProperty('location')).toBe('everywhere');
+    expect(v1.getPropertyKeys()).toEqual(['name', 'firstName']);
+    expect(v1.getPropertyKeys()).toEqual(['name', 'firstName']);
+    expect(v2.getPropertyKeys()).toEqual(['name', 'firstName', 'location']);
+  });
+
+  it('should filter edge properties', function () {
+    var graph = new Graph();
+
+    var v1 = graph.addVertex();
+    var v2 = graph.addVertex();
+
+    var edge1 = graph.addEdge(null, v1, v2, 'knows');
+    edge1.setProperty('name', 'marko');
+    edge1.setProperty('location', 'everywhere');
+    edge1.setProperty('firstName', 'john');
+    var edge2 = graph.addEdge(null, v2, v1, 'knows');
+    edge2.setProperty('name', 'stephen');
+    edge2.setProperty('location', 'everywhere');
+    edge2.setProperty('firstName', 'james');
+
+    expect(edge1.getPropertyKeys()).toEqual(['name', 'location', 'firstName']);
+    expect(edge2.getPropertyKeys()).toEqual(['name', 'location', 'firstName']);
+
+    graph.addEdgePropertyFilter('allVisible', {
+      isVisible: function () {
+        return true;
+      }
+    });
+
+    expect(graph.getEdges('location', 'everywhere').length).toBe(2);
+    expect(graph.getEdges('name', 'marko').length).toBe(1);
+    expect(graph.getEdges('name', 'stephen').length).toBe(1);
+    expect(graph.getEdges('name', 'marko')).toContain(edge1);
+    expect(graph.getEdges('name', 'stephen')).toContain(edge2);
+    expect(edge1.getProperty('name')).toBe('marko');
+    expect(edge1.getProperty('location')).toBe('everywhere');
+    expect(edge2.getProperty('name')).toBe('stephen');
+    expect(edge2.getProperty('location')).toBe('everywhere');
+    expect(edge1.getPropertyKeys()).toEqual(['name', 'location', 'firstName']);
+    expect(edge2.getPropertyKeys()).toEqual(['name', 'location', 'firstName']);
+
+    var namePredicate = {
+      isVisible: function (vertex, propertyKey) {
+        return propertyKey !== 'name';
+      }
+    };
+    graph.addEdgePropertyFilter('namePredicate', namePredicate);
+
+    expect(graph.getEdges('location', 'everywhere').length).toBe(2);
+    expect(graph.getEdges('name', 'marko').length).toBe(0);
+    expect(graph.getEdges('name', 'marko', ['namePredicate']).length).toBe(1);
+    expect(graph.getEdges('name', 'stephen').length).toBe(0);
+    expect(graph.getEdges('name', 'stephen', ['namePredicate']).length).toBe(1);
+    expect(edge1.getProperty('name')).toBeNull();
+    expect(edge2.getProperty('name')).toBeNull();
+    expect(edge1.getProperty('name', 'namePredicate')).toBe('marko');
+    expect(edge1.getProperty('name', ['namePredicate'])).toBe('marko');
+    expect(edge2.getProperty('name', 'namePredicate')).toBe('stephen');
+    expect(edge1.getProperty('location')).toBe('everywhere');
+    expect(edge2.getProperty('location')).toBe('everywhere');
+    expect(edge1.getPropertyKeys()).toEqual(['location', 'firstName']);
+    expect(edge1.getPropertyKeys('namePredicate')).toEqual(['name', 'location', 'firstName']);
+    expect(edge1.getPropertyKeys(['namePredicate'])).toEqual(['name', 'location', 'firstName']);
+    expect(edge2.getPropertyKeys()).toEqual(['location', 'firstName']);
+    expect(edge2.getPropertyKeys('namePredicate')).toEqual(['name', 'location', 'firstName']);
+
+    var locationPredicate = {
+      isVisible: function (vertex, propertyKey) {
+        return propertyKey !== 'location';
+      }
+    };
+    graph.addEdgePropertyFilter('locationPredicate', locationPredicate);
+
+    expect(graph.getEdges('location', 'everywhere').length).toBe(0);
+    expect(graph.getEdges('location', 'everywhere', ['namePredicate']).length).toBe(0);
+    expect(graph.getEdges('location', 'everywhere', ['locationPredicate']).length).toBe(2);
+    expect(graph.getEdges('location', 'everywhere', ['locationPredicate', 'namePredicate']).length).toBe(2);
+    expect(graph.getEdges('name', 'marko').length).toBe(0);
+    expect(graph.getEdges('name', 'marko', ['namePredicate']).length).toBe(1);
+    expect(graph.getEdges('name', 'marko', ['namePredicate', 'locationPredicate']).length).toBe(1);
+    expect(graph.getEdges('name', 'stephen').length).toBe(0);
+    expect(graph.getEdges('name', 'stephen', ['namePredicate']).length).toBe(1);
+    expect(graph.getEdges('name', 'stephen', ['namePredicate', 'locationPredicate']).length).toBe(1);
+    expect(edge1.getProperty('name')).toBeNull();
+    expect(edge2.getProperty('name')).toBeNull();
+    expect(edge1.getProperty('name', 'namePredicate')).toBe('marko');
+    expect(edge2.getProperty('name', 'namePredicate')).toBe('stephen');
+    expect(edge1.getProperty('name', 'namePredicate', 'locationPredicate')).toBe('marko');
+    expect(edge2.getProperty('name', 'namePredicate', 'locationPredicate')).toBe('stephen');
+    expect(edge1.getProperty('name', ['namePredicate', 'locationPredicate'])).toBe('marko');
+    expect(edge2.getProperty('name', ['namePredicate', 'locationPredicate'])).toBe('stephen');
+    expect(edge1.getProperty('location')).toBeNull();
+    expect(edge2.getProperty('location')).toBeNull();
+    expect(edge1.getProperty('location', 'namePredicate')).toBeNull();
+    expect(edge2.getProperty('location', 'namePredicate')).toBeNull();
+    expect(edge1.getProperty('location', 'locationPredicate')).toBe('everywhere');
+    expect(edge2.getProperty('location', 'locationPredicate')).toBe('everywhere');
+    expect(edge1.getProperty('location', 'namePredicate', 'locationPredicate')).toBe('everywhere');
+    expect(edge2.getProperty('location', 'namePredicate', 'locationPredicate')).toBe('everywhere');
+    expect(edge1.getProperty('location', ['namePredicate', 'locationPredicate'])).toBe('everywhere');
+    expect(edge2.getProperty('location', ['namePredicate', 'locationPredicate'])).toBe('everywhere');
+    expect(edge1.getPropertyKeys()).toEqual(['firstName']);
+    expect(edge2.getPropertyKeys()).toEqual(['firstName']);
+    expect(edge1.getPropertyKeys('namePredicate')).toEqual(['name', 'firstName']);
+    expect(edge2.getPropertyKeys('namePredicate')).toEqual(['name', 'firstName']);
+    expect(edge1.getPropertyKeys('locationPredicate')).toEqual(['location', 'firstName']);
+    expect(edge2.getPropertyKeys('locationPredicate')).toEqual(['location', 'firstName']);
+    expect(edge1.getPropertyKeys('namePredicate', 'locationPredicate')).toEqual(['name', 'location', 'firstName']);
+    expect(edge2.getPropertyKeys('namePredicate', 'locationPredicate')).toEqual(['name', 'location', 'firstName']);
+    expect(edge1.getPropertyKeys(['namePredicate', 'locationPredicate'])).toEqual(['name', 'location', 'firstName']);
+    expect(edge2.getPropertyKeys(['namePredicate', 'locationPredicate'])).toEqual(['name', 'location', 'firstName']);
+
+    edge1.setProperty('name', 'newName');
+    edge1.setProperty('name', 'newName', 'locationPredicate');
+    edge1.setProperty('name', 'newName', ['locationPredicate']);
+    edge2.setProperty('name', 'newName2', 'namePredicate');
+    edge1.removeProperty('location', 'locationPredicate');
+    edge2.removeProperty('location');
+    edge2.removeProperty('location', 'namePredicate');
+    edge2.removeProperty('location', ['namePredicate']);
+
+    expect(edge1.getProperty('name')).toBeNull();
+    expect(edge1.getProperty('name', 'namePredicate')).toBe('marko');
+    expect(edge2.getProperty('name')).toBeNull();
+    expect(edge2.getProperty('name', 'namePredicate')).toBe('newName2');
+    expect(edge1.getProperty('location')).toBeNull();
+    expect(edge1.getProperty('location', 'locationPredicate')).toBeNull();
+    expect(edge2.getProperty('location')).toBeNull();
+    expect(edge2.getProperty('location', 'locationPredicate')).toBe('everywhere');
+
+    graph.removeEdgePropertyFilter('locationPredicate');
+
+    expect(graph.getEdges('location', 'everywhere').length).toBe(1);
+    expect(graph.getEdges('name', 'marko').length).toBe(0);
+    expect(graph.getEdges('name', 'newName2').length).toBe(0);
+    expect(edge1.getProperty('name')).toBeNull();
+    expect(edge2.getProperty('name')).toBeNull();
+    expect(edge2.getProperty('name', ['namePredicate'])).toBe('newName2');
+    expect(edge1.getProperty('location')).toBeNull();
+    expect(edge2.getProperty('location')).toBe('everywhere');
+    expect(edge1.getPropertyKeys()).toEqual(['firstName']);
+    expect(edge2.getPropertyKeys()).toEqual(['location', 'firstName']);
+    expect(edge1.getPropertyKeys('namePredicate')).toEqual(['name', 'firstName']);
+    expect(edge2.getPropertyKeys('namePredicate')).toEqual(['name', 'location', 'firstName']);
+
+    graph.removeAllEdgePropertyFilters();
+
+    expect(graph.getEdges('location', 'everywhere').length).toBe(1);
+    expect(graph.getEdges('name', 'marko').length).toBe(1);
+    expect(graph.getEdges('name', 'newName2').length).toBe(1);
+    expect(edge1.getProperty('name')).toBe('marko');
+    expect(edge1.getProperty('name', 'namePredicate')).toBe('marko');
+    expect(edge2.getProperty('name')).toBe('newName2');
+    expect(edge2.getProperty('name', 'namePredicate')).toBe('newName2');
+    expect(edge1.getProperty('location')).toBeNull();
+    expect(edge2.getProperty('location')).toBe('everywhere');
+    expect(edge1.getPropertyKeys()).toEqual(['name', 'firstName']);
+    expect(edge1.getPropertyKeys()).toEqual(['name', 'firstName']);
+    expect(edge2.getPropertyKeys()).toEqual(['name', 'location', 'firstName']);
+  });
+
 });

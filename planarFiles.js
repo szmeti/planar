@@ -8,6 +8,7 @@ planarFiles = {
     'src/model/Edge.js',
     'src/model/Vertex.js',
     'src/model/Graph.js',
+    'src/model/filter/InternalPropertyFilter.js',
     'src/index/Index.js',
     'src/index/IndexManager.js',
     'src/query/LabelFilter.js',

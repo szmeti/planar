@@ -23,6 +23,7 @@
     "Edge": false,
     "Vertex": false,
     "Graph": false,
+    "InternalPropertyFilter": false,
     "Index": false,
     "IndexManager": false,
     "Element": false,
@@ -43,6 +44,7 @@
     "D3DirectedLineEdgeRenderer": false,
     "D3SymbolVertexRenderer": false,
     "D3QueryVertexRenderer": false,
+    "D3QueryResultVertexRenderer": false,
     "RaphaelEngine": false,
     "RaphaelRectangleVertexRenderer": false,
     "ElementRendererProvider": false,
@@ -61,6 +63,9 @@
     "after": false,
     "afterEach": false,
     "expect": false,
-    "fail": false
+    "fail": false,
+
+
+    "QueryResultVertexPropertyPredicate": false
   }
 }

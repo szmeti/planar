@@ -166,6 +166,100 @@ describe('VertexQuery', function () {
     expect(results).toContain(aFriendB);
     expect(results).toContain(aFriendC);
     expect(results).toContain(aHateC);
+
+    var amountPredicate = {
+      isVisible: function (vertex, propertyKey) {
+        return propertyKey !== 'amount';
+      }
+    };
+    graph.addEdgePropertyFilter('amountPredicate', amountPredicate);
+
+    results = a.query().direction(OUT).labels('friend').has('amount', 1.0).edges();
+    expect(results.length).toBe(0);
+    results = a.query().direction(OUT).labels('friend').has('amount', 1.0).vertices();
+    expect(results.length).toBe(0);
+    expect(a.query().direction(OUT).labels('friend').has('amount', 1.0).count(), 0);
+
+    results = a.query().direction(OUT).labels('friend').has('amount', 1.0, null, ['amountPredicate']).edges();
+    expect(results.length).toBe(1);
+    expect(results).toContain(aFriendB);
+    results = a.query().direction(OUT).labels('friend').has('amount', 1.0, null, ['amountPredicate']).vertices();
+    expect(results.length).toBe(1);
+    expect(results).toContain(b);
+    expect(a.query().direction(OUT).labels('friend').has('amount', 1.0, null, ['amountPredicate']).count(), 1);
+
+    results = a.query().direction(OUT).labels('friend').has('amount', Compare.NOT_EQUAL, 1.0).edges();
+    expect(results.length).toBe(2);
+    expect(results).toContain(aFriendB);
+    expect(results).toContain(aFriendC);
+    results = a.query().direction(OUT).labels('friend').has('amount', Compare.NOT_EQUAL, 1.0).vertices();
+    expect(results.length).toBe(2);
+    expect(results).toContain(b);
+    expect(results).toContain(c);
+    expect(a.query().direction(OUT).labels('friend').has('amount', Compare.NOT_EQUAL, 1.0).count(), 2);
+
+    results = a.query().direction(OUT).labels('friend').has('amount', Compare.NOT_EQUAL, 1.0, ['amountPredicate']).edges();
+    expect(results.length).toBe(1);
+    expect(results).toContain(aFriendC);
+    results = a.query().direction(OUT).labels('friend').has('amount', Compare.NOT_EQUAL, 1.0, ['amountPredicate']).vertices();
+    expect(results.length).toBe(1);
+    expect(results).toContain(c);
+    expect(a.query().direction(OUT).labels('friend').has('amount', Compare.NOT_EQUAL, 1.0, ['amountPredicate']).count(), 1);
+
+    results = a.query().direction(OUT).labels('friend').has('amount', Compare.LESS_THAN_EQUAL, 1.0).edges();
+    expect(results.length).toBe(0);
+    results = a.query().direction(OUT).labels('friend').has('amount', Compare.LESS_THAN_EQUAL, 1.0).vertices();
+    expect(results.length).toBe(0);
+    expect(a.query().direction(OUT).labels('friend').has('amount', Compare.LESS_THAN_EQUAL, 1.0).count(), 0);
+
+    results = a.query().direction(OUT).labels('friend').has('amount', Compare.LESS_THAN_EQUAL, 1.0, ['amountPredicate']).edges();
+    expect(results.length).toBe(2);
+    expect(results).toContain(aFriendB);
+    expect(results).toContain(aFriendC);
+    results = a.query().direction(OUT).labels('friend').has('amount', Compare.LESS_THAN_EQUAL, 1.0, ['amountPredicate']).vertices();
+    expect(results.length).toBe(2);
+    expect(results).toContain(b);
+    expect(results).toContain(c);
+    expect(a.query().direction(OUT).labels('friend').has('amount', Compare.LESS_THAN_EQUAL, 1.0, ['amountPredicate']).count(), 2);
+
+    results = a.query().direction(OUT).has('amount', Compare.LESS_THAN, 1.0).edges();
+    expect(results.length).toBe(0);
+    results = a.query().direction(OUT).has('amount', Compare.LESS_THAN, 1.0).vertices();
+    expect(results.length).toBe(0);
+    expect(a.query().direction(OUT).has('amount', Compare.LESS_THAN, 1.0).count(), 0);
+
+    results = a.query().direction(OUT).has('amount', Compare.LESS_THAN, 1.0, ['amountPredicate']).edges();
+    expect(results.length).toBe(1);
+    expect(results).toContain(aFriendC);
+    results = a.query().direction(OUT).has('amount', Compare.LESS_THAN, 1.0, ['amountPredicate']).vertices();
+    expect(results.length).toBe(1);
+    expect(results).toContain(c);
+    expect(a.query().direction(OUT).has('amount', Compare.LESS_THAN, 1.0, ['amountPredicate']).count(), 1);
+
+    results = a.query().direction(OUT).has('amount').edges();
+    expect(results.length).toBe(0);
+
+    results = a.query().direction(OUT).has('amount', null, null, ['amountPredicate']).edges();
+    expect(results.length).toBe(3);
+    expect(results).toContain(aFriendB);
+    expect(results).toContain(aFriendC);
+    expect(results).toContain(aHateC);
+
+    results = a.query().direction(OUT).hasNot('amount').vertices();
+    expect(results.length).toBe(3);
+    expect(results).toContain(b);
+    expect(results).toContain(c);
+
+    var cCount = 0;
+    for (var i = 0; i < results.length; i++) {
+      if (results[i] === c) {
+        cCount++;
+      }
+    }
+
+    expect(cCount).toBe(2);
+
+    graph.removeAllEdgePropertyFilters();
   });
 
   it('should execute contains queries', function () {
@@ -215,7 +309,7 @@ describe('VertexQuery', function () {
     expect(results).toContain(b);
     expect(a.query().direction(OUT).labels('friend').interval('date', 5, 11).count(), 1);
   });
-  
+
   it('should execute limit queries', function () {
     var results = a.query().direction(OUT).labels('friend', 'hate').limit(2).edges();
     expect(results.length).toBe(2);

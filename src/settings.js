@@ -25,7 +25,8 @@ var settings = {
       'square': new D3SymbolVertexRenderer('square'),
       'triangle-down': new D3SymbolVertexRenderer('triangle-down'),
       'triangle-up': new D3SymbolVertexRenderer('triangle-up'),
-      'query-vertex': D3QueryVertexRenderer
+      'query-vertex': D3QueryVertexRenderer,
+      'query-result-vertex': D3QueryResultVertexRenderer
     },
 
     edgeRenderers: {

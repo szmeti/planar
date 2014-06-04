@@ -59,7 +59,7 @@ var D3Engine = (function () {
     var element = elementSet.enter().append('g');
 
     element.attr('class', function (uiElement) {
-      var elementType = uiElement[type].getProperty(PROP_TYPE);
+      var elementType = uiElement[type].getPropertyUnfiltered(PROP_TYPE);
       var clazz = type;
 
       if (elementType) {
