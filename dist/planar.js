@@ -1258,7 +1258,7 @@
                 edge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", "url(#arrow)").attr("style", "fill: none;stroke: #666;stroke-width: 1.5px;");
             },
             initDefs: function(defs) {
-                defs.append("marker").attr("id", "arrow").attr("viewBox", "0 -3 40 3").attr("refX", 20).attr("refY", -.3).attr("markerWidth", 20).attr("markerHeight", 4).attr("orient", "auto").append("path").attr("d", "M0,-3L20,0L0,3");
+                defs.append("marker").attr("id", "arrow").attr("refX", 10).attr("refY", 2).attr("markerWidth", 10).attr("markerHeight", 4).attr("orient", "auto").append("path").attr("d", "M0,0L10,2L0,4");
             },
             linkCurve: function(sourceX, sourceY, targetX, targetY) {
                 var dx = targetX - sourceX, dy = targetY - sourceY, dr = Math.sqrt(dx * dx + dy * dy);

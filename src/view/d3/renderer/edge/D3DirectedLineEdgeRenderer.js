@@ -147,14 +147,13 @@ var D3DirectedLineEdgeRenderer = (function () {
     initDefs: function (defs) {
       defs.append('marker')
         .attr('id', 'arrow')
-        .attr('viewBox', '0 -3 40 3')
-        .attr('refX', 20)
-        .attr('refY', -0.3)
-        .attr('markerWidth', 20)
+        .attr('refX', 10)
+        .attr('refY', 2)
+        .attr('markerWidth', 10)
         .attr('markerHeight', 4)
         .attr('orient', 'auto')
         .append('path')
-        .attr('d', 'M0,-3L20,0L0,3');
+        .attr('d', 'M0,0L10,2L0,4');
     },
 
     linkCurve: function(sourceX, sourceY, targetX, targetY) {
