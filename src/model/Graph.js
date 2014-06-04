@@ -5,6 +5,8 @@ var Graph = (function () {
     this.vertices = {};
     this.edges = {};
     this.indexManager = new IndexManager(this);
+    this.vertexPropertyFilters = {};
+    this.edgePropertyFilters = {};
 
     if (utils.exists(container) && utils.exists(engine)) {
       this.renderer = new Renderer(this, container, engine);
@@ -64,11 +66,12 @@ var Graph = (function () {
       }
     },
 
-    getVertices: function (key, value) {
+    getVertices: function (key, value, disabledFilters) {
+      disabledFilters = disabledFilters || [];
       if (utils.isUndefined(key) || key === null) {
         return utils.values(this.vertices);
       } else {
-        return new GraphQuery(this).has(key, value).vertices();
+        return new GraphQuery(this).has(key, value, null, disabledFilters).vertices();
       }
     },
 
@@ -116,11 +119,11 @@ var Graph = (function () {
       }
     },
 
-    getEdges: function (key, value) {
+    getEdges: function (key, value, disabledFilters) {
       if (utils.isUndefined(key) || key === null) {
         return  utils.values(this.edges);
       } else {
-        return new GraphQuery(this).has(key, value).edges();
+        return new GraphQuery(this).has(key, value, null, disabledFilters).edges();
       }
     },
 
@@ -174,6 +177,50 @@ var Graph = (function () {
 
     dropKeyIndex: function (key, type) {
       this.indexManager.dropKeyIndex(key, type);
+    },
+
+    addVertexPropertyFilter: function (name, predicate) {
+      utils.checkExists('Predicate name', name);
+      utils.checkExists('Predicate', predicate);
+
+      this.vertexPropertyFilters[name] = predicate;
+    },
+
+    addEdgePropertyFilter: function (name, predicate) {
+      utils.checkExists('Predicate name', name);
+      utils.checkExists('Predicate', predicate);
+
+      this.edgePropertyFilters[name] = predicate;
+    },
+
+    getPropertyFilters: function (element, disabledFilters) {
+      disabledFilters = utils.convertVarArgs(disabledFilters);
+
+      if (utils.isOfType(element, Vertex)) {
+        return utils.select(this.vertexPropertyFilters, disabledFilters);
+      } else if (utils.isOfType(element, Edge)) {
+        return utils.select(this.edgePropertyFilters, disabledFilters);
+      } else {
+        throw 'Invalid type';
+      }
+    },
+
+    removeAllVertexPropertyFilters: function () {
+      this.vertexPropertyFilters = {};
+    },
+
+    removeAllEdgePropertyFilters: function () {
+      this.edgePropertyFilters = {};
+    },
+
+    removeVertexPropertyFilter: function (predicateName) {
+      utils.checkExists('Predicate name', predicateName);
+      delete this.vertexPropertyFilters[predicateName];
+    },
+
+    removeEdgePropertyFilter: function (predicateName) {
+      utils.checkExists('Predicate name', predicateName);
+      delete this.edgePropertyFilters[predicateName];
     },
 
     render: function () {

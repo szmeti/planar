@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 sample</title>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF8">
+
+    <style type="text/css">
+        body{
+            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+            font-size: 14px;
+            color: #666666;
+            text-shadow: 0 1px 0 #ffffff;
+        }
+
+        #container {
+            /*background-color: #eceaf3;*/
+        }
+
+        .edge {
+            stroke: #999;
+            stroke-width: 2;
+            cursor: pointer;
+        }
+
+        .edge:hover {
+            stroke-width: 15;
+        }
+
+        .vertex {
+            cursor: pointer;
+        }
+
+        svg {
+            border: 1px solid #808080;
+        }
+
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+
+        .divider {
+            stroke: #b3b3b3;
+        }
+
+        .query-vertex-box {
+            fill:url(#queryVertexDefaultFillScheme);
+            fill-opacity:1;
+            stroke: #b3b3b3;
+            stroke-width:1;
+        }
+
+        .query-vertex-ref-label {
+        }
+
+        .entity-type-label {
+            font-weight: bold;
+        }
+
+        .property-name-label {
+            fill: #616161;
+            font-weight: bold;
+        }
+
+        .view-more-label {
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+
+<script type="text/javascript" src="http://codeorigin.jquery.com/jquery-1.10.2.js"></script>
+<script type="text/javascript" src="../bower_components/d3/d3.js"></script>
+<script type="text/javascript" src="../dist/planar.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var queryGraph = new planar.Graph();
+
+        var graph = new planar.Graph('#container', new planar.D3Engine());
+
+
+        var v1 = graph.addVertex();
+        v1.setProperty(planar.PROP_TYPE, "query-result-vertex");
+        v1.setProperty('_queryVertexReference', "P1");
+        v1.setProperty('entityType', "Person");
+        v1.setProperty('age', 19);
+        v1.setProperty('firstName', 'John');
+        v1.setProperty('surname', 'Smith');
+        v1.setProperty('gender', 'male');
+
+        var v2 = graph.addVertex();
+        v2.setProperty(planar.PROP_TYPE, "query-result-vertex");
+        v2.setProperty('_queryVertexReference', "F1");
+        v2.setProperty('entityType', "Flight");
+
+        var v3 = graph.addVertex();
+        v3.setProperty(planar.PROP_TYPE, "query-result-vertex");
+        v3.setProperty('_queryVertexReference', "P2");
+        v3.setProperty('entityType', "Person");
+        v3.setProperty('age', 10);
+
+        graph.addEdge(null, v1, v2, "knows");
+        graph.addEdge(null, v2, v3, "knows");
+        graph.addEdge(null, v3, v1, "knows");
+
+        graph.addVertexPropertyFilter('query-result-filter', new planar.QueryResultVertexPropertyPredicate(queryGraph));
+        graph.addVertexPropertyFilter('internal-property-filter', planar.InternalPropertyFilter);
+
+        graph.render();
+    });
+</script>
+
+</body>
+</html>

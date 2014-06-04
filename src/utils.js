@@ -69,6 +69,18 @@ var utils = {
     return keys;
   },
 
+  select: function (haystack, excludedElements) {
+    var elements = [];
+
+    for (var key in haystack) {
+      if (haystack.hasOwnProperty(key) && utils.indexOf(key, excludedElements) === -1) {
+        elements.push(haystack[key]);
+      }
+    }
+
+    return elements;
+  },
+
   get: function () {
     var args = this.convertVarArgs(arguments);
     var current = args[0];

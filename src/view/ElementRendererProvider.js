@@ -6,7 +6,7 @@ var ElementRendererProvider = (function () {
     getRenderer: function (element, engine, type) {
       var renderer;
 
-      var elementType = element.getProperty(PROP_TYPE);
+      var elementType = element.getPropertyUnfiltered(PROP_TYPE);
       if (elementType !== null) {
         renderer = utils.get(settings, engine, type === 'vertex' ? 'vertexRenderers' : 'edgeRenderers', elementType);
       }

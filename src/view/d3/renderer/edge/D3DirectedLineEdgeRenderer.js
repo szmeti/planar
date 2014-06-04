@@ -125,7 +125,7 @@ var D3DirectedLineEdgeRenderer = (function () {
 
 
       edge.inVertex.vertex.getEdges(OUT).forEach(function(vertexEdge) {
-        console.log(vertexEdge.id);
+//        console.log(vertexEdge.id);
       });
 
 //      var countOfSiblins = edge.inVertex.getEdges().length,
