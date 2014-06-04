@@ -57,6 +57,15 @@
             }
             return keys;
         },
+        select: function(haystack, excludedElements) {
+            var elements = [];
+            for (var key in haystack) {
+                if (haystack.hasOwnProperty(key) && utils.indexOf(key, excludedElements) === -1) {
+                    elements.push(haystack[key]);
+                }
+            }
+            return elements;
+        },
         get: function() {
             var args = this.convertVarArgs(arguments);
             var current = args[0];
@@ -179,6 +188,15 @@
         };
     }();
     var Element = function() {
+        function checkPropertyAccess(graph, element, propertyKey, disabledFilters) {
+            var filterPredicates = graph.getPropertyFilters(element, disabledFilters);
+            for (var i = 0; i < filterPredicates.length; i++) {
+                if (!filterPredicates[i].isVisible(element, propertyKey)) {
+                    return false;
+                }
+            }
+            return true;
+        }
         return {
             initProperties: function(graph) {
                 this.properties = [];
@@ -188,17 +206,48 @@
                 utils.checkExists("Property key", key);
                 utils.checkExists("Property value", value);
                 utils.checkNotEmpty("Property key", key);
+                if (checkPropertyAccess(this.graph, this, key, Array.prototype.splice.call(arguments, 2))) {
+                    this.setPropertyUnfiltered(key, value);
+                }
+            },
+            setPropertyUnfiltered: function(key, value) {
+                utils.checkExists("Property key", key);
+                utils.checkExists("Property value", value);
+                utils.checkNotEmpty("Property key", key);
                 var oldValue = this.properties[key];
                 this.properties[key] = value;
                 this.graph.indexManager.updateKeyIndexValue(key, value, oldValue, this);
             },
             getProperty: function(key) {
+                if (checkPropertyAccess(this.graph, this, key, Array.prototype.splice.call(arguments, 1))) {
+                    return this.getPropertyUnfiltered(key);
+                } else {
+                    return null;
+                }
+            },
+            getPropertyUnfiltered: function(key) {
                 return utils.isUndefined(this.properties[key]) ? null : this.properties[key];
             },
             getPropertyKeys: function() {
+                var keys = [];
+                for (var key in this.properties) {
+                    if (this.properties.hasOwnProperty(key) && checkPropertyAccess(this.graph, this, key, Array.prototype.slice.call(arguments))) {
+                        keys.push(key);
+                    }
+                }
+                return keys;
+            },
+            getPropertyKeysUnfiltered: function() {
                 return utils.keys(this.properties);
             },
             removeProperty: function(key) {
+                if (checkPropertyAccess(this.graph, this, key, Array.prototype.splice.call(arguments, 1))) {
+                    return this.removePropertyUnfiltered(key);
+                } else {
+                    return null;
+                }
+            },
+            removePropertyUnfiltered: function(key) {
                 var value = this.getProperty(key);
                 delete this.properties[key];
                 this.graph.indexManager.removeKeyIndexValue(key, value, this);
@@ -286,6 +335,8 @@
             this.vertices = {};
             this.edges = {};
             this.indexManager = new IndexManager(this);
+            this.vertexPropertyFilters = {};
+            this.edgePropertyFilters = {};
             if (utils.exists(container) && utils.exists(engine)) {
                 this.renderer = new Renderer(this, container, engine);
                 this.renderer.init();
@@ -332,11 +383,12 @@
                     this.trigger("vertexRemoved", storedVertex);
                 }
             },
-            getVertices: function(key, value) {
+            getVertices: function(key, value, disabledFilters) {
+                disabledFilters = disabledFilters || [];
                 if (utils.isUndefined(key) || key === null) {
                     return utils.values(this.vertices);
                 } else {
-                    return new GraphQuery(this).has(key, value).vertices();
+                    return new GraphQuery(this).has(key, value, null, disabledFilters).vertices();
                 }
             },
             addEdge: function(id, outVertex, inVertex, label) {
@@ -375,11 +427,11 @@
                     }
                 }
             },
-            getEdges: function(key, value) {
+            getEdges: function(key, value, disabledFilters) {
                 if (utils.isUndefined(key) || key === null) {
                     return utils.values(this.edges);
                 } else {
-                    return new GraphQuery(this).has(key, value).edges();
+                    return new GraphQuery(this).has(key, value, null, disabledFilters).edges();
                 }
             },
             forEachVertex: function(callback) {
@@ -424,11 +476,52 @@
             dropKeyIndex: function(key, type) {
                 this.indexManager.dropKeyIndex(key, type);
             },
+            addVertexPropertyFilter: function(name, predicate) {
+                utils.checkExists("Predicate name", name);
+                utils.checkExists("Predicate", predicate);
+                this.vertexPropertyFilters[name] = predicate;
+            },
+            addEdgePropertyFilter: function(name, predicate) {
+                utils.checkExists("Predicate name", name);
+                utils.checkExists("Predicate", predicate);
+                this.edgePropertyFilters[name] = predicate;
+            },
+            getPropertyFilters: function(element, disabledFilters) {
+                disabledFilters = utils.convertVarArgs(disabledFilters);
+                if (utils.isOfType(element, Vertex)) {
+                    return utils.select(this.vertexPropertyFilters, disabledFilters);
+                } else if (utils.isOfType(element, Edge)) {
+                    return utils.select(this.edgePropertyFilters, disabledFilters);
+                } else {
+                    throw "Invalid type";
+                }
+            },
+            removeAllVertexPropertyFilters: function() {
+                this.vertexPropertyFilters = {};
+            },
+            removeAllEdgePropertyFilters: function() {
+                this.edgePropertyFilters = {};
+            },
+            removeVertexPropertyFilter: function(predicateName) {
+                utils.checkExists("Predicate name", predicateName);
+                delete this.vertexPropertyFilters[predicateName];
+            },
+            removeEdgePropertyFilter: function(predicateName) {
+                utils.checkExists("Predicate name", predicateName);
+                delete this.edgePropertyFilters[predicateName];
+            },
             render: function() {
                 this.renderer.render();
             }
         });
         return Graph;
+    }();
+    var InternalPropertyFilter = function() {
+        return {
+            isVisible: function(element, propertyKey) {
+                return propertyKey.indexOf("_") !== 0;
+            }
+        };
     }();
     var Index = function() {
         function Index(name, type) {
@@ -680,16 +773,17 @@
         };
     }();
     var HasFilter = function() {
-        function HasFilter(key, predicate, value) {
+        function HasFilter(key, predicate, value, disabledFilters) {
             utils.checkExists("Key", key);
             utils.checkExists("Predicate", predicate);
             this.key = key;
-            this.value = value;
             this.predicate = predicate;
+            this.value = value;
+            this.disabledFilters = disabledFilters;
         }
         utils.mixin(HasFilter.prototype, {
             matches: function(element) {
-                return this.predicate.evaluate(element.getProperty(this.key), this.value);
+                return this.predicate.evaluate(element.getProperty(this.key, this.disabledFilters), this.value);
             }
         });
         return HasFilter;
@@ -739,27 +833,30 @@
                 this.queryLimit = limit;
                 return this;
             },
-            has: function(key, value1, value2) {
+            has: function(key, value1, value2, disabledFilters) {
+                disabledFilters = disabledFilters || [];
                 if (!utils.isUndefined(value2) && value2 !== null) {
-                    this.hasFilters.push(new HasFilter(key, value1, value2));
+                    this.hasFilters.push(new HasFilter(key, value1, value2, disabledFilters));
                 } else if (!utils.isUndefined(value1) && value1 !== null) {
-                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, value1));
+                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, value1, disabledFilters));
                 } else {
-                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, null));
+                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, null, disabledFilters));
                 }
                 return this;
             },
-            hasNot: function(key, value) {
+            hasNot: function(key, value, disabledFilters) {
+                disabledFilters = disabledFilters || [];
                 if (utils.isUndefined(value) || value === null) {
-                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, null));
+                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, null, disabledFilters));
                 } else {
-                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, value));
+                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, value, disabledFilters));
                 }
                 return this;
             },
-            interval: function(key, startValue, endValue) {
-                this.hasFilters.push(new HasFilter(key, Compare.GREATER_THAN_EQUAL, startValue));
-                this.hasFilters.push(new HasFilter(key, Compare.LESS_THAN, endValue));
+            interval: function(key, startValue, endValue, disabledFilters) {
+                disabledFilters = disabledFilters || [];
+                this.hasFilters.push(new HasFilter(key, Compare.GREATER_THAN_EQUAL, startValue, disabledFilters));
+                this.hasFilters.push(new HasFilter(key, Compare.LESS_THAN, endValue, disabledFilters));
                 return this;
             },
             edges: function() {
@@ -1020,7 +1117,7 @@
         function addEnterSection(type, elementSet) {
             var element = elementSet.enter().append("g");
             element.attr("class", function(uiElement) {
-                var elementType = uiElement[type].getProperty(PROP_TYPE);
+                var elementType = uiElement[type].getPropertyUnfiltered(PROP_TYPE);
                 var clazz = type;
                 if (elementType) {
                     clazz += " " + elementType;
@@ -1189,7 +1286,7 @@
                 radiusY = inEdgeMidPoint.horizontal ? distanceOfMidPoints : radius;
                 var sweep = isLeftOf(outEdgeMidPoint.point, inEdgeMidPoint.point) !== indexOfCurrentEdge < siblingEdges / 2;
                 d3.select("#text-of-label-" + edge.id).attr("x", inEdgeMidPoint.point.x + distanceOfMidPoints / 2);
-                d3.select("#text-of-label-" + edge.id).attr("y", inEdgeMidPoint.point.y + distanceOfMidPoints / 2 - inEdgeMidPoint.point.y / 2);
+                d3.select("#text-of-label-" + edge.id).attr("y", inEdgeMidPoint.point.y + distanceOfMidPoints / 2);
                 line.attr("id", "edgeLabel" + edge.id);
                 line.attr("d", "M" + outEdgeMidPoint.point.x + "," + outEdgeMidPoint.point.y + "A " + radiusX + " " + radiusY + " 0 0 " + (sweep ? 1 : 0) + " " + inEdgeMidPoint.point.x + " " + inEdgeMidPoint.point.y);
             }
@@ -1215,6 +1312,63 @@
                 line.attr("y2", function(uiEdge) {
                     return uiEdge.outVertex.y;
                 });
+            }
+        };
+    }();
+    var D3QueryResultVertexRenderer = function() {
+        return {
+            init: function(uiVertex, element) {
+                var vertex = uiVertex.vertex;
+                var queryVertexReference = vertex.getPropertyUnfiltered("_queryVertexReference");
+                var entityType = vertex.getPropertyUnfiltered("entityType");
+                var lineHeight = 25;
+                var boxPadding = 10;
+                var propertyKeys = vertex.getPropertyKeys();
+                var numberOfLines = propertyKeys.length + 1;
+                var currentHeight = -(numberOfLines * lineHeight) / 2 + lineHeight / 2;
+                var boundingBoxCalculator = new BoundingBoxCalculator(boxPadding, lineHeight, numberOfLines);
+                var header = element.append("g").attr("class", "query-result-vertex-header");
+                var entityTypeLabel = header.append("text").attr("class", "entity-type-label").attr("text-anchor", "start").attr("y", currentHeight).text(entityType);
+                var queryVertexRefLabel = header.append("text").attr("class", "query-vertex-ref-label").attr("text-anchor", "end").attr("y", currentHeight).text(queryVertexReference);
+                var iconSize = 16;
+                var zoomInIcon = header.append("use").attr("xlink:href", "#icon-zoomin").attr("y", currentHeight - iconSize + 2);
+                boundingBoxCalculator.addElement(header[0][0]);
+                for (var i = 0; i < propertyKeys.length; i++) {
+                    var propertyKey = propertyKeys[i];
+                    var propertyValue = vertex.getProperty(propertyKey);
+                    currentHeight += lineHeight;
+                    var propertyText = element.append("text").attr("text-anchor", "middle").attr("x", 0).attr("y", currentHeight);
+                    propertyText.append("tspan").attr("class", "property-name-label").text(propertyKey + ": ");
+                    propertyText.append("tspan").text(propertyValue);
+                    boundingBoxCalculator.addElement(propertyText[0][0]);
+                }
+                var linePadding = 5;
+                var totalWidth = boundingBoxCalculator.totalWidth();
+                var minWidth = header[0][0].getBBox().width + 5 * boxPadding;
+                var totalHeight = boundingBoxCalculator.totalHeight();
+                var dividerY = -(totalHeight / 2 - lineHeight) + linePadding;
+                var leftEdge;
+                var rightEdge;
+                if (totalWidth > minWidth) {
+                    leftEdge = boundingBoxCalculator.leftEdge();
+                    rightEdge = boundingBoxCalculator.rightEdge();
+                } else {
+                    totalWidth = minWidth;
+                    leftEdge = boundingBoxCalculator.leftEdge() - 1.5 * boxPadding;
+                    rightEdge = boundingBoxCalculator.rightEdge() + 1.5 * boxPadding;
+                }
+                queryVertexRefLabel.attr("x", rightEdge - boxPadding - iconSize - 4);
+                entityTypeLabel.attr("x", leftEdge + boxPadding);
+                zoomInIcon.attr("x", rightEdge - boxPadding - iconSize);
+                element.append("line").attr("class", "divider").attr("x1", leftEdge).attr("y1", dividerY).attr("x2", rightEdge).attr("y2", dividerY);
+                element.insert("rect", ".query-result-vertex-header").attr("class", "query-vertex-box").attr("rx", "4").attr("width", totalWidth).attr("height", totalHeight).attr("x", leftEdge).attr("y", boundingBoxCalculator.topEdge());
+            },
+            initDefs: function(defs) {
+                var whiteGradient = defs.append("linearGradient").attr("id", "queryResultVertexDefaultFillScheme").attr("x1", "0%").attr("y1", "0%").attr("x2", "0%").attr("y2", "100%");
+                whiteGradient.append("stop").attr("offset", "0%").attr("style", "stop-color:#f9f9f9;stop-opacity:1");
+                whiteGradient.append("stop").attr("offset", "100%").attr("style", "stop-color:#edebf4;stop-opacity:1");
+                var zoomInIcon = defs.append("g").attr("id", "icon-zoomin");
+                zoomInIcon.append("path").attr("d", "M15.504 13.616l-3.79-3.223c-0.392-0.353-0.811-0.514-1.149-0.499 " + "0.895-1.048 1.435-2.407 1.435-3.893 0-3.314-2.686-6-6-6-3.314 0-6 2.686-6 " + "6 0 3.314 2.686 6 6 6 1.486 0 2.845-0.54 3.893-1.435-0.016 0.338 0.146 0.757 " + "0.499 1.149l3.223 3.79c0.552 0.613 1.453 0.665 2.003 0.115s0.498-1.452-0.115-2.003zM6 " + "10c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4zM7 3h-2v2h-2v2h2v2h2v-2h2v-2h-2z");
             }
         };
     }();
@@ -1318,6 +1472,21 @@
         });
         return D3SymbolVertexRenderer;
     }();
+    var QueryResultVertexPropertyPredicate = function() {
+        function QueryResultVertexPropertyPredicate(queryGraph) {
+            utils.checkExists("Query Graph", queryGraph);
+            this.queryGraph = queryGraph;
+        }
+        utils.mixin(QueryResultVertexPropertyPredicate.prototype, {
+            isVisible: function(vertex, propertyKey) {
+                if (propertyKey === "entityType") {
+                    return false;
+                }
+                return true;
+            }
+        });
+        return QueryResultVertexPropertyPredicate;
+    }();
     var RaphaelEngine = function() {
         function RaphaelEngine() {}
         utils.mixin(RaphaelEngine.prototype, Engine);
@@ -1352,7 +1521,7 @@
         return {
             getRenderer: function(element, engine, type) {
                 var renderer;
-                var elementType = element.getProperty(PROP_TYPE);
+                var elementType = element.getPropertyUnfiltered(PROP_TYPE);
                 if (elementType !== null) {
                     renderer = utils.get(settings, engine, type === "vertex" ? "vertexRenderers" : "edgeRenderers", elementType);
                 }
@@ -1475,7 +1644,8 @@
                 square: new D3SymbolVertexRenderer("square"),
                 "triangle-down": new D3SymbolVertexRenderer("triangle-down"),
                 "triangle-up": new D3SymbolVertexRenderer("triangle-up"),
-                "query-vertex": D3QueryVertexRenderer
+                "query-vertex": D3QueryVertexRenderer,
+                "query-result-vertex": D3QueryResultVertexRenderer
             },
             edgeRenderers: {
                 line: D3DirectedLineEdgeRenderer
@@ -1488,6 +1658,7 @@
     exports.Edge = Edge;
     exports.Vertex = Vertex;
     exports.Graph = Graph;
+    exports.InternalPropertyFilter = InternalPropertyFilter;
     exports.VertexQuery = VertexQuery;
     exports.GraphQuery = VertexQuery;
     exports.Index = Index;
@@ -1495,6 +1666,8 @@
     exports.ForceDirectedLayout = ForceDirectedLayout;
     exports.D3Engine = D3Engine;
     exports.D3SymbolVertexRenderer = D3SymbolVertexRenderer;
+    exports.D3QueryVertexRenderer = D3QueryVertexRenderer;
+    exports.D3QueryResultVertexRenderer = D3QueryResultVertexRenderer;
     exports.D3LineEdgeRenderer = D3LineEdgeRenderer;
     exports.D3DirectedLineEdgeRenderer = D3DirectedLineEdgeRenderer;
     exports.RaphaelEngine = RaphaelEngine;
@@ -1504,6 +1677,7 @@
     exports.IN = IN;
     exports.BOTH = BOTH;
     exports.PROP_TYPE = PROP_TYPE;
+    exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
 })({}, function() {
     return this;
 }());
