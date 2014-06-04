@@ -38,6 +38,11 @@ var D3DirectedLineEdgeRenderer = (function () {
     return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
   };
 
+  var connectedVertices = function (edge, v1, v2) {
+    return (edge.outVertex.id === v1.id && edge.inVertex.id === v2.id) ||
+           (edge.outVertex.id === v2.id && edge.inVertex.id === v1.id);
+  };
+
   // now, this is where the fun takes place
   var pointOnEdge = function(fromRect, toRect) {
     var centerA = centerOf(fromRect),
@@ -78,11 +83,62 @@ var D3DirectedLineEdgeRenderer = (function () {
     return new Point(centerA.x + add.x, centerA.y + add.y);
   };
 
+  var calculateXRadius = function(actualEdge,countOfEdges, distanceOfMidpoints) {
+    var radiusConstant = 100000 / distanceOfMidpoints;
+    radiusConstant = Math.min(radiusConstant, 420);
+    radiusConstant = Math.max(radiusConstant, 230);
+    var diameter = (countOfEdges - 1) * radiusConstant;
+    var maxRadius = diameter / 2;
+    return -maxRadius + actualEdge * radiusConstant;
+  };
+
+  var calculateMidPointByIntersection = function(intersection, element) {
+    var boundingBox = element.boundingBox;
+
+
+    if (boundingBox.topEdge() + element.y === intersection.y) {
+      return {
+        point : new Point(element.x, element.y - (boundingBox.totalHeight() / 2)),
+        horizontal : true
+      };
+    } else if (boundingBox.bottomEdge() + element.y === intersection.y) {
+      return {
+        point : new Point(element.x, element.y + (boundingBox.totalHeight() / 2)),
+        horizontal : true
+      };
+    } else if (boundingBox.leftEdge() + element.x  === intersection.x) {
+      return {
+        point : new Point(element.x - (boundingBox.totalWidth() / 2), element.y),
+        horizontal : false
+      };
+    } else if (boundingBox.rightEdge() + element.x === intersection.x) {
+      return {
+        point : new Point(element.x + (boundingBox.totalWidth() / 2), element.y),
+        horizontal : false
+      };
+    }
+  };
 
   return {
 
     init: function (edge, element) {
+      var text = element.append('text')
+        .attr('id', 'text-of-label-'+ edge.id)
+        .attr('x', 10)
+        .attr('y', 100)
+        .attr('text-anchor', 'middle')
+//        .attr('transform', 'translate(0,5)')
+        .attr('class', 'edge-label');
+
+//      var textPath = text.append('textPath').attr('startOffset', '50%')
+//        .attr('xlink:href', '#edgeLabel'+ edge.id);
+
+      text.append('tspan')
+        .attr('baseline-shift', 'super')
+        .text(edge.edge.label);
+
       edge.uiElement = element.append('path')
+        .attr('id', 'edgeLabel')
         .attr('class', 'directed-edge arrow')
         .attr('marker-end','url(#arrow)')
         .attr('style', 'fill: none;stroke: #666;stroke-width: 1.5px;');
@@ -91,14 +147,14 @@ var D3DirectedLineEdgeRenderer = (function () {
     initDefs: function (defs) {
       defs.append('marker')
         .attr('id', 'arrow')
-        .attr('viewBox', '0 -5 10 10')
-        .attr('refX', 15)
-        .attr('refY', -1.5)
-        .attr('markerWidth', 6)
-        .attr('markerHeight', 6)
+        .attr('viewBox', '0 -3 40 3')
+        .attr('refX', 20)
+        .attr('refY', -0.3)
+        .attr('markerWidth', 20)
+        .attr('markerHeight', 4)
         .attr('orient', 'auto')
         .append('path')
-        .attr('d', 'M0,-5L10,0L0,5');
+        .attr('d', 'M0,-3L20,0L0,3');
     },
 
     linkCurve: function(sourceX, sourceY, targetX, targetY) {
@@ -113,7 +169,8 @@ var D3DirectedLineEdgeRenderer = (function () {
         inWidth = widthOf(edge.inVertex),
         inHeight = heightOf(edge.inVertex),
         outWidth = widthOf(edge.outVertex),
-        outHeight = heightOf(edge.outVertex);
+        outHeight = heightOf(edge.outVertex),
+        inVertexEdges = edge.inVertex.vertex.getEdges(BOTH);
 
       var inVertexRect = new Rect(edge.inVertex.x - (inWidth / 2), edge.inVertex.y - (inHeight / 2), inWidth, inHeight);
       var outVertexRect = new Rect(edge.outVertex.x - (outWidth / 2), edge.outVertex.y - (outHeight / 2), outWidth, outHeight);
@@ -121,21 +178,35 @@ var D3DirectedLineEdgeRenderer = (function () {
       var intersectionOnOutVertex = pointOnEdge(outVertexRect, inVertexRect);
       var intersectionOnInVertex = pointOnEdge(inVertexRect, outVertexRect);
 
+      var radiusX = 0, radiusY = 0, indexOfCurrentEdge = 0, siblingEdges = 0;
 
+      for (var i = 0; i < inVertexEdges.length; i++) {
+        if (!connectedVertices(inVertexEdges[i], edge.outVertex, edge.inVertex)) {
+          continue;
+        }
 
+        if (edge.id < inVertexEdges[i].id) {
+          indexOfCurrentEdge++;
+        }
 
-      edge.inVertex.vertex.getEdges(OUT).forEach(function(vertexEdge) {
-        console.log(vertexEdge.id);
-      });
+        siblingEdges++;
+      }
+      var inEdgeMidPoint = calculateMidPointByIntersection(intersectionOnInVertex, edge.inVertex),
+          outEdgeMidPoint = calculateMidPointByIntersection(intersectionOnOutVertex, edge.outVertex);
 
-//      var countOfSiblins = edge.inVertex.getEdges().length,
-//        pointOfHalfDistanceBetweenVertices = new Point((edge.inVertex.x + edge.outVertex.x)/2, (edge.inVertex.y + edge.outVertex.y)/2),
-//
-//        halfDistanceBetweenVertices = distanceOfPoints(pointOfHalfDistanceBetweenVertices, edge.inVertex);
-//
-//
-////      line.attr('d', D3DirectedLineEdgeRenderer.linkCurve(pointOnOutVertex.x, pointOnOutVertex.y, pointOnInVertex.x, pointOnInVertex.y));
-      line.attr('d', 'M' + intersectionOnOutVertex.x + ',' + intersectionOnOutVertex.y + 'L' + intersectionOnInVertex.x + ' '+ intersectionOnInVertex.y);
+      var distanceOfMidPoints = distanceOfPoints(inEdgeMidPoint.point, outEdgeMidPoint.point),
+          radius = calculateXRadius(indexOfCurrentEdge, siblingEdges, distanceOfPoints(inEdgeMidPoint.point, outEdgeMidPoint.point));
+
+      radiusX = inEdgeMidPoint.horizontal ? radius : distanceOfMidPoints;
+      radiusY = inEdgeMidPoint.horizontal ? distanceOfMidPoints : radius;
+
+      var sweep = isLeftOf(outEdgeMidPoint.point, inEdgeMidPoint.point) !== (indexOfCurrentEdge < siblingEdges / 2);
+
+      d3.select('#text-of-label-'+ edge.id).attr('x', inEdgeMidPoint.point.x + distanceOfMidPoints / 2);
+      d3.select('#text-of-label-'+ edge.id).attr('y', inEdgeMidPoint.point.y + distanceOfMidPoints / 2);
+
+      line.attr('id', 'edgeLabel'+ edge.id);
+      line.attr('d', 'M' + outEdgeMidPoint.point.x + ',' + outEdgeMidPoint.point.y + 'A ' + radiusX + ' ' + radiusY  + ' 0 0 '+ (sweep ? 1 : 0) +' ' + inEdgeMidPoint.point.x + ' ' + inEdgeMidPoint.point.y);
     }
 
   };

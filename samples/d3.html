@@ -27,6 +27,11 @@
             stroke-width: 15;
         }
 
+        .edge-label {
+            stroke-width: -0.5;
+            stroke: #666666;
+        }
+
         .vertex {
             cursor: pointer;
         }
@@ -179,9 +184,15 @@
 //        v3.setProperty('filters', v3Filters);
         v3.setProperty('alias', 'P3');
 
-        graph.addEdge(null, v1, v2, "knows");
+        graph.addEdge(null, v1, v2, "v1v2");
+
         graph.addEdge(null, v2, v3, "knows");
-        graph.addEdge(null, v3, v1, "knows");
+        graph.addEdge(null, v2, v3, "other1");
+        graph.addEdge(null, v3, v2, "other2");
+        graph.addEdge(null, v2, v3, "other3");
+        graph.addEdge(null, v3, v2, "other4");
+
+//        graph.addEdge(null, v3, v1, "knows");
 
         graph.render();
     });

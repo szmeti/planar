@@ -13,6 +13,7 @@ var D3QueryVertexRenderer = (function () {
       var numberOfLines = 1 + filters.length;
       var currentHeight = -(numberOfLines * lineHeight) / 2 + lineHeight / 2;
       var boundingBoxCalculator = new BoundingBoxCalculator(boxPadding, lineHeight, numberOfLines);
+      uiVertex.boundingBox = boundingBoxCalculator;
 
       var aliasText = element.append('text').
         attr('class', 'alias-label').

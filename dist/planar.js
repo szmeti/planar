@@ -1110,6 +1110,9 @@
         var distanceOfPoints = function(p1, p2) {
             return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
         };
+        var connectedVertices = function(edge, v1, v2) {
+            return edge.outVertex.id === v1.id && edge.inVertex.id === v2.id || edge.outVertex.id === v2.id && edge.inVertex.id === v1.id;
+        };
         var pointOnEdge = function(fromRect, toRect) {
             var centerA = centerOf(fromRect), centerB = centerOf(toRect), gradA2B = gradient(centerA, centerB), aspectA = aspectRatio(fromRect), h05 = fromRect.width / 2, w05 = fromRect.height / 2, normA2B = Math.abs(gradA2B / aspectA), add = new Point((isLeftOf(centerA, centerB) ? 1 : -1) * h05, (isAbove(centerA, centerB) ? 1 : -1) * w05);
             if (normA2B < 1) {
@@ -1119,27 +1122,76 @@
             }
             return new Point(centerA.x + add.x, centerA.y + add.y);
         };
+        var calculateXRadius = function(actualEdge, countOfEdges, distanceOfMidpoints) {
+            var radiusConstant = 1e5 / distanceOfMidpoints;
+            radiusConstant = Math.min(radiusConstant, 420);
+            radiusConstant = Math.max(radiusConstant, 230);
+            var diameter = (countOfEdges - 1) * radiusConstant;
+            var maxRadius = diameter / 2;
+            return -maxRadius + actualEdge * radiusConstant;
+        };
+        var calculateMidPointByIntersection = function(intersection, element) {
+            var boundingBox = element.boundingBox;
+            if (boundingBox.topEdge() + element.y === intersection.y) {
+                return {
+                    point: new Point(element.x, element.y - boundingBox.totalHeight() / 2),
+                    horizontal: true
+                };
+            } else if (boundingBox.bottomEdge() + element.y === intersection.y) {
+                return {
+                    point: new Point(element.x, element.y + boundingBox.totalHeight() / 2),
+                    horizontal: true
+                };
+            } else if (boundingBox.leftEdge() + element.x === intersection.x) {
+                return {
+                    point: new Point(element.x - boundingBox.totalWidth() / 2, element.y),
+                    horizontal: false
+                };
+            } else if (boundingBox.rightEdge() + element.x === intersection.x) {
+                return {
+                    point: new Point(element.x + boundingBox.totalWidth() / 2, element.y),
+                    horizontal: false
+                };
+            }
+        };
         return {
             init: function(edge, element) {
-                edge.uiElement = element.append("path").attr("class", "directed-edge arrow").attr("marker-end", "url(#arrow)").attr("style", "fill: none;stroke: #666;stroke-width: 1.5px;");
+                var text = element.append("text").attr("id", "text-of-label-" + edge.id).attr("x", 10).attr("y", 100).attr("text-anchor", "middle").attr("class", "edge-label");
+                text.append("tspan").attr("baseline-shift", "super").text(edge.edge.label);
+                edge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", "url(#arrow)").attr("style", "fill: none;stroke: #666;stroke-width: 1.5px;");
             },
             initDefs: function(defs) {
-                defs.append("marker").attr("id", "arrow").attr("viewBox", "0 -5 10 10").attr("refX", 15).attr("refY", -1.5).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto").append("path").attr("d", "M0,-5L10,0L0,5");
+                defs.append("marker").attr("id", "arrow").attr("viewBox", "0 -3 40 3").attr("refX", 20).attr("refY", -.3).attr("markerWidth", 20).attr("markerHeight", 4).attr("orient", "auto").append("path").attr("d", "M0,-3L20,0L0,3");
             },
             linkCurve: function(sourceX, sourceY, targetX, targetY) {
                 var dx = targetX - sourceX, dy = targetY - sourceY, dr = Math.sqrt(dx * dx + dy * dy);
                 return "M" + sourceX + "," + sourceY + "Q " + dr + " " + dy + " " + targetX + " " + targetY;
             },
             updatePosition: function(edge) {
-                var line = edge.uiElement, inWidth = widthOf(edge.inVertex), inHeight = heightOf(edge.inVertex), outWidth = widthOf(edge.outVertex), outHeight = heightOf(edge.outVertex);
+                var line = edge.uiElement, inWidth = widthOf(edge.inVertex), inHeight = heightOf(edge.inVertex), outWidth = widthOf(edge.outVertex), outHeight = heightOf(edge.outVertex), inVertexEdges = edge.inVertex.vertex.getEdges(BOTH);
                 var inVertexRect = new Rect(edge.inVertex.x - inWidth / 2, edge.inVertex.y - inHeight / 2, inWidth, inHeight);
                 var outVertexRect = new Rect(edge.outVertex.x - outWidth / 2, edge.outVertex.y - outHeight / 2, outWidth, outHeight);
                 var intersectionOnOutVertex = pointOnEdge(outVertexRect, inVertexRect);
                 var intersectionOnInVertex = pointOnEdge(inVertexRect, outVertexRect);
-                edge.inVertex.vertex.getEdges(OUT).forEach(function(vertexEdge) {'use strict';
-                    console.log(vertexEdge.id);
-                });
-                line.attr("d", "M" + intersectionOnOutVertex.x + "," + intersectionOnOutVertex.y + "L" + intersectionOnInVertex.x + " " + intersectionOnInVertex.y);
+                var radiusX = 0, radiusY = 0, indexOfCurrentEdge = 0, siblingEdges = 0;
+                for (var i = 0; i < inVertexEdges.length; i++) {
+                    if (!connectedVertices(inVertexEdges[i], edge.outVertex, edge.inVertex)) {
+                        continue;
+                    }
+                    if (edge.id < inVertexEdges[i].id) {
+                        indexOfCurrentEdge++;
+                    }
+                    siblingEdges++;
+                }
+                var inEdgeMidPoint = calculateMidPointByIntersection(intersectionOnInVertex, edge.inVertex), outEdgeMidPoint = calculateMidPointByIntersection(intersectionOnOutVertex, edge.outVertex);
+                var distanceOfMidPoints = distanceOfPoints(inEdgeMidPoint.point, outEdgeMidPoint.point), radius = calculateXRadius(indexOfCurrentEdge, siblingEdges, distanceOfPoints(inEdgeMidPoint.point, outEdgeMidPoint.point));
+                radiusX = inEdgeMidPoint.horizontal ? radius : distanceOfMidPoints;
+                radiusY = inEdgeMidPoint.horizontal ? distanceOfMidPoints : radius;
+                var sweep = isLeftOf(outEdgeMidPoint.point, inEdgeMidPoint.point) !== indexOfCurrentEdge < siblingEdges / 2;
+                d3.select("#text-of-label-" + edge.id).attr("x", inEdgeMidPoint.point.x + distanceOfMidPoints / 2);
+                d3.select("#text-of-label-" + edge.id).attr("y", inEdgeMidPoint.point.y + distanceOfMidPoints / 2 - inEdgeMidPoint.point.y / 2);
+                line.attr("id", "edgeLabel" + edge.id);
+                line.attr("d", "M" + outEdgeMidPoint.point.x + "," + outEdgeMidPoint.point.y + "A " + radiusX + " " + radiusY + " 0 0 " + (sweep ? 1 : 0) + " " + inEdgeMidPoint.point.x + " " + inEdgeMidPoint.point.y);
             }
         };
     }();
@@ -1177,6 +1229,7 @@
                 var numberOfLines = 1 + filters.length;
                 var currentHeight = -(numberOfLines * lineHeight) / 2 + lineHeight / 2;
                 var boundingBoxCalculator = new BoundingBoxCalculator(boxPadding, lineHeight, numberOfLines);
+                uiVertex.boundingBox = boundingBoxCalculator;
                 var aliasText = element.append("text").attr("class", "alias-label").attr("text-anchor", "middle").attr("x", 0).attr("y", currentHeight).text(alias);
                 boundingBoxCalculator.addElement(aliasText[0][0]);
                 for (var i = 0; i < filters.length; i++) {
