@@ -1220,9 +1220,9 @@
             return new Point(centerA.x + add.x, centerA.y + add.y);
         };
         var calculateXRadius = function(actualEdge, countOfEdges, distanceOfMidpoints) {
-            var radiusConstant = 1e5 / distanceOfMidpoints;
-            radiusConstant = Math.min(radiusConstant, 420);
-            radiusConstant = Math.max(radiusConstant, 230);
+            var radiusConstant = 25e3 / distanceOfMidpoints;
+            radiusConstant = Math.min(radiusConstant, 105);
+            radiusConstant = Math.max(radiusConstant, 55);
             var diameter = (countOfEdges - 1) * radiusConstant;
             var maxRadius = diameter / 2;
             return -maxRadius + actualEdge * radiusConstant;
@@ -1282,13 +1282,15 @@
                 }
                 var inEdgeMidPoint = calculateMidPointByIntersection(intersectionOnInVertex, edge.inVertex), outEdgeMidPoint = calculateMidPointByIntersection(intersectionOnOutVertex, edge.outVertex);
                 var distanceOfMidPoints = distanceOfPoints(inEdgeMidPoint.point, outEdgeMidPoint.point), radius = calculateXRadius(indexOfCurrentEdge, siblingEdges, distanceOfPoints(inEdgeMidPoint.point, outEdgeMidPoint.point));
-                radiusX = inEdgeMidPoint.horizontal ? radius : distanceOfMidPoints;
-                radiusY = inEdgeMidPoint.horizontal ? distanceOfMidPoints : radius;
                 var sweep = isLeftOf(outEdgeMidPoint.point, inEdgeMidPoint.point) !== indexOfCurrentEdge < siblingEdges / 2;
-                d3.select("#text-of-label-" + edge.id).attr("x", inEdgeMidPoint.point.x + distanceOfMidPoints / 2);
-                d3.select("#text-of-label-" + edge.id).attr("y", inEdgeMidPoint.point.y + distanceOfMidPoints / 2);
+                var alpha = Math.asin(Math.abs(inEdgeMidPoint.point.y - outEdgeMidPoint.point.y) / distanceOfMidPoints) * 180 / Math.PI;
+                var isAboveInOut = isAbove(inEdgeMidPoint.point, outEdgeMidPoint.point);
+                var isLeft = isLeftOf(inEdgeMidPoint.point, outEdgeMidPoint.point);
+                var xAxisRotation = isLeft ? 180 : 0;
+                xAxisRotation += isAboveInOut === isLeft ? alpha : -alpha;
+                line.attr("class", "alpha " + alpha + " isleft " + isLeft + " isabove" + isAboveInOut);
                 line.attr("id", "edgeLabel" + edge.id);
-                line.attr("d", "M" + outEdgeMidPoint.point.x + "," + outEdgeMidPoint.point.y + "A " + radiusX + " " + radiusY + " 0 0 " + (sweep ? 1 : 0) + " " + inEdgeMidPoint.point.x + " " + inEdgeMidPoint.point.y);
+                line.attr("d", "M" + outEdgeMidPoint.point.x + "," + outEdgeMidPoint.point.y + "A " + distanceOfMidPoints * .55 + " " + radius + " " + xAxisRotation + " 0 " + (sweep ? 1 : 0) + " " + inEdgeMidPoint.point.x + " " + inEdgeMidPoint.point.y);
             }
         };
     }();
