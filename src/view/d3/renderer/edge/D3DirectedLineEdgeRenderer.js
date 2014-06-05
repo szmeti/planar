@@ -139,6 +139,10 @@ var D3DirectedLineEdgeRenderer = (function () {
         .attr('class', 'directed-edge arrow')
         .attr('marker-end','url(#arrow)')
         .attr('style', 'fill: none;stroke: #666;stroke-width: 1.5px;');
+
+      if(edge.edge.label === 'references') {
+        edge.uiElement.attr('stroke-dasharray', '5,5');
+      }
     },
 
     initDefs: function (defs) {
