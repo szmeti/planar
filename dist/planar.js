@@ -1225,7 +1225,7 @@
             radiusConstant = Math.max(radiusConstant, 55);
             var diameter = (countOfEdges - 1) * radiusConstant;
             var maxRadius = diameter / 2;
-            return -maxRadius + actualEdge * radiusConstant;
+            return Math.abs(-maxRadius + actualEdge * radiusConstant);
         };
         var calculateMidPointByIntersection = function(intersection, element) {
             var boundingBox = element.boundingBox;
@@ -1253,7 +1253,7 @@
         };
         return {
             init: function(edge, element) {
-                var text = element.append("text").attr("id", "text-of-label-" + edge.id).attr("x", 10).attr("y", 100).attr("text-anchor", "middle").attr("class", "edge-label");
+                var text = element.append("text").attr("id", "text-of-label-" + edge.id).attr("x", 10).attr("y", 100).attr("alignment-baseline", "central").attr("text-anchor", "middle").attr("class", "edge-label");
                 text.append("tspan").attr("baseline-shift", "super").text(edge.edge.label);
                 edge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", "url(#arrow)").attr("style", "fill: none;stroke: #666;stroke-width: 1.5px;");
             },
@@ -1282,15 +1282,32 @@
                 }
                 var inEdgeMidPoint = calculateMidPointByIntersection(intersectionOnInVertex, edge.inVertex), outEdgeMidPoint = calculateMidPointByIntersection(intersectionOnOutVertex, edge.outVertex);
                 var distanceOfMidPoints = distanceOfPoints(inEdgeMidPoint.point, outEdgeMidPoint.point), radius = calculateXRadius(indexOfCurrentEdge, siblingEdges, distanceOfPoints(inEdgeMidPoint.point, outEdgeMidPoint.point));
-                var sweep = isLeftOf(outEdgeMidPoint.point, inEdgeMidPoint.point) !== indexOfCurrentEdge < siblingEdges / 2;
-                var alpha = Math.asin(Math.abs(inEdgeMidPoint.point.y - outEdgeMidPoint.point.y) / distanceOfMidPoints) * 180 / Math.PI;
+                var isEdgeBelowCenter = indexOfCurrentEdge < siblingEdges / 2;
+                var midPointOfDistance = new Point((inEdgeMidPoint.point.x + outEdgeMidPoint.point.x) / 2, (inEdgeMidPoint.point.y + outEdgeMidPoint.point.y) / 2);
                 var isAboveInOut = isAbove(inEdgeMidPoint.point, outEdgeMidPoint.point);
-                var isLeft = isLeftOf(inEdgeMidPoint.point, outEdgeMidPoint.point);
-                var xAxisRotation = isLeft ? 180 : 0;
-                xAxisRotation += isAboveInOut === isLeft ? alpha : -alpha;
-                line.attr("class", "alpha " + alpha + " isleft " + isLeft + " isabove" + isAboveInOut);
+                var isLeftInOut = isLeftOf(inEdgeMidPoint.point, outEdgeMidPoint.point);
+                var isLeftOutIn = isLeftOf(outEdgeMidPoint.point, inEdgeMidPoint.point);
+                var referenceVertex = edge.inVertex.id > edge.outVertex.id ? edge.inVertex : edge.outVertex;
+                var direction = edge.inVertex === referenceVertex;
+                var referencePoint = edge.inVertex.id > edge.outVertex.id ? inEdgeMidPoint.point : outEdgeMidPoint.point;
+                var otherPoint = edge.inVertex.id > edge.outVertex.id ? outEdgeMidPoint.point : inEdgeMidPoint.point;
+                var sinAlpha = Math.abs(inEdgeMidPoint.point.y - outEdgeMidPoint.point.y) / distanceOfMidPoints;
+                var cosAlpha = Math.abs(inEdgeMidPoint.point.x - outEdgeMidPoint.point.x) / distanceOfMidPoints;
+                var alpha = Math.asin(sinAlpha) * 180 / Math.PI;
+                var sinAlpha2 = (referencePoint.y - otherPoint.y) / distanceOfMidPoints;
+                var cosAlpha2 = (referencePoint.x - otherPoint.x) / distanceOfMidPoints;
+                var sweepFlag = direction !== isEdgeBelowCenter ? 1 : 0;
+                var xAxisRotation = isAboveInOut === isLeftInOut ? alpha : -alpha;
+                var labelX = radius / 1.75 * sinAlpha2;
+                var labelY = radius / 1.75 * cosAlpha2;
+                labelX = isEdgeBelowCenter ? -labelX : labelX;
+                labelY = isEdgeBelowCenter ? -labelY : labelY;
+                d3.select("#text-of-label-" + edge.id).attr("x", midPointOfDistance.x + labelX);
+                d3.select("#text-of-label-" + edge.id).attr("y", midPointOfDistance.y - labelY);
+                labelY *= isAboveInOut ? -1 : 1;
+                line.attr("class", "inEdgeMidPointx " + inEdgeMidPoint.point.x + " inEdgeMidPointy " + inEdgeMidPoint.point.y + "outEdgeMidPointx " + outEdgeMidPoint.point.x + " outEdgeMidPointy " + outEdgeMidPoint.point.y + " labelx " + labelX + " labelY " + labelY + " isleftoinout " + isLeftInOut + " isaboveinout " + isAboveInOut + " isedgebelowcenter " + isEdgeBelowCenter + " indexofcurrentedge " + indexOfCurrentEdge + " sinalpha" + sinAlpha + " referencevertex " + referenceVertex.id + " direction " + direction);
                 line.attr("id", "edgeLabel" + edge.id);
-                line.attr("d", "M" + outEdgeMidPoint.point.x + "," + outEdgeMidPoint.point.y + "A " + distanceOfMidPoints * .55 + " " + radius + " " + xAxisRotation + " 0 " + (sweep ? 1 : 0) + " " + inEdgeMidPoint.point.x + " " + inEdgeMidPoint.point.y);
+                line.attr("d", "M" + outEdgeMidPoint.point.x + "," + outEdgeMidPoint.point.y + "A " + distanceOfMidPoints * .55 + " " + radius + " " + xAxisRotation + " 0 " + sweepFlag + " " + inEdgeMidPoint.point.x + " " + inEdgeMidPoint.point.y);
             }
         };
     }();
@@ -1408,6 +1425,9 @@
                 var whiteGradient = defs.append("linearGradient").attr("id", "queryVertexDefaultFillScheme").attr("x1", "0%").attr("y1", "0%").attr("x2", "0%").attr("y2", "100%");
                 whiteGradient.append("stop").attr("offset", "0%").attr("style", "stop-color:#f9f9f9;stop-opacity:1");
                 whiteGradient.append("stop").attr("offset", "100%").attr("style", "stop-color:#edebf4;stop-opacity:1");
+                var closeIcon = defs.append("symbol").attr("id", "icon-close").attr("viewBox", "0 0 16 16");
+                closeIcon.append("title").text("close");
+                closeIcon.append("path").attr("d", "M2.343 13.657c-3.124-3.124-3.124-8.19 0-11.314 3.125-3.124 8.19-3.124 11.315 0 3.124 3.124 3.124 8.19 0 11.314-3.125 3.125-8.19 3.125-11.315 0zM12.243 3.757c-2.344-2.343-6.143-2.343-8.485 0-2.344 2.343-2.344 6.142 0 8.485 2.343 2.343 6.142 2.343 8.485 0 2.343-2.343 2.343-6.142 0-8.485zM5.879 11.536l-1.414-1.415 2.121-2.121-2.121-2.121 1.414-1.415 2.121 2.122 2.121-2.122 1.414 1.415-2.121 2.121 2.121 2.121-1.414 1.415-2.121-2.122-2.121 2.122z");
             },
             formatText: function(filter, alias, text) {
                 if (filter.hasOwnProperty("referencedAlias")) {

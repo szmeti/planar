@@ -89,7 +89,7 @@ var D3DirectedLineEdgeRenderer = (function () {
     radiusConstant = Math.max(radiusConstant, 55);
     var diameter = (countOfEdges - 1) * radiusConstant;
     var maxRadius = diameter / 2;
-    return -maxRadius + actualEdge * radiusConstant;
+    return Math.abs(-maxRadius + actualEdge * radiusConstant);
   };
 
   var calculateMidPointByIntersection = function(intersection, element) {
@@ -126,12 +126,9 @@ var D3DirectedLineEdgeRenderer = (function () {
         .attr('id', 'text-of-label-'+ edge.id)
         .attr('x', 10)
         .attr('y', 100)
+        .attr('alignment-baseline', 'central')
         .attr('text-anchor', 'middle')
-//        .attr('transform', 'translate(0,5)')
         .attr('class', 'edge-label');
-
-//      var textPath = text.append('textPath').attr('startOffset', '50%')
-//        .attr('xlink:href', '#edgeLabel'+ edge.id);
 
       text.append('tspan')
         .attr('baseline-shift', 'super')
@@ -196,20 +193,42 @@ var D3DirectedLineEdgeRenderer = (function () {
       var distanceOfMidPoints = distanceOfPoints(inEdgeMidPoint.point, outEdgeMidPoint.point),
           radius = calculateXRadius(indexOfCurrentEdge, siblingEdges, distanceOfPoints(inEdgeMidPoint.point, outEdgeMidPoint.point));
 
-      var sweep = isLeftOf(outEdgeMidPoint.point, inEdgeMidPoint.point) !== (indexOfCurrentEdge < siblingEdges / 2);
-
-      var alpha = Math.asin(Math.abs(inEdgeMidPoint.point.y - outEdgeMidPoint.point.y) / distanceOfMidPoints) * 180 / Math.PI;
+      var isEdgeBelowCenter = (indexOfCurrentEdge < siblingEdges / 2);
+      var midPointOfDistance = new Point((inEdgeMidPoint.point.x + outEdgeMidPoint.point.x) / 2, (inEdgeMidPoint.point.y + outEdgeMidPoint.point.y) / 2);
       var isAboveInOut = isAbove(inEdgeMidPoint.point, outEdgeMidPoint.point);
       var isLeftInOut = isLeftOf(inEdgeMidPoint.point, outEdgeMidPoint.point);
 
-      var xAxisRotation = isLeftInOut ? 180 : 0;
-      xAxisRotation += isAboveInOut === isLeftInOut ? alpha : -alpha;
-//      d3.select('#text-of-label-'+ edge.id).attr('x', xMid);
-//      d3.select('#text-of-label-'+ edge.id).attr('y', yMid);
+      var referenceVertex = edge.inVertex.id > edge.outVertex.id ? edge.inVertex : edge.outVertex;
+      var direction = edge.inVertex === referenceVertex;
 
+      var referencePoint = edge.inVertex.id > edge.outVertex.id ? inEdgeMidPoint.point : outEdgeMidPoint.point;
+      var otherPoint = edge.inVertex.id > edge.outVertex.id ? outEdgeMidPoint.point : inEdgeMidPoint.point;
+
+      var sinAlphaAbs = Math.abs(inEdgeMidPoint.point.y - outEdgeMidPoint.point.y) / distanceOfMidPoints;
+      var alpha = Math.asin(sinAlphaAbs) * 180 / Math.PI;
+
+      var sinAlpha = (referencePoint.y - otherPoint.y) / distanceOfMidPoints;
+      var cosAlpha = (referencePoint.x - otherPoint.x) / distanceOfMidPoints;
+
+      var sweepFlag = (direction !== isEdgeBelowCenter ? 1 : 0);
+
+      var xAxisRotation = isAboveInOut === isLeftInOut ? alpha : -alpha;
+
+      var labelX = radius / 1.75 * sinAlpha;
+      var labelY = radius / 1.75 * cosAlpha;
+
+      labelX = isEdgeBelowCenter ? -labelX : labelX;
+      labelY = isEdgeBelowCenter ? -labelY : labelY;
+
+      d3.select('#text-of-label-'+ edge.id).attr('x', midPointOfDistance.x + labelX);
+      d3.select('#text-of-label-'+ edge.id).attr('y', midPointOfDistance.y - labelY);
+
+      labelY *= isAboveInOut ? -1 : 1;
+
+      line.attr('class', 'inEdgeMidPointx '+inEdgeMidPoint.point.x + ' inEdgeMidPointy ' + inEdgeMidPoint.point.y + 'outEdgeMidPointx '+outEdgeMidPoint.point.x + ' outEdgeMidPointy ' + outEdgeMidPoint.point.y + ' labelx ' + labelX + ' labelY ' + labelY + ' isleftoinout ' + isLeftInOut + ' isaboveinout ' + isAboveInOut + ' isedgebelowcenter ' + isEdgeBelowCenter + ' indexofcurrentedge ' + indexOfCurrentEdge + ' sinalpha' + sinAlphaAbs + ' referencevertex ' + referenceVertex.id + ' direction '+ direction);
 
       line.attr('id', 'edgeLabel'+ edge.id);
-      line.attr('d', 'M' + outEdgeMidPoint.point.x + ',' + outEdgeMidPoint.point.y + 'A ' + distanceOfMidPoints * 0.55 + ' ' + radius  + ' '+ xAxisRotation +' 0 '+ (sweep ? 1 : 0) +' ' + inEdgeMidPoint.point.x + ' ' + inEdgeMidPoint.point.y);
+      line.attr('d', 'M' + outEdgeMidPoint.point.x + ',' + outEdgeMidPoint.point.y + 'A ' + distanceOfMidPoints * 0.55 + ' ' + radius  + ' '+ xAxisRotation +' 0 '+ sweepFlag +' ' + inEdgeMidPoint.point.x + ' ' + inEdgeMidPoint.point.y);
     }
 
   };

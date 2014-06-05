@@ -79,6 +79,14 @@ var D3QueryVertexRenderer = (function () {
       whiteGradient.append('stop')
         .attr('offset', '100%')
         .attr('style', 'stop-color:#edebf4;stop-opacity:1');
+
+      var closeIcon = defs.append('symbol')
+        .attr('id', 'icon-close')
+        .attr('viewBox', '0 0 16 16');
+
+      closeIcon.append('title').text('close');
+      closeIcon.append('path')
+        .attr('d', 'M2.343 13.657c-3.124-3.124-3.124-8.19 0-11.314 3.125-3.124 8.19-3.124 11.315 0 3.124 3.124 3.124 8.19 0 11.314-3.125 3.125-8.19 3.125-11.315 0zM12.243 3.757c-2.344-2.343-6.143-2.343-8.485 0-2.344 2.343-2.344 6.142 0 8.485 2.343 2.343 6.142 2.343 8.485 0 2.343-2.343 2.343-6.142 0-8.485zM5.879 11.536l-1.414-1.415 2.121-2.121-2.121-2.121 1.414-1.415 2.121 2.122 2.121-2.122 1.414 1.415-2.121 2.121 2.121 2.121-1.414 1.415-2.121-2.122-2.121 2.122z');
     },
 
     formatText: function (filter, alias, text) {
