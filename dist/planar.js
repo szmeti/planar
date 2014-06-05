@@ -331,14 +331,17 @@
         return Vertex;
     }();
     var Graph = function() {
-        function Graph(container, engine) {
+        function Graph(container, engine, instanceSettings) {
             this.vertices = {};
             this.edges = {};
             this.indexManager = new IndexManager(this);
             this.vertexPropertyFilters = {};
             this.edgePropertyFilters = {};
+            instanceSettings = instanceSettings || {};
+            this.settings = utils.mixin({}, settings);
+            this.settings = utils.mixin(this.settings, instanceSettings);
             if (utils.exists(container) && utils.exists(engine)) {
-                this.renderer = new Renderer(this, container, engine);
+                this.renderer = new Renderer(this, container, engine, this.settings);
                 this.renderer.init();
             }
         }
@@ -1546,15 +1549,15 @@
         };
     }();
     var Renderer = function() {
-        function Renderer(graph, container, engine) {
+        function Renderer(graph, container, engine, instanceSettings) {
             utils.checkExists("Graph", graph);
             this.graph = graph;
             this.container = container;
             this.engine = utils.isUndefined(engine) ? settings.engine : engine;
-            this.width = settings.width;
-            this.height = settings.height;
+            this.width = instanceSettings.width;
+            this.height = instanceSettings.height;
             this.initialized = false;
-            this.layout = settings.layout;
+            this.layout = instanceSettings.layout;
             this.vertices = [];
             this.verticesById = {};
             this.edges = [];
