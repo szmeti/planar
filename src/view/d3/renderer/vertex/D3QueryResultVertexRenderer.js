@@ -14,7 +14,7 @@ var D3QueryResultVertexRenderer = (function () {
       var numberOfLines = propertyKeys.length + 1;
       var currentHeight = -(numberOfLines * lineHeight) / 2 + lineHeight / 2;
       var boundingBoxCalculator = new BoundingBoxCalculator(boxPadding, lineHeight, numberOfLines);
-      uiVertex.boundingBox = boundingBoxCalculator;
+      uiVertex.uiElement = element;
 
       var header = element.append('g').
         attr('class', 'query-result-vertex-header');

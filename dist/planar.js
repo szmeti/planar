@@ -1231,25 +1231,29 @@
             return Math.abs(-maxRadius + actualEdge * radiusConstant);
         };
         var calculateMidPointByIntersection = function(intersection, element) {
-            var boundingBox = element.boundingBox;
-            if (boundingBox.topEdge() + element.y === intersection.y) {
+            var uiElement = element.uiElement;
+            var width = uiElement[0][0].getBBox().width;
+            var height = uiElement[0][0].getBBox().height;
+            var halfWidth = width / 2;
+            var halfHeight = height / 2;
+            if (element.y - halfHeight === intersection.y) {
                 return {
-                    point: new Point(element.x, element.y - boundingBox.totalHeight() / 2),
+                    point: new Point(element.x, element.y - halfHeight),
                     horizontal: true
                 };
-            } else if (boundingBox.bottomEdge() + element.y === intersection.y) {
+            } else if (halfHeight + element.y === intersection.y) {
                 return {
-                    point: new Point(element.x, element.y + boundingBox.totalHeight() / 2),
+                    point: new Point(element.x, element.y + halfHeight),
                     horizontal: true
                 };
-            } else if (boundingBox.leftEdge() + element.x === intersection.x) {
+            } else if (element.x - halfWidth === intersection.x) {
                 return {
-                    point: new Point(element.x - boundingBox.totalWidth() / 2, element.y),
+                    point: new Point(element.x - halfWidth, element.y),
                     horizontal: false
                 };
-            } else if (boundingBox.rightEdge() + element.x === intersection.x) {
+            } else if (halfWidth + element.x === intersection.x) {
                 return {
-                    point: new Point(element.x + boundingBox.totalWidth() / 2, element.y),
+                    point: new Point(element.x + halfWidth, element.y),
                     horizontal: false
                 };
             }
@@ -1347,7 +1351,7 @@
                 var numberOfLines = propertyKeys.length + 1;
                 var currentHeight = -(numberOfLines * lineHeight) / 2 + lineHeight / 2;
                 var boundingBoxCalculator = new BoundingBoxCalculator(boxPadding, lineHeight, numberOfLines);
-                uiVertex.boundingBox = boundingBoxCalculator;
+                uiVertex.uiElement = element;
                 var header = element.append("g").attr("class", "query-result-vertex-header");
                 var entityTypeLabel = header.append("text").attr("class", "entity-type-label").attr("text-anchor", "start").attr("y", currentHeight).text(entityType);
                 var queryVertexRefLabel = header.append("text").attr("class", "query-vertex-ref-label").attr("text-anchor", "end").attr("y", currentHeight).text(queryVertexReference);
@@ -1397,16 +1401,19 @@
         return {
             init: function(uiVertex, element) {
                 var vertex = uiVertex.vertex;
-                var filters = vertex.getProperty("filters") || [];
-                var alias = vertex.getProperty("alias");
+                var filters = vertex.getPropertyUnfiltered("filters") || [];
+                var alias = vertex.getPropertyUnfiltered("alias");
+                var entityType = vertex.getPropertyUnfiltered("entityType");
                 var lineHeight = 25;
                 var boxPadding = 10;
                 var numberOfLines = 1 + filters.length;
                 var currentHeight = -(numberOfLines * lineHeight) / 2 + lineHeight / 2;
                 var boundingBoxCalculator = new BoundingBoxCalculator(boxPadding, lineHeight, numberOfLines);
-                uiVertex.boundingBox = boundingBoxCalculator;
-                var aliasText = element.append("text").attr("class", "alias-label").attr("text-anchor", "middle").attr("x", 0).attr("y", currentHeight).text(alias);
-                boundingBoxCalculator.addElement(aliasText[0][0]);
+                uiVertex.uiElement = element;
+                var header = element.append("g").attr("class", "query-vertex-header");
+                var entityTypeLabel = header.append("text").attr("class", "entity-type-label").attr("text-anchor", "start").attr("y", currentHeight).text(entityType);
+                var aliasText = header.append("text").attr("class", "alias-label").attr("text-anchor", "end").attr("y", currentHeight).text(alias);
+                boundingBoxCalculator.addElement(header[0][0]);
                 for (var i = 0; i < filters.length; i++) {
                     var filter = filters[i];
                     currentHeight += lineHeight;
@@ -1417,11 +1424,24 @@
                     boundingBoxCalculator.addElement(filterText[0][0]);
                 }
                 var linePadding = 5;
-                var leftEdge = boundingBoxCalculator.leftEdge();
+                var totalWidth = boundingBoxCalculator.totalWidth();
+                var minWidth = header[0][0].getBBox().width + 4 * boxPadding;
                 var totalHeight = boundingBoxCalculator.totalHeight();
                 var dividerY = -(totalHeight / 2 - lineHeight) + linePadding;
-                element.append("line").attr("class", "divider").attr("x1", leftEdge).attr("y1", dividerY).attr("x2", boundingBoxCalculator.rightEdge()).attr("y2", dividerY);
-                element.insert("rect", ".alias-label").attr("class", "query-vertex-box").attr("rx", "4").attr("width", boundingBoxCalculator.totalWidth()).attr("height", totalHeight).attr("x", leftEdge).attr("y", boundingBoxCalculator.topEdge());
+                var leftEdge;
+                var rightEdge;
+                if (totalWidth > minWidth) {
+                    leftEdge = boundingBoxCalculator.leftEdge();
+                    rightEdge = boundingBoxCalculator.rightEdge();
+                } else {
+                    totalWidth = minWidth;
+                    leftEdge = boundingBoxCalculator.leftEdge() - boxPadding;
+                    rightEdge = boundingBoxCalculator.rightEdge() + boxPadding;
+                }
+                aliasText.attr("x", rightEdge - boxPadding);
+                entityTypeLabel.attr("x", leftEdge + boxPadding);
+                element.append("line").attr("class", "divider").attr("x1", leftEdge).attr("y1", dividerY).attr("x2", rightEdge).attr("y2", dividerY);
+                element.insert("rect", ".query-vertex-header").attr("class", "query-vertex-box").attr("rx", "4").attr("width", totalWidth).attr("height", totalHeight).attr("x", leftEdge).attr("y", boundingBoxCalculator.topEdge());
             },
             initDefs: function(defs) {
                 var whiteGradient = defs.append("linearGradient").attr("id", "queryVertexDefaultFillScheme").attr("x1", "0%").attr("y1", "0%").attr("x2", "0%").attr("y2", "100%");

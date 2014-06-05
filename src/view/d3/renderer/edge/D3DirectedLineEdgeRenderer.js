@@ -93,27 +93,32 @@ var D3DirectedLineEdgeRenderer = (function () {
   };
 
   var calculateMidPointByIntersection = function(intersection, element) {
-    var boundingBox = element.boundingBox;
+    var uiElement = element.uiElement;
+
+    var width = uiElement[0][0].getBBox().width;
+    var height = uiElement[0][0].getBBox().height;
+    var halfWidth = width / 2;
+    var halfHeight = height / 2;
 
 
-    if (boundingBox.topEdge() + element.y === intersection.y) {
+    if (element.y - halfHeight === intersection.y) {
       return {
-        point : new Point(element.x, element.y - (boundingBox.totalHeight() / 2)),
+        point : new Point(element.x, element.y - halfHeight),
         horizontal : true
       };
-    } else if (boundingBox.bottomEdge() + element.y === intersection.y) {
+    } else if (halfHeight + element.y === intersection.y) {
       return {
-        point : new Point(element.x, element.y + (boundingBox.totalHeight() / 2)),
+        point : new Point(element.x, element.y + halfHeight),
         horizontal : true
       };
-    } else if (boundingBox.leftEdge() + element.x  === intersection.x) {
+    } else if (element.x - halfWidth  === intersection.x) {
       return {
-        point : new Point(element.x - (boundingBox.totalWidth() / 2), element.y),
+        point : new Point(element.x - halfWidth, element.y),
         horizontal : false
       };
-    } else if (boundingBox.rightEdge() + element.x === intersection.x) {
+    } else if (halfWidth + element.x === intersection.x) {
       return {
-        point : new Point(element.x + (boundingBox.totalWidth() / 2), element.y),
+        point : new Point(element.x + halfWidth, element.y),
         horizontal : false
       };
     }

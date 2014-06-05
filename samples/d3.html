@@ -76,6 +76,7 @@
         var v1 = graph.addVertex();
         v1.setProperty(planar.PROP_TYPE, "query-vertex");
         v1.setProperty('alias', 'P1');
+        v1.setProperty('entityType', 'Person');
 
         var v1Filters = [
             {
@@ -182,11 +183,13 @@
         v2.setProperty(planar.PROP_TYPE, "query-vertex");
         v2.setProperty('filters', v2Filters);
         v2.setProperty('alias', 'P2');
+        v2.setProperty('entityType', 'Person');
 
         var v3 = graph.addVertex();
         v3.setProperty(planar.PROP_TYPE, "query-vertex");
 //        v3.setProperty('filters', v3Filters);
         v3.setProperty('alias', 'P3');
+        v3.setProperty('entityType', 'Person');
 
         graph.addEdge(null, v1, v2, "v1v2");
 

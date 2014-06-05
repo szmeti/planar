@@ -5,24 +5,33 @@ var D3QueryVertexRenderer = (function () {
 
     init: function (uiVertex, element) {
       var vertex = uiVertex.vertex;
-      var filters = vertex.getProperty('filters') || [];
-      var alias = vertex.getProperty('alias');
+      var filters = vertex.getPropertyUnfiltered('filters') || [];
+      var alias = vertex.getPropertyUnfiltered('alias');
+      var entityType = vertex.getPropertyUnfiltered('entityType');
 
       var lineHeight = 25;
       var boxPadding = 10;
       var numberOfLines = 1 + filters.length;
       var currentHeight = -(numberOfLines * lineHeight) / 2 + lineHeight / 2;
       var boundingBoxCalculator = new BoundingBoxCalculator(boxPadding, lineHeight, numberOfLines);
-      uiVertex.boundingBox = boundingBoxCalculator;
+      uiVertex.uiElement = element;
 
-      var aliasText = element.append('text').
+      var header = element.append('g').
+        attr('class', 'query-vertex-header');
+
+      var entityTypeLabel = header.append('text').
+        attr('class', 'entity-type-label').
+        attr('text-anchor', 'start').
+        attr('y', currentHeight).
+        text(entityType);
+
+      var aliasText = header.append('text').
         attr('class', 'alias-label').
-        attr('text-anchor', 'middle').
-        attr('x', 0).
+        attr('text-anchor', 'end').
         attr('y', currentHeight).
         text(alias);
 
-      boundingBoxCalculator.addElement(aliasText[0][0]);
+      boundingBoxCalculator.addElement(header[0][0]);
 
       for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
@@ -43,22 +52,37 @@ var D3QueryVertexRenderer = (function () {
       }
 
       var linePadding = 5;
-      var leftEdge = boundingBoxCalculator.leftEdge();
-      var totalHeight = (boundingBoxCalculator.totalHeight());
+      var totalWidth = boundingBoxCalculator.totalWidth();
+      var minWidth = header[0][0].getBBox().width + 4 * boxPadding;
+      var totalHeight = boundingBoxCalculator.totalHeight();
       var dividerY = -(totalHeight / 2 - lineHeight) + linePadding;
+      var leftEdge;
+      var rightEdge;
+
+      if (totalWidth > minWidth) {
+        leftEdge = boundingBoxCalculator.leftEdge();
+        rightEdge = boundingBoxCalculator.rightEdge();
+      } else {
+        totalWidth = minWidth;
+        leftEdge = boundingBoxCalculator.leftEdge() - boxPadding;
+        rightEdge = boundingBoxCalculator.rightEdge() + boxPadding;
+      }
+
+      aliasText.attr('x', rightEdge - boxPadding);
+      entityTypeLabel.attr('x', leftEdge + boxPadding);
 
       element.append('line')
         .attr('class', 'divider')
         .attr('x1', leftEdge)
         .attr('y1', dividerY)
-        .attr('x2', boundingBoxCalculator.rightEdge())
+        .attr('x2', rightEdge)
         .attr('y2', dividerY);
 
       element.
-        insert('rect', '.alias-label').
+        insert('rect', '.query-vertex-header').
         attr('class', 'query-vertex-box').
         attr('rx', '4').
-        attr('width', boundingBoxCalculator.totalWidth()).
+        attr('width', totalWidth).
         attr('height', totalHeight).
         attr('x', leftEdge).
         attr('y', boundingBoxCalculator.topEdge());
