@@ -1263,6 +1263,9 @@
                 var text = element.append("text").attr("id", "text-of-label-" + edge.id).attr("x", 10).attr("y", 100).attr("alignment-baseline", "central").attr("text-anchor", "middle").attr("class", "edge-label");
                 text.append("tspan").attr("baseline-shift", "super").text(edge.edge.label);
                 edge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", "url(#arrow)").attr("style", "fill: none;stroke: #666;stroke-width: 1.5px;");
+                if (edge.edge.label === "references") {
+                    edge.uiElement.attr("stroke-dasharray", "5,5");
+                }
             },
             initDefs: function(defs) {
                 defs.append("marker").attr("id", "arrow").attr("refX", 10).attr("refY", 2).attr("markerWidth", 10).attr("markerHeight", 4).attr("orient", "auto").append("path").attr("d", "M0,0L10,2L0,4");
