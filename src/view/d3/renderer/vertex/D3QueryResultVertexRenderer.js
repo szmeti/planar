@@ -74,8 +74,8 @@ var D3QueryResultVertexRenderer = (function () {
         rightEdge = boundingBoxCalculator.rightEdge();
       } else {
         totalWidth = minWidth;
-        leftEdge = boundingBoxCalculator.leftEdge() - 1.5 * boxPadding;
-        rightEdge = boundingBoxCalculator.rightEdge() + 1.5 * boxPadding;
+        leftEdge = -totalWidth / 2;
+        rightEdge = totalWidth / 2;
       }
 
       queryVertexRefLabel.attr('x', rightEdge - boxPadding - iconSize - 4);

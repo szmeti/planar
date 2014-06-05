@@ -64,8 +64,8 @@ var D3QueryVertexRenderer = (function () {
         rightEdge = boundingBoxCalculator.rightEdge();
       } else {
         totalWidth = minWidth;
-        leftEdge = boundingBoxCalculator.leftEdge() - boxPadding;
-        rightEdge = boundingBoxCalculator.rightEdge() + boxPadding;
+        leftEdge = -totalWidth / 2;
+        rightEdge = totalWidth / 2;
       }
 
       aliasText.attr('x', rightEdge - boxPadding);

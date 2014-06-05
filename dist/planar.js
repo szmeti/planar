@@ -1382,8 +1382,8 @@
                     rightEdge = boundingBoxCalculator.rightEdge();
                 } else {
                     totalWidth = minWidth;
-                    leftEdge = boundingBoxCalculator.leftEdge() - 1.5 * boxPadding;
-                    rightEdge = boundingBoxCalculator.rightEdge() + 1.5 * boxPadding;
+                    leftEdge = -totalWidth / 2;
+                    rightEdge = totalWidth / 2;
                 }
                 queryVertexRefLabel.attr("x", rightEdge - boxPadding - iconSize - 4);
                 entityTypeLabel.attr("x", leftEdge + boxPadding);
@@ -1438,8 +1438,8 @@
                     rightEdge = boundingBoxCalculator.rightEdge();
                 } else {
                     totalWidth = minWidth;
-                    leftEdge = boundingBoxCalculator.leftEdge() - boxPadding;
-                    rightEdge = boundingBoxCalculator.rightEdge() + boxPadding;
+                    leftEdge = -totalWidth / 2;
+                    rightEdge = totalWidth / 2;
                 }
                 aliasText.attr("x", rightEdge - boxPadding);
                 entityTypeLabel.attr("x", leftEdge + boxPadding);
