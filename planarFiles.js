@@ -1,9 +1,13 @@
 planarFiles = {
   'planarSrc': [
     'src/version.js',
-    'src/utils.js',
+    'src/utils/utils.js',
+    'src/utils/GeometryUtils.js',
+    'src/utils/SvgUtils.js',
     'src/constants.js',
     'src/event/EventEmitter.js',
+    'src/model/Point.js',
+    'src/model/Rectangle.js',
     'src/model/Element.js',
     'src/model/Edge.js',
     'src/model/Vertex.js',

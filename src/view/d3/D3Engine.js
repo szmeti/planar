@@ -30,8 +30,10 @@ var D3Engine = (function () {
 
       var d3Renderers = ElementRendererProvider.getAll('d3');
 
-      for (var name in d3Renderers){
-        d3Renderers[name].initDefs(defs);
+      for (var i = 0; i < d3Renderers.length; i++){
+        if (typeof d3Renderers[i].initDefs === 'function') {
+          d3Renderers[i].initDefs(defs);
+        }
       }
     },
 

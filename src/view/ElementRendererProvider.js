@@ -19,10 +19,9 @@ var ElementRendererProvider = (function () {
     },
 
     getAll: function(engine) {
-      var renderers = {};
       var engineSetting = utils.get(settings, engine);
-      utils.mixin(renderers, engineSetting.vertexRenderers);
-      utils.mixin(renderers, engineSetting.edgeRenderers);
+      var renderers = utils.values(engineSetting.vertexRenderers);
+      renderers = renderers.concat(utils.values(engineSetting.edgeRenderers));
 
       return renderers;
     },

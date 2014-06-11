@@ -43,6 +43,11 @@ var Edge = (function () {
 
     remove: function () {
       this.graph.removeEdge(this);
+    },
+
+    connects : function (v1, v2) {
+      return (this.outVertex.id === v1.id && this.inVertex.id === v2.id) ||
+        (this.outVertex.id === v2.id && this.inVertex.id === v1.id);
     }
 
   });
