@@ -1259,6 +1259,33 @@
         return D3Engine;
     }();
     var D3DirectedLineEdgeRenderer = function() {
+        return {
+            init: function(edge, element) {
+                var text = element.append("text").attr("id", "text-of-label-" + edge.id).attr("x", 10).attr("y", 100).attr("alignment-baseline", "central").attr("text-anchor", "middle").attr("class", "edge-label");
+                text.append("tspan").attr("baseline-shift", "super").text(edge.edge.label);
+                edge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", "url(#arrow)").attr("style", "fill: none;stroke: #666;stroke-width: 1.5px;");
+                if (edge.edge.label === "references") {
+                    edge.uiElement.attr("stroke-dasharray", "5,5");
+                }
+            },
+            initDefs: function(defs) {
+                defs.append("marker").attr("id", "arrow").attr("refX", 10).attr("refY", 2).attr("markerWidth", 10).attr("markerHeight", 4).attr("orient", "auto").append("path").attr("d", "M0,0L10,2L0,4");
+            },
+            updatePosition: function(edge) {
+                var line = edge.uiElement;
+                var calculator = new DirectedLineEdgeCalculator(edge);
+                var edgeProprties = calculator.calculate();
+                d3.select("#text-of-label-" + edge.id).attr("x", edgeProprties.labelPosition.x);
+                d3.select("#text-of-label-" + edge.id).attr("y", edgeProprties.labelPosition.y);
+                line.attr("id", "edgeLabel" + edge.id);
+                line.attr("d", "M" + edgeProprties.startPoint.x + "," + edgeProprties.startPoint.y + "A " + edgeProprties.radiusX + " " + edgeProprties.radiusY + " " + edgeProprties.xAxisRotation + " 0 " + edgeProprties.sweepFlag + " " + edgeProprties.endPoint.x + " " + edgeProprties.endPoint.y);
+            }
+        };
+    }();
+    var DirectedLineEdgeCalculator = function() {
+        function DirectedLineEdgeCalculator(edge) {
+            this.edge = edge;
+        }
         var calculateRadius = function(actualEdge, countOfEdges, distanceOfMidpoints) {
             var radiusConstant = 25e3 / distanceOfMidpoints;
             radiusConstant = Math.min(radiusConstant, 105);
@@ -1300,50 +1327,48 @@
                 y: midPointOfDistance.y - labelY
             };
         };
-        return {
-            init: function(edge, element) {
-                var text = element.append("text").attr("id", "text-of-label-" + edge.id).attr("x", 10).attr("y", 100).attr("alignment-baseline", "central").attr("text-anchor", "middle").attr("class", "edge-label");
-                text.append("tspan").attr("baseline-shift", "super").text(edge.edge.label);
-                edge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", "url(#arrow)").attr("style", "fill: none;stroke: #666;stroke-width: 1.5px;");
-                if (edge.edge.label === "references") {
-                    edge.uiElement.attr("stroke-dasharray", "5,5");
-                }
-            },
-            initDefs: function(defs) {
-                defs.append("marker").attr("id", "arrow").attr("refX", 10).attr("refY", 2).attr("markerWidth", 10).attr("markerHeight", 4).attr("orient", "auto").append("path").attr("d", "M0,0L10,2L0,4");
-            },
-            updatePosition: function(edge) {
-                var line = edge.uiElement, inWidth = SvgUtils.widthOf(edge.inVertex), inHeight = SvgUtils.heightOf(edge.inVertex), outWidth = SvgUtils.widthOf(edge.outVertex), outHeight = SvgUtils.heightOf(edge.outVertex);
-                var inVertexRect = new Rectangle(edge.inVertex.x - inWidth / 2, edge.inVertex.y - inHeight / 2, inWidth, inHeight);
-                var outVertexRect = new Rectangle(edge.outVertex.x - outWidth / 2, edge.outVertex.y - outHeight / 2, outWidth, outHeight);
+        utils.mixin(DirectedLineEdgeCalculator.prototype, {
+            calculate: function() {
+                var inWidth = SvgUtils.widthOf(this.edge.inVertex), inHeight = SvgUtils.heightOf(this.edge.inVertex), outWidth = SvgUtils.widthOf(this.edge.outVertex), outHeight = SvgUtils.heightOf(this.edge.outVertex);
+                var inVertexRect = new Rectangle(this.edge.inVertex.x - inWidth / 2, this.edge.inVertex.y - inHeight / 2, inWidth, inHeight);
+                var outVertexRect = new Rectangle(this.edge.outVertex.x - outWidth / 2, this.edge.outVertex.y - outHeight / 2, outWidth, outHeight);
                 var intersectionOnOutVertex = GeometryUtils.findIntersectionOnClosestSide(outVertexRect, inVertexRect);
                 var intersectionOnInVertex = GeometryUtils.findIntersectionOnClosestSide(inVertexRect, outVertexRect);
-                var inEdgeMidPoint = calculateMidPointByIntersection(intersectionOnInVertex, edge.inVertex);
-                var outEdgeMidPoint = calculateMidPointByIntersection(intersectionOnOutVertex, edge.outVertex);
+                var inEdgeMidPoint = calculateMidPointByIntersection(intersectionOnInVertex, this.edge.inVertex);
+                var outEdgeMidPoint = calculateMidPointByIntersection(intersectionOnOutVertex, this.edge.outVertex);
                 var distanceOfMidPoints = GeometryUtils.distanceOfPoints(inEdgeMidPoint.point, outEdgeMidPoint.point);
-                var connectedEdges = countSiblingsAndFindCurrent(edge);
+                var connectedEdges = countSiblingsAndFindCurrent(this.edge);
                 var radius = calculateRadius(connectedEdges.indexOfCurrentEdge, connectedEdges.siblingEdges, distanceOfMidPoints);
                 var isEdgeBelowCenter = connectedEdges.indexOfCurrentEdge < connectedEdges.siblingEdges / 2;
                 var isAboveInOut = GeometryUtils.isAbove(inEdgeMidPoint.point, outEdgeMidPoint.point);
                 var isLeftInOut = GeometryUtils.isLeftOf(inEdgeMidPoint.point, outEdgeMidPoint.point);
-                var referenceVertex = edge.inVertex.id > edge.outVertex.id ? edge.inVertex : edge.outVertex;
-                var direction = edge.inVertex === referenceVertex;
-                var referencePoint = edge.inVertex.id > edge.outVertex.id ? inEdgeMidPoint.point : outEdgeMidPoint.point;
-                var otherPoint = edge.inVertex.id > edge.outVertex.id ? outEdgeMidPoint.point : inEdgeMidPoint.point;
+                var referenceVertex = this.edge.inVertex.id > this.edge.outVertex.id ? this.edge.inVertex : this.edge.outVertex;
+                var direction = this.edge.inVertex === referenceVertex;
+                var referencePoint = this.edge.inVertex.id > this.edge.outVertex.id ? inEdgeMidPoint.point : outEdgeMidPoint.point;
+                var otherPoint = this.edge.inVertex.id > this.edge.outVertex.id ? outEdgeMidPoint.point : inEdgeMidPoint.point;
                 var sinAlphaAbs = Math.abs(inEdgeMidPoint.point.y - outEdgeMidPoint.point.y) / distanceOfMidPoints;
                 var alpha = Math.asin(sinAlphaAbs) * 180 / Math.PI;
                 var sinAlpha = (referencePoint.y - otherPoint.y) / distanceOfMidPoints;
                 var cosAlpha = (referencePoint.x - otherPoint.x) / distanceOfMidPoints;
-                var sweepFlag = direction !== isEdgeBelowCenter ? 1 : 0;
-                var xAxisRotation = isAboveInOut === isLeftInOut ? alpha : -alpha;
                 var midPointOfDistance = new Point((inEdgeMidPoint.point.x + outEdgeMidPoint.point.x) / 2, (inEdgeMidPoint.point.y + outEdgeMidPoint.point.y) / 2);
-                var labelPosition = calculateLabelPosition(radius, midPointOfDistance, isEdgeBelowCenter, sinAlpha, cosAlpha);
-                d3.select("#text-of-label-" + edge.id).attr("x", labelPosition.x);
-                d3.select("#text-of-label-" + edge.id).attr("y", labelPosition.y);
-                line.attr("id", "edgeLabel" + edge.id);
-                line.attr("d", "M" + outEdgeMidPoint.point.x + "," + outEdgeMidPoint.point.y + "A " + distanceOfMidPoints * .55 + " " + radius + " " + xAxisRotation + " 0 " + sweepFlag + " " + inEdgeMidPoint.point.x + " " + inEdgeMidPoint.point.y);
+                return {
+                    startPoint: {
+                        x: outEdgeMidPoint.point.x,
+                        y: outEdgeMidPoint.point.y
+                    },
+                    endPoint: {
+                        x: inEdgeMidPoint.point.x,
+                        y: inEdgeMidPoint.point.y
+                    },
+                    labelPosition: calculateLabelPosition(radius, midPointOfDistance, isEdgeBelowCenter, sinAlpha, cosAlpha),
+                    radiusX: distanceOfMidPoints * .55,
+                    radiusY: radius,
+                    xAxisRotation: isAboveInOut === isLeftInOut ? alpha : -alpha,
+                    sweepFlag: direction !== isEdgeBelowCenter ? 1 : 0
+                };
             }
-        };
+        });
+        return DirectedLineEdgeCalculator;
     }();
     var D3LineEdgeRenderer = function() {
         return {

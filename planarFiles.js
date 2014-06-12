@@ -46,7 +46,7 @@ planarFiles = {
   ],
 
   'planarUnitTests': [
-    'test/spec/{,*/}*.js'
+    'test/spec/**/*.js'
   ],
 
   'liveReload': [
