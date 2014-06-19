@@ -17,6 +17,31 @@
             /*background-color: #eceaf3;*/
         }
 
+        .canvas .wrapper.outer > .background {
+            fill: #000000;
+        }
+        .canvas .wrapper.inner > .background {
+            cursor: move;
+        }
+        .canvas .background {
+            fill: #F6F6F6;
+            stroke: #333333;
+            cursor: move;
+        }
+        .canvas .panCanvas {
+            cursor: move;
+        }
+
+        .canvas .navigator .frame .background {
+            stroke: #111111;
+            stroke-width: 4px;
+            fill-opacity: 0.4;
+            fill: #000000;
+            fill: url(#navigatorGradient);
+            filter: url(#navigatorDropShadow);
+            cursor: move;
+        }
+
         .edge {
             stroke: #999;
             stroke-width: 2;

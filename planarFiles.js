@@ -27,6 +27,8 @@ planarFiles = {
     'src/view/layout/RandomLayout.js',
     'src/view/layout/ForceDirectedLayout.js',
     'src/view/Engine.js',
+    'src/view/d3/Navigator.js',
+    'src/view/d3/Canvas.js',
     'src/view/d3/D3Engine.js',
     'src/view/d3/renderer/{,*/}*.js',
     'src/view/raphael/RaphaelEngine.js',

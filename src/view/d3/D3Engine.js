@@ -4,29 +4,40 @@ var D3Engine = (function () {
   function D3Engine() {
   }
 
+  function caculcateDragLimit(point, distanceToEdge, minLimit, maxLimit) {
+    var paddingFromEdge = 10;
+    if (point - distanceToEdge < minLimit) {
+      return minLimit + distanceToEdge + paddingFromEdge;
+    } else if (point + distanceToEdge > maxLimit) {
+      return maxLimit - distanceToEdge - paddingFromEdge;
+    } else {
+      return point;
+    }
+  }
+
   utils.mixin(D3Engine.prototype, Engine);
 
   utils.mixin(D3Engine.prototype, {
 
     initEngine: function (container, width, height) {
-      function zoom() {
-        svg.attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
-      }
 
-      var svg = this.svg = d3.select(container).
+      var svgContainer = d3.select(container).
         append('svg').
+        attr('class', 'svg-container').
         attr('width', width).
         attr('height', height).
-        append('g').
-        call(d3.behavior.zoom().scaleExtent([1, 8]).on('zoom', zoom))
-        .append('g');
+        append('g');
 
-      svg.append('rect')
-        .attr('class', 'overlay')
-        .attr('width', width)
-        .attr('height', height);
+      var widthOfDrawArea = width * 0.75;
+      var heightOfDrawArea = height * 0.75;
 
-      var defs = svg.append('defs');
+      var graphSvg = this.svg = d3.select(document.createElement('svg')).
+        append('svg').
+        attr('class', 'graph-container').
+        attr('width', widthOfDrawArea).
+        attr('height', heightOfDrawArea);
+
+      var defs = graphSvg.append('defs');
 
       var d3Renderers = ElementRendererProvider.getAll('d3');
 
@@ -35,6 +46,11 @@ var D3Engine = (function () {
           d3Renderers[i].initDefs(defs);
         }
       }
+
+      var canvas = new Canvas().width(widthOfDrawArea).height(heightOfDrawArea);
+      svgContainer.call(canvas);
+
+      canvas.addItem(this.svg);
     },
 
     beforeRender: function (vertices, edges) {
@@ -44,7 +60,7 @@ var D3Engine = (function () {
       var vertexSet = bindData(this.svg, 'vertex', vertices);
       var vertexEnter = addEnterSection('vertex', vertexSet);
       translateVertices(vertexSet);
-      addDragToVertices(vertexEnter);
+      addDragToVertices(vertexEnter, this.svg);
 
       updateEdgePositions(edgeSet);
     }
@@ -93,7 +109,7 @@ var D3Engine = (function () {
     });
   }
 
-  function addDragToVertices(element) {
+  function addDragToVertices(element, container) {
     var drag = d3.behavior.drag();
 
     drag.on('dragstart', function (uiVertex) {
@@ -103,8 +119,18 @@ var D3Engine = (function () {
     });
 
     drag.on('drag', function (uiVertex) {
+//      var containerWidth = parseInt(container.attr('width'));
+//      var containerHeight = parseInt(container.attr('height'));
+//
+//      var halfWidth = SvgUtils.widthOf(uiVertex) / 2;
+//      var halfHeight = SvgUtils.heightOf(uiVertex) / 2;
+//
+//      var newX = caculcateDragLimit(d3.event.x, halfWidth, 0, containerWidth);
+//      var newY = caculcateDragLimit(d3.event.y, halfHeight, 0, containerHeight);
+
       uiVertex.x = d3.event.x;
       uiVertex.y = d3.event.y;
+
       var graph = uiVertex.vertex.getGraph();
       graph.trigger('vertexDrag', uiVertex);
     });

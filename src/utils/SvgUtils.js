@@ -8,6 +8,14 @@ var SvgUtils = {
 
   heightOf: function (element) {
     return element.g[0][0].getBBox().height;
+  },
+
+  getXYFromTranslate : function(translateString) {
+    var split = translateString.split(',');
+    var x = split[0] ? split[0].split('(')[1] : 0;
+    var y = split[1] ? split[1].split(')')[0] : 0;
+    return [x, y];
   }
+  
 
 };

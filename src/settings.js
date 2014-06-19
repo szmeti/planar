@@ -29,12 +29,15 @@ var settings = {
       'query-result-vertex': D3QueryResultVertexRenderer
     },
 
+    zoomEnabled : true,
+    dragEnabled : true,
+
     edgeRenderers: {
       'line': D3DirectedLineEdgeRenderer
     }
   },
 
-  width: 1280,
-  height: 768
+  width: 1200,
+  height: 680
 
 };
