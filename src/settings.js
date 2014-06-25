@@ -37,7 +37,9 @@ var settings = {
     }
   },
 
-  width: 1200,
-  height: 680
+  width: 900,
+  height: 680,
+  navigatorPadding: 50,
+  navigatorScale: 0.25
 
 };

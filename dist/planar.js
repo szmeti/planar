@@ -1180,7 +1180,7 @@
     var D3Engine = function() {
         function D3Engine() {}
         function caculcateDragLimit(point, distanceToEdge, minLimit, maxLimit) {
-            var paddingFromEdge = 10;
+            var paddingFromEdge = 0;
             if (point - distanceToEdge < minLimit) {
                 return minLimit + distanceToEdge + paddingFromEdge;
             } else if (point + distanceToEdge > maxLimit) {
@@ -1192,29 +1192,75 @@
         utils.mixin(D3Engine.prototype, Engine);
         utils.mixin(D3Engine.prototype, {
             initEngine: function(container, width, height) {
-                var svgContainer = d3.select(container).append("svg").attr("class", "svg-container").attr("width", width).attr("height", height).append("g");
-                var widthOfDrawArea = width * .75;
-                var heightOfDrawArea = height * .75;
-                var graphSvg = this.svg = d3.select(document.createElement("svg")).append("svg").attr("class", "graph-container").attr("width", widthOfDrawArea).attr("height", heightOfDrawArea);
-                var defs = graphSvg.append("defs");
+                var navigatorPadding = 50;
+                var navigatorScale = .25;
+                var navigator = null;
+                function initCommonDefs(svgDefs) {
+                    svgDefs.append("clipPath").attr("id", "wrapperClipPath").attr("class", "wrapper clipPath").append("rect").attr("class", "background").attr("width", width).attr("height", height);
+                    var filter = svgDefs.append("svg:filter").attr("id", "navigatorDropShadow").attr("x", "-20%").attr("y", "-20%").attr("width", "150%").attr("height", "150%");
+                    filter.append("svg:feOffset").attr("result", "offOut").attr("in", "SourceGraphic").attr("dx", "1").attr("dy", "1");
+                    filter.append("svg:feColorMatrix").attr("result", "matrixOut").attr("in", "offOut").attr("type", "matrix").attr("values", "0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.5 0");
+                    filter.append("svg:feGaussianBlur").attr("result", "blurOut").attr("in", "matrixOut").attr("stdDeviation", "10");
+                    filter.append("svg:feBlend").attr("in", "SourceGraphic").attr("in2", "blurOut").attr("mode", "normal");
+                    var navigatorRadialFill = svgDefs.append("radialGradient").attr({
+                        id: "navigatorGradient",
+                        gradientUnits: "userSpaceOnUse",
+                        cx: "500",
+                        cy: "500",
+                        r: "400",
+                        fx: "500",
+                        fy: "500"
+                    });
+                    navigatorRadialFill.append("stop").attr("offset", "0%").attr("stop-color", "#FFFFFF");
+                    navigatorRadialFill.append("stop").attr("offset", "40%").attr("stop-color", "#EEEEEE");
+                    navigatorRadialFill.append("stop").attr("offset", "100%").attr("stop-color", "#E0E0E0");
+                }
+                var lastScale = 1;
+                function zoomHandler() {
+                    var translation = [ 0, 0 ];
+                    if (d3.event.scale === lastScale) {
+                        var halfWidth = graphElements[0][0].getBBox().width / 2 * .5;
+                        var halfHeight = graphElements[0][0].getBBox().height / 2 * .5;
+                        var newX = caculcateDragLimit(d3.event.translate[0], halfWidth, 0, width);
+                        var newY = caculcateDragLimit(d3.event.translate[1], halfHeight, 0, height);
+                        translation = [ newX, newY ];
+                        console.log("lastscale: " + lastScale);
+                        var w = graphElements.node().getBBox().width * .5 * lastScale;
+                        var h = graphElements.node().getBBox().height * .5 * lastScale;
+                        console.log("w: " + w + " h:" + h);
+                    }
+                    lastScale = d3.event.scale;
+                    panCanvas.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+                }
+                var zoom = d3.behavior.zoom().scaleExtent([ 1, 8 ]).on("zoom.canvas", zoomHandler);
+                var svg = this.svg = d3.select(container).append("svg").attr("class", "canvas").attr("width", width + navigatorPadding * 2 + width * navigatorScale).attr("height", height);
+                svg.append("rect").attr("id", "clipPathRect").attr("width", width).attr("height", height).attr("stroke", "#111111").attr("fill", "none");
+                var clipPath = svg.append("g").attr("clip-path", "url(#wrapperClipPath)");
+                var panCanvas = this.panCanvas = clipPath.append("g").call(zoom).append("g").attr("id", "panCanvas").attr("transform", "translate(0,0)");
+                this.graphContainer = panCanvas.append("g").attr("id", "graphContainer").attr("transform", "scale(0.5)");
+                this.graphContainer.append("rect").attr("class", "overlay").attr("width", width).attr("height", height);
+                var graphElements = this.graphElements = this.graphContainer.append("g").attr("id", "graphElements");
+                navigator = this.navigator = new Navigator().zoom(zoom).target(d3.select(container).select(".canvas")).navigatorScale(navigatorScale).navigatorPadding(navigatorPadding).x(width + navigatorPadding).y(navigatorPadding);
+                svg.call(navigator);
+                navigator.render();
+                var defs = svg.append("defs");
+                initCommonDefs(defs);
                 var d3Renderers = ElementRendererProvider.getAll("d3");
                 for (var i = 0; i < d3Renderers.length; i++) {
                     if (typeof d3Renderers[i].initDefs === "function") {
                         d3Renderers[i].initDefs(defs);
                     }
                 }
-                var canvas = new Canvas().width(widthOfDrawArea).height(heightOfDrawArea);
-                svgContainer.call(canvas);
-                canvas.addItem(this.svg);
             },
             beforeRender: function(vertices, edges) {
-                var edgeSet = bindData(this.svg, "edge", edges);
+                var edgeSet = bindData(this.graphElements, "edge", edges);
                 addEnterSection("edge", edgeSet);
-                var vertexSet = bindData(this.svg, "vertex", vertices);
+                var vertexSet = bindData(this.graphElements, "vertex", vertices);
                 var vertexEnter = addEnterSection("vertex", vertexSet);
                 translateVertices(vertexSet);
-                addDragToVertices(vertexEnter, this.svg);
+                addDragToVertices(vertexEnter);
                 updateEdgePositions(edgeSet);
+                this.navigator.render();
             }
         });
         function bindData(svg, type, elements) {
@@ -1249,7 +1295,7 @@
                 return "translate(" + uiVertex.x + "," + uiVertex.y + ")";
             });
         }
-        function addDragToVertices(element, container) {
+        function addDragToVertices(element) {
             var drag = d3.behavior.drag();
             drag.on("dragstart", function(uiVertex) {
                 d3.event.sourceEvent.stopPropagation();
@@ -1382,41 +1428,46 @@
     };
     var Navigator = function() {
         "use strict";
-        var navigatorScale = .15, scale = 1, zoom = null, base = null, target = null, width = 0, height = 0, x = 0, y = 0, frameX = 0, frameY = 0;
+        var navigatorScale = .15, scale = 1, zoom = null, base = null, target = null, width = 0, height = 0, x = 0, y = 0, navigatorPadding = 0, frameX = 0, frameY = 0;
         function Navigator(selection) {
             base = selection;
             var container = selection.append("g").attr("class", "navigator").call(zoom);
+            container.append("rect").attr("class", "background").attr("width", width - (width + navigatorPadding * 2) * navigatorScale).attr("height", height).attr("stroke", "#111111");
+            var navigatorClipPath = container.append("g").attr("width", width).attr("height", height).attr("clip-path", "url(#wrapperClipPath)");
+            var panCanvas = d3.select("#panCanvas");
             zoom.on("zoom.navigator", function() {
                 scale = d3.event.scale;
             });
-            Navigator.node = container.node();
-            var frame = container.append("g").attr("class", "frame");
+            Navigator.node = navigatorClipPath.node();
+            var frame = navigatorClipPath.append("g").attr("class", "frame");
             frame.append("rect").attr("class", "background").attr("width", width).attr("height", height).attr("filter", "url(#navigatorDropShadow)");
             var drag = d3.behavior.drag().on("dragstart.navigator", function() {
                 var frameTranslate = SvgUtils.getXYFromTranslate(frame.attr("transform"));
-                frameX = frameTranslate[0];
-                frameY = frameTranslate[1];
+                frameX = parseInt(frameTranslate[0], 10);
+                frameY = parseInt(frameTranslate[1], 10);
             }).on("drag.navigator", function() {
                 d3.event.sourceEvent.stopImmediatePropagation();
                 frameX += d3.event.dx;
                 frameY += d3.event.dy;
                 frame.attr("transform", "translate(" + frameX + "," + frameY + ")");
                 var translate = [ -frameX * scale, -frameY * scale ];
-                target.attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+                panCanvas.attr("transform", "translate(" + translate + ")scale(" + scale + ")");
                 zoom.translate(translate);
             });
             frame.call(drag);
             Navigator.render = function() {
                 scale = zoom.scale();
+                var panCanvas = d3.select("#panCanvas");
+                d3.selectAll(".navigator-graph").remove();
                 container.attr("transform", "translate(" + x + "," + y + ")scale(" + navigatorScale + ")");
-                var node = target.node().cloneNode(true);
+                var node = panCanvas.node().cloneNode(true);
                 node.removeAttribute("id");
                 base.selectAll(".navigator .canvas").remove();
                 Navigator.node.appendChild(node);
-                var targetTransform = SvgUtils.getXYFromTranslate(target.attr("transform"));
-                frame.attr("transform", "translate(" + -targetTransform[0] / scale + "," + -targetTransform[1] / scale + ")").select(".background").attr("width", width / scale).attr("height", height / scale);
+                var targetTransform = SvgUtils.getXYFromTranslate(panCanvas.attr("transform"));
+                frame.attr("transform", "translate(" + -targetTransform[0] / scale + "," + -targetTransform[1] / scale + ")").select(".background").attr("width", (width - width * navigatorScale) / scale).attr("height", height / scale);
                 frame.node().parentNode.appendChild(frame.node());
-                d3.select(node).attr("transform", "translate(1,1)");
+                d3.select(node).attr("class", "navigator-graph").attr("transform", "translate(1,1)");
             };
         }
         Navigator.width = function(value) {
@@ -1445,6 +1496,13 @@
                 return y;
             }
             y = parseInt(value, 10);
+            return this;
+        };
+        Navigator.navigatorPadding = function(value) {
+            if (!arguments.length) {
+                return navigatorPadding;
+            }
+            navigatorPadding = parseInt(value, 10);
             return this;
         };
         Navigator.scale = function(value) {
@@ -1971,8 +2029,10 @@
                 line: D3DirectedLineEdgeRenderer
             }
         },
-        width: 1200,
-        height: 680
+        width: 900,
+        height: 680,
+        navigatorPadding: 50,
+        navigatorScale: .25
     };
     exports.settings = settings;
     exports.Edge = Edge;
