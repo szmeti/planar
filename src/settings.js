@@ -29,9 +29,6 @@ var settings = {
       'query-result-vertex': D3QueryResultVertexRenderer
     },
 
-    zoomEnabled : true,
-    dragEnabled : true,
-
     edgeRenderers: {
       'line': D3DirectedLineEdgeRenderer
     }
@@ -39,7 +36,14 @@ var settings = {
 
   width: 900,
   height: 680,
-  navigatorPadding: 50,
-  navigatorScale: 0.25
+  navigatorPadding: 20,
+  navigatorScale: 0.25,
+  wrapperBorder: 1,
+  zoomEnabled: true,
+  dragEnabled: true,
+
+  panControlEnabled: true,
+  controlZoomScale: 0.25,
+  controlPanScale: 50
 
 };

@@ -21,10 +21,10 @@ var Navigator = function() {
 
     var container = selection.append('g')
       .attr('class', 'navigator')
+      .attr('clip-path', 'url(#navigatorClipPath)')
       .call(zoom);
 
-    var navigatorClipPath = container.append('g')
-      .attr('clip-path', 'url(#navigatorClipPath)');
+    var navigatorClipPath = container.append('g');
 
     zoom.on('zoom.navigator', function() {
       scale = d3.event.scale;

@@ -9,15 +9,9 @@ var D3Engine = (function () {
   utils.mixin(D3Engine.prototype, {
 
     initEngine: function (container, width, height) {
-      var zoomEnabled     = true,
-        dragEnabled     = true,
-        scale           = 1,
+      var scale           = 1,
         translation     = [0,0],
-        base            = null,
-        wrapperBorder   = 1,
-        navigator         = null,
-        navigatorPadding  = 20,
-        navigatorScale    = 0.25;
+        navigator         = null;
 
       var xScale = d3.scale.linear()
         .domain([-width / 2, width / 2])
@@ -28,13 +22,13 @@ var D3Engine = (function () {
         .range([height, 0]);
 
       var zoomHandler = function(newScale) {
-        if (!zoomEnabled) { return; }
+        if (!settings.zoomEnabled) { return; }
         if (d3.event) {
           scale = d3.event.scale;
         } else {
           scale = newScale;
         }
-        if (dragEnabled) {
+        if (settings.dragEnabled) {
           var tbound = -height * scale + height,
             bbound = 0,
             lbound = -width * scale + width,
@@ -51,7 +45,7 @@ var D3Engine = (function () {
           .attr('transform', 'translate(' + translation + ')' + ' scale(' + scale + ')');
 
         navigator.scale(scale).render();
-      }; // startoff zoomed in a bit to show pan/zoom rectangle
+      };
       
       function initCommonDefs(svgDefs) {
         svgDefs.append('clipPath')
@@ -122,18 +116,19 @@ var D3Engine = (function () {
           .attr('stop-color', '#E0E0E0');
 
         var outerWrapper = svg.append('g')
+          .attr('id','outerWrapper')
           .attr('class', 'wrapper outer')
-          .attr('transform', 'translate(0, ' + navigatorPadding + ')');
+          .attr('transform', 'translate(0, ' + settings.navigatorPadding + ')');
 
         outerWrapper.append('rect')
           .attr('class', 'background')
-          .attr('width', width + wrapperBorder*2)
-          .attr('height', height + wrapperBorder*2);
+          .attr('width', width + settings.wrapperBorder*2)
+          .attr('height', height + settings.wrapperBorder*2);
 
         var innerWrapper = outerWrapper.append('g')
           .attr('class', 'wrapper inner')
           .attr('clip-path', 'url(#wrapperClipPath)')
-          .attr('transform', 'translate(' + (wrapperBorder) + ',' + (wrapperBorder) + ')')
+          .attr('transform', 'translate(' + (settings.wrapperBorder) + ',' + (settings.wrapperBorder) + ')')
           .call(zoom);
 
         innerWrapper.append('rect')
@@ -167,8 +162,8 @@ var D3Engine = (function () {
       var svg = this.svg = d3.select(container)
         .append('svg')
         .attr('class', 'svg canvas')
-        .attr('width',  width  + (wrapperBorder*2) + navigatorPadding*2 + (width*navigatorScale))
-        .attr('height', height + (wrapperBorder*2) + navigatorPadding*2)
+        .attr('width',  width  + (settings.wrapperBorder*2) + settings.navigatorPadding*2 + (width*settings.navigatorScale))
+        .attr('height', height + (settings.wrapperBorder*2) + settings.navigatorPadding*2)
         .attr('shape-rendering', 'auto');
 
       svg.append('rect')
@@ -186,11 +181,22 @@ var D3Engine = (function () {
       navigator = this.navigator = new Navigator()
         .zoom(zoom)
         .target(this.panCanvas)
-        .navigatorScale(navigatorScale)
-        .x(width + navigatorPadding)
-        .y(navigatorPadding);
+        .navigatorScale(settings.navigatorScale)
+        .x(width + settings.navigatorPadding)
+        .y(settings.navigatorPadding);
 
       svg.call(navigator);
+
+      var zoomPanControl = new ZoomPanControl()
+        .target(this.panCanvas)
+        .zoom(zoom)
+        .zoomScale(settings.controlZoomScale)
+        .panScale(settings.controlPanScale)
+        .x(8)
+        .y(20);
+
+      svg.call(zoomPanControl);
+      zoomPanControl.render();
 
       var d3Renderers = ElementRendererProvider.getAll('d3');
 
