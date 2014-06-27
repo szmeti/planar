@@ -1179,24 +1179,32 @@
     }();
     var D3Engine = function() {
         function D3Engine() {}
-        function caculcateDragLimit(point, distanceToEdge, minLimit, maxLimit) {
-            var paddingFromEdge = 0;
-            if (point - distanceToEdge < minLimit) {
-                return minLimit + distanceToEdge + paddingFromEdge;
-            } else if (point + distanceToEdge > maxLimit) {
-                return maxLimit - distanceToEdge - paddingFromEdge;
-            } else {
-                return point;
-            }
-        }
         utils.mixin(D3Engine.prototype, Engine);
         utils.mixin(D3Engine.prototype, {
             initEngine: function(container, width, height) {
-                var navigatorPadding = 50;
-                var navigatorScale = .25;
-                var navigator = null;
+                var zoomEnabled = true, dragEnabled = true, scale = 1, translation = [ 0, 0 ], base = null, wrapperBorder = 1, navigator = null, navigatorPadding = 20, navigatorScale = .25;
+                var xScale = d3.scale.linear().domain([ -width / 2, width / 2 ]).range([ 0, width ]);
+                var yScale = d3.scale.linear().domain([ -height / 2, height / 2 ]).range([ height, 0 ]);
+                var zoomHandler = function(newScale) {
+                    if (!zoomEnabled) {
+                        return;
+                    }
+                    if (d3.event) {
+                        scale = d3.event.scale;
+                    } else {
+                        scale = newScale;
+                    }
+                    if (dragEnabled) {
+                        var tbound = -height * scale + height, bbound = 0, lbound = -width * scale + width, rbound = 0;
+                        translation = d3.event ? d3.event.translate : [ 0, 0 ];
+                        translation = [ Math.max(Math.min(translation[0], rbound), lbound), Math.max(Math.min(translation[1], bbound), tbound) ];
+                    }
+                    d3.select(".panCanvas, .panCanvas .bg").attr("transform", "translate(" + translation + ")" + " scale(" + scale + ")");
+                    navigator.scale(scale).render();
+                };
                 function initCommonDefs(svgDefs) {
                     svgDefs.append("clipPath").attr("id", "wrapperClipPath").attr("class", "wrapper clipPath").append("rect").attr("class", "background").attr("width", width).attr("height", height);
+                    svgDefs.append("clipPath").attr("id", "navigatorClipPath").attr("class", "navigator clipPath").attr("width", width).attr("height", height).append("rect").attr("class", "background").attr("width", width).attr("height", height);
                     var filter = svgDefs.append("svg:filter").attr("id", "navigatorDropShadow").attr("x", "-20%").attr("y", "-20%").attr("width", "150%").attr("height", "150%");
                     filter.append("svg:feOffset").attr("result", "offOut").attr("in", "SourceGraphic").attr("dx", "1").attr("dy", "1");
                     filter.append("svg:feColorMatrix").attr("result", "matrixOut").attr("in", "offOut").attr("type", "matrix").attr("values", "0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.5 0");
@@ -1214,37 +1222,23 @@
                     navigatorRadialFill.append("stop").attr("offset", "0%").attr("stop-color", "#FFFFFF");
                     navigatorRadialFill.append("stop").attr("offset", "40%").attr("stop-color", "#EEEEEE");
                     navigatorRadialFill.append("stop").attr("offset", "100%").attr("stop-color", "#E0E0E0");
+                    var outerWrapper = svg.append("g").attr("class", "wrapper outer").attr("transform", "translate(0, " + navigatorPadding + ")");
+                    outerWrapper.append("rect").attr("class", "background").attr("width", width + wrapperBorder * 2).attr("height", height + wrapperBorder * 2);
+                    var innerWrapper = outerWrapper.append("g").attr("class", "wrapper inner").attr("clip-path", "url(#wrapperClipPath)").attr("transform", "translate(" + wrapperBorder + "," + wrapperBorder + ")").call(zoom);
+                    innerWrapper.append("rect").attr("class", "background").attr("width", width).attr("height", height);
+                    var panCanvas = innerWrapper.append("g").attr("id", "panCanvas").attr("class", "panCanvas").attr("width", width).attr("height", height).attr("transform", "translate(0,0)");
+                    panCanvas.append("rect").attr("class", "background").attr("width", width).attr("height", height);
+                    panCanvas.append("g").attr("id", "graphElements").attr("transform", "scale(0.5)");
                 }
-                var lastScale = 1;
-                function zoomHandler() {
-                    var translation = [ 0, 0 ];
-                    if (d3.event.scale === lastScale) {
-                        var halfWidth = graphElements[0][0].getBBox().width / 2 * .5;
-                        var halfHeight = graphElements[0][0].getBBox().height / 2 * .5;
-                        var newX = caculcateDragLimit(d3.event.translate[0], halfWidth, 0, width);
-                        var newY = caculcateDragLimit(d3.event.translate[1], halfHeight, 0, height);
-                        translation = [ newX, newY ];
-                        console.log("lastscale: " + lastScale);
-                        var w = graphElements.node().getBBox().width * .5 * lastScale;
-                        var h = graphElements.node().getBBox().height * .5 * lastScale;
-                        console.log("w: " + w + " h:" + h);
-                    }
-                    lastScale = d3.event.scale;
-                    panCanvas.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-                }
-                var zoom = d3.behavior.zoom().scaleExtent([ 1, 8 ]).on("zoom.canvas", zoomHandler);
-                var svg = this.svg = d3.select(container).append("svg").attr("class", "canvas").attr("width", width + navigatorPadding * 2 + width * navigatorScale).attr("height", height);
-                svg.append("rect").attr("id", "clipPathRect").attr("width", width).attr("height", height).attr("stroke", "#111111").attr("fill", "none");
-                var clipPath = svg.append("g").attr("clip-path", "url(#wrapperClipPath)");
-                var panCanvas = this.panCanvas = clipPath.append("g").call(zoom).append("g").attr("id", "panCanvas").attr("transform", "translate(0,0)");
-                this.graphContainer = panCanvas.append("g").attr("id", "graphContainer").attr("transform", "scale(0.5)");
-                this.graphContainer.append("rect").attr("class", "overlay").attr("width", width).attr("height", height);
-                var graphElements = this.graphElements = this.graphContainer.append("g").attr("id", "graphElements");
-                navigator = this.navigator = new Navigator().zoom(zoom).target(d3.select(container).select(".canvas")).navigatorScale(navigatorScale).navigatorPadding(navigatorPadding).x(width + navigatorPadding).y(navigatorPadding);
-                svg.call(navigator);
-                navigator.render();
+                var zoom = d3.behavior.zoom().x(xScale).y(yScale).scaleExtent([ 1, 5 ]).on("zoom.canvas", zoomHandler);
+                var svg = this.svg = d3.select(container).append("svg").attr("class", "svg canvas").attr("width", width + wrapperBorder * 2 + navigatorPadding * 2 + width * navigatorScale).attr("height", height + wrapperBorder * 2 + navigatorPadding * 2).attr("shape-rendering", "auto");
+                svg.append("rect").attr("class", "overlay").attr("width", width).attr("height", height);
                 var defs = svg.append("defs");
                 initCommonDefs(defs);
+                this.panCanvas = d3.select("#panCanvas");
+                this.graphElements = d3.select("#graphElements");
+                navigator = this.navigator = new Navigator().zoom(zoom).target(this.panCanvas).navigatorScale(navigatorScale).x(width + navigatorPadding).y(navigatorPadding);
+                svg.call(navigator);
                 var d3Renderers = ElementRendererProvider.getAll("d3");
                 for (var i = 0; i < d3Renderers.length; i++) {
                     if (typeof d3Renderers[i].initDefs === "function") {
@@ -1350,7 +1344,7 @@
             var svg = selection.append("svg").attr("class", "svg canvas").attr("width", width + wrapperBorder * 2 + navigatorPadding * 2 + width * navigatorScale).attr("height", height + wrapperBorder * 2 + navigatorPadding * 2).attr("shape-rendering", "auto");
             var svgDefs = svg.append("defs");
             svgDefs.append("clipPath").attr("id", "wrapperClipPath").attr("class", "wrapper clipPath").append("rect").attr("class", "background").attr("width", width).attr("height", height);
-            svgDefs.append("clipPath").attr("id", "navigatorClipPath").attr("class", "navigator clipPath").attr("width", width).attr("height", height).append("rect").attr("class", "background").attr("width", width).attr("height", height);
+            svgDefs.append("clipPath").attr("id", "navigatorClipPath").attr("class", "navigator clipPath").attr("width", width).attr("height", height).attr("transform", "translate(" + (width + navigatorPadding) + "," + navigatorPadding / 2 + ")").append("rect").attr("class", "background").attr("width", width).attr("height", height);
             var filter = svgDefs.append("svg:filter").attr("id", "navigatorDropShadow").attr("x", "-20%").attr("y", "-20%").attr("width", "150%").attr("height", "150%");
             filter.append("svg:feOffset").attr("result", "offOut").attr("in", "SourceGraphic").attr("dx", "1").attr("dy", "1");
             filter.append("svg:feColorMatrix").attr("result", "matrixOut").attr("in", "offOut").attr("type", "matrix").attr("values", "0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.5 0");
@@ -1428,13 +1422,11 @@
     };
     var Navigator = function() {
         "use strict";
-        var navigatorScale = .15, scale = 1, zoom = null, base = null, target = null, width = 0, height = 0, x = 0, y = 0, navigatorPadding = 0, frameX = 0, frameY = 0;
+        var navigatorScale = .15, scale = 1, zoom = null, base = null, target = null, width = 0, height = 0, x = 0, y = 0, frameX = 0, frameY = 0;
         function Navigator(selection) {
             base = selection;
             var container = selection.append("g").attr("class", "navigator").call(zoom);
-            container.append("rect").attr("class", "background").attr("width", width - (width + navigatorPadding * 2) * navigatorScale).attr("height", height).attr("stroke", "#111111");
-            var navigatorClipPath = container.append("g").attr("width", width).attr("height", height).attr("clip-path", "url(#wrapperClipPath)");
-            var panCanvas = d3.select("#panCanvas");
+            var navigatorClipPath = container.append("g").attr("clip-path", "url(#navigatorClipPath)");
             zoom.on("zoom.navigator", function() {
                 scale = d3.event.scale;
             });
@@ -1446,28 +1438,30 @@
                 frameX = parseInt(frameTranslate[0], 10);
                 frameY = parseInt(frameTranslate[1], 10);
             }).on("drag.navigator", function() {
+                var tbound = 0, bbound = height - height / scale, lbound = 0, rbound = width - width / scale;
                 d3.event.sourceEvent.stopImmediatePropagation();
                 frameX += d3.event.dx;
                 frameY += d3.event.dy;
+                frameX = Math.max(Math.min(frameX, rbound), lbound);
+                frameY = Math.max(Math.min(frameY, bbound), tbound);
                 frame.attr("transform", "translate(" + frameX + "," + frameY + ")");
                 var translate = [ -frameX * scale, -frameY * scale ];
-                panCanvas.attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+                target.attr("transform", "translate(" + translate + ")scale(" + scale + ")");
                 zoom.translate(translate);
             });
             frame.call(drag);
             Navigator.render = function() {
                 scale = zoom.scale();
-                var panCanvas = d3.select("#panCanvas");
-                d3.selectAll(".navigator-graph").remove();
                 container.attr("transform", "translate(" + x + "," + y + ")scale(" + navigatorScale + ")");
-                var node = panCanvas.node().cloneNode(true);
+                var node = target.node().cloneNode(true);
                 node.removeAttribute("id");
+                d3.selectAll(".navigator .panCanvas").remove();
                 base.selectAll(".navigator .canvas").remove();
                 Navigator.node.appendChild(node);
-                var targetTransform = SvgUtils.getXYFromTranslate(panCanvas.attr("transform"));
-                frame.attr("transform", "translate(" + -targetTransform[0] / scale + "," + -targetTransform[1] / scale + ")").select(".background").attr("width", (width - width * navigatorScale) / scale).attr("height", height / scale);
+                var targetTransform = SvgUtils.getXYFromTranslate(target.attr("transform"));
+                frame.attr("transform", "translate(" + -targetTransform[0] / scale + "," + -targetTransform[1] / scale + ")").select(".background").attr("width", width / scale).attr("height", height / scale);
                 frame.node().parentNode.appendChild(frame.node());
-                d3.select(node).attr("class", "navigator-graph").attr("transform", "translate(1,1)");
+                d3.select(node).attr("transform", "translate(1,1)");
             };
         }
         Navigator.width = function(value) {
@@ -1496,13 +1490,6 @@
                 return y;
             }
             y = parseInt(value, 10);
-            return this;
-        };
-        Navigator.navigatorPadding = function(value) {
-            if (!arguments.length) {
-                return navigatorPadding;
-            }
-            navigatorPadding = parseInt(value, 10);
             return this;
         };
         Navigator.scale = function(value) {

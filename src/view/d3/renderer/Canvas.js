@@ -82,7 +82,7 @@ var Canvas = function() {
       .attr('class', 'navigator clipPath')
       .attr('width', width)
       .attr('height', height)
-      //.attr('transform', 'translate(' + (width + navigatorPadding) + ',' + (navigatorPadding/2) + ')')
+      .attr('transform', 'translate(' + (width + navigatorPadding) + ',' + (navigatorPadding/2) + ')')
       .append('rect')
       .attr('class', 'background')
       .attr('width', width)
