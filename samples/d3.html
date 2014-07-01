@@ -15,6 +15,7 @@
 
         #container {
             /*background-color: #eceaf3;*/
+            clear:both;
         }
 
         .canvas .wrapper.outer > .background {
@@ -60,7 +61,7 @@
         }
 
         svg {
-            border: 1px solid #808080;
+            /*border: 1px solid #808080*/;
         }
 
         .overlay {
@@ -106,20 +107,31 @@
            stroke-width: 2;
         }
 
+        #graphCanvas {
+            float: left;
+        }
+
+        #navigatorContainer {
+            float: left;
+        }
+
 
     </style>
 </head>
 <body>
 
-<div id="container"></div>
+<div id="container">
+    <div id="graphCanvas"></div>
+    <div id="navigatorContainer"></div>
+</div>
 
-<script type="text/javascript" src="http://codeorigin.jquery.com/jquery-1.10.2.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script type="text/javascript" src="../bower_components/d3/d3.js"></script>
 <script type="text/javascript" src="../dist/planar.js"></script>
 
 <script type="text/javascript">
     $(document).ready(function () {
-        var graph = new planar.Graph('#container', new planar.D3Engine());
+        var graph = new planar.Graph('#graphCanvas','#navigatorContainer', new planar.D3Engine());
 
         var v1 = graph.addVertex();
         v1.setProperty(planar.PROP_TYPE, "query-vertex");

@@ -8,7 +8,7 @@ var RaphaelEngine = (function () {
 
   utils.mixin(RaphaelEngine.prototype, {
 
-    initEngine: function (container, width, height) {
+    initEngine: function (container, navigatorContainer, width, height) {
       this.paper = new Raphael(container, width, height);
     },
 

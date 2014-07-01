@@ -36,14 +36,31 @@ var settings = {
 
   width: 900,
   height: 680,
-  navigatorPadding: 20,
-  navigatorScale: 0.25,
-  wrapperBorder: 1,
-  zoomEnabled: true,
-  dragEnabled: true,
 
-  panControlEnabled: true,
-  controlZoomScale: 0.25,
-  controlPanScale: 50
+  zoom: {
+    enabled: true,
+    minScale: 1,
+    maxScale: 8
+  },
+
+  drag: {
+    enabled: true
+  },
+
+  navigator: {
+    enabled: true,
+    paddingTop: 0,
+    paddingLeft: 20,
+    scale: 0.25,
+    wrapperBorder: 1
+  },
+
+  zoomPanControl: {
+    enabled: true,
+    zoomScale: 0.25,
+    panScale: 50,
+    paddingTop: 5,
+    paddingLeft: 10
+  }
 
 };

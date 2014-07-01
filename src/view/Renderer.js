@@ -1,11 +1,12 @@
 /* global Renderer: true */
 var Renderer = (function () {
 
-  function Renderer(graph, container, engine, instanceSettings) {
+  function Renderer(graph, container, navigatorContainer, engine, instanceSettings) {
     utils.checkExists('Graph', graph);
 
     this.graph = graph;
     this.container = container;
+    this.navigatorContainer = navigatorContainer;
     this.engine = utils.isUndefined(engine) ? settings.engine : engine;
     this.width = instanceSettings.width;
     this.height = instanceSettings.height;
@@ -83,7 +84,7 @@ var Renderer = (function () {
 
     init: function () {
       setUpEventHandlers(this.graph, this);
-      this.engine.init(this.container, this.width, this.height, this.graph);
+      this.engine.init(this.container, this.navigatorContainer, this.width, this.height, this.graph);
       var self = this;
       this.graph.forEachVertex(function (vertex) {
         self.engine.initVertex(vertex);

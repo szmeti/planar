@@ -44,12 +44,30 @@ var ZoomPanControl = function() {
 
     function doZoom(newScaleStep) {
       var targetTransform = SvgUtils.getXYFromTranslate(target.attr('transform'));
-      var newScale = zoom.scale() + newScaleStep;
+
+      var scale = zoom.scale();
+      var newScale = scale + newScaleStep;
+
+      var originalCanvas = { w: width * scale, h: height * scale};
+      var newCanvas = { w: width * newScale, h: height * newScale};
+      var xScale = (originalCanvas.w - newCanvas.w) / 2;
+      var yScale = (originalCanvas.h - newCanvas.h) / 2;
+      var newTransform = [xScale + targetTransform[0], yScale + targetTransform[1]];
 
       newScale = Math.min(zoom.scaleExtent()[1], Math.max(zoom.scaleExtent()[0], newScale));
 
-      target.attr('transform', 'translate(' + [targetTransform[0], targetTransform[1]] + ')scale(' + newScale + ')');
-      zoom.scale(newScale);
+      var tbound = -height * newScale + height,
+        bbound = 0,
+        lbound = -width * newScale + width,
+        rbound = 0;
+
+      var translation = [
+        Math.max(Math.min(newTransform[0], rbound), lbound),
+        Math.max(Math.min(newTransform[1], bbound), tbound)
+      ];
+
+      target.attr('transform', 'translate('+ translation +')scale(' + newScale + ')');
+      zoom.translate(translation).scale(newScale);
     }
 
     function doPan(x,y) {
@@ -75,7 +93,7 @@ var ZoomPanControl = function() {
     }
 
     ZoomPanControl.render = function() {
-      if (!settings.panControlEnabled) {
+      if (!settings.zoomPanControl.enabled) {
         return;
       }
 

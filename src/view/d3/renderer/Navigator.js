@@ -15,7 +15,81 @@ var Navigator = function() {
     frameX          = 0,
     frameY          = 0;
 
+  function shouldShowNavigator() {
+    return settings.zoom.enabled && settings.navigator.enabled;
+  }
+
+  function initDefs(svg) {
+    var svgDefs = svg.append('defs');
+    svgDefs.append('clipPath')
+      .attr('id', 'navigatorClipPath')
+      .attr('class', 'navigator clipPath')
+      .attr('width', width)
+      .attr('height', height)
+      .append('rect')
+      .attr('class', 'background')
+      .attr('width', width)
+      .attr('height', height);
+
+    var filter = svgDefs.append('svg:filter')
+      .attr('id', 'navigatorDropShadow')
+      .attr('x', '-20%')
+      .attr('y', '-20%')
+      .attr('width', '150%')
+      .attr('height', '150%');
+
+    filter.append('svg:feOffset')
+      .attr('result', 'offOut')
+      .attr('in', 'SourceGraphic')
+      .attr('dx', '1')
+      .attr('dy', '1');
+
+    filter.append('svg:feColorMatrix')
+      .attr('result', 'matrixOut')
+      .attr('in', 'offOut')
+      .attr('type', 'matrix')
+      .attr('values', '0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.5 0');
+
+    filter.append('svg:feGaussianBlur')
+      .attr('result', 'blurOut')
+      .attr('in', 'matrixOut')
+      .attr('stdDeviation', '10');
+
+    filter.append('svg:feBlend')
+      .attr('in', 'SourceGraphic')
+      .attr('in2', 'blurOut')
+      .attr('mode', 'normal');
+
+    var navigatorRadialFill = svgDefs.append('radialGradient')
+      .attr({
+        id:'navigatorGradient',
+        gradientUnits:'userSpaceOnUse',
+        cx:'500',
+        cy:'500',
+        r:'400',
+        fx:'500',
+        fy:'500'
+      });
+    navigatorRadialFill.append('stop')
+      .attr('offset', '0%')
+      .attr('stop-color', '#FFFFFF');
+    navigatorRadialFill.append('stop')
+      .attr('offset', '40%')
+      .attr('stop-color', '#EEEEEE');
+    navigatorRadialFill.append('stop')
+      .attr('offset', '100%')
+      .attr('stop-color', '#E0E0E0');
+  }
+
   function Navigator(selection) {
+    if (!shouldShowNavigator()) {
+      Navigator.render = function () {
+        return;
+      };
+      return;
+    }
+
+    initDefs(selection);
 
     base = selection;
 

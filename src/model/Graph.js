@@ -1,7 +1,7 @@
 /* global Graph: true */
 var Graph = (function () {
 
-  function Graph(container, engine, instanceSettings) {
+  function Graph(container, navigatorContainer, engine, instanceSettings) {
     this.vertices = {};
     this.edges = {};
     this.indexManager = new IndexManager(this);
@@ -12,7 +12,7 @@ var Graph = (function () {
     this.settings = utils.mixin(this.settings, instanceSettings);
 
     if (utils.exists(container) && utils.exists(engine)) {
-      this.renderer = new Renderer(this, container, engine, this.settings);
+      this.renderer = new Renderer(this, container, navigatorContainer, engine, this.settings);
       this.renderer.init();
     }
   }
