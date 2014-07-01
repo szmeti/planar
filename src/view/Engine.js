@@ -3,12 +3,12 @@ var Engine = (function () {
 
   return {
 
-    init: function (container, navigatorContainer, width, height, graph) {
-      utils.checkExists('Container', container);
+    init: function (settings, graph) {
+      utils.checkExists('Container', settings.container);
       utils.checkExists('Graph', graph);
 
       if (utils.isFunction(this.initEngine)) {
-        this.initEngine(container, navigatorContainer, width, height, graph);
+        this.initEngine(settings, graph);
       }
     },
 

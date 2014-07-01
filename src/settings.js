@@ -2,7 +2,11 @@
 
 var settings = {
 
-  engine: new RaphaelEngine(),
+  container: null,
+
+  navigatorContainer: null,
+
+  engine: new D3Engine(),
 
   layout: new RandomLayout(),
 
@@ -49,16 +53,13 @@ var settings = {
 
   navigator: {
     enabled: true,
-    paddingTop: 0,
-    paddingLeft: 20,
-    scale: 0.25,
-    wrapperBorder: 1
+    scale: 0.25
   },
 
   zoomPanControl: {
     enabled: true,
-    zoomScale: 0.25,
-    panScale: 50,
+    zoomStep: 0.25,
+    panStep: 50,
     paddingTop: 5,
     paddingLeft: 10
   }

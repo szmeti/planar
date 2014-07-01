@@ -35,9 +35,7 @@
 
         .canvas .navigator .frame .background {
             fill-opacity: 0.4;
-            fill: #000000;
-            fill: url(#navigatorGradient);
-            filter: url(#navigatorDropShadow);
+            fill: #7c7c7c;
             cursor: move;
         }
 
@@ -112,6 +110,7 @@
         }
 
         #navigatorContainer {
+            margin-left: 20px;
             float: left;
         }
 
@@ -131,7 +130,7 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
-        var graph = new planar.Graph('#graphCanvas','#navigatorContainer', new planar.D3Engine());
+        var graph = new planar.Graph({container: '#graphCanvas', navigatorContainer: '#navigatorContainer'});
 
         var v1 = graph.addVertex();
         v1.setProperty(planar.PROP_TYPE, "query-vertex");

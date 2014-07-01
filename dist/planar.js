@@ -422,7 +422,7 @@
         return Vertex;
     }();
     var Graph = function() {
-        function Graph(container, navigatorContainer, engine, instanceSettings) {
+        function Graph(instanceSettings) {
             this.vertices = {};
             this.edges = {};
             this.indexManager = new IndexManager(this);
@@ -431,8 +431,8 @@
             instanceSettings = instanceSettings || {};
             this.settings = utils.mixin({}, settings);
             this.settings = utils.mixin(this.settings, instanceSettings);
-            if (utils.exists(container) && utils.exists(engine)) {
-                this.renderer = new Renderer(this, container, navigatorContainer, engine, this.settings);
+            if (utils.exists(this.settings.container) && utils.exists(this.settings.engine)) {
+                this.renderer = new Renderer(this, this.settings);
                 this.renderer.init();
             }
         }
@@ -1165,11 +1165,11 @@
     }();
     var Engine = function() {
         return {
-            init: function(container, navigatorContainer, width, height, graph) {
-                utils.checkExists("Container", container);
+            init: function(settings, graph) {
+                utils.checkExists("Container", settings.container);
                 utils.checkExists("Graph", graph);
                 if (utils.isFunction(this.initEngine)) {
-                    this.initEngine(container, navigatorContainer, width, height, graph);
+                    this.initEngine(settings, graph);
                 }
             },
             beforeRender: function() {},
@@ -1177,15 +1177,192 @@
             renderVertex: function() {}
         };
     }();
+    var D3ZoomPanManager = function() {
+        function D3ZoomPanManager(settings) {}
+        utils.mixin(D3ZoomPanManager.prototype, {});
+        return D3ZoomPanManager;
+    }();
+    var D3Navigator = function() {
+        function D3Navigator(selection, zoom, target, settings) {
+            this.navigatorScale = settings.navigator.scale;
+            this.scale = 1;
+            this.zoom = zoom;
+            this.target = target;
+            this.width = settings.width;
+            this.height = settings.height;
+            this.frameX = 0;
+            this.frameY = 0;
+            if (!shouldShowNavigator()) {
+                D3Navigator.render = function() {};
+                return;
+            }
+            initDefs(selection, this.width, this.height);
+            this.base = selection;
+            this.container = this.base.append("g").attr("class", "navigator").attr("clip-path", "url(#navigatorClipPath)").call(this.zoom);
+            var navigatorClipPath = this.container.append("g");
+            var navigator = this;
+            this.zoom.on("zoom.navigator", function() {
+                navigator.scale = d3.event.scale;
+            });
+            D3Navigator.node = navigatorClipPath.node();
+            this.frame = navigatorClipPath.append("g").attr("class", "frame");
+            this.frame.append("rect").attr("class", "background").attr("width", this.width).attr("height", this.height);
+            var drag = d3.behavior.drag().on("dragstart.navigator", function() {
+                onDragstart(navigator);
+            }).on("drag.navigator", function() {
+                onDrag(navigator);
+            });
+            this.frame.call(drag);
+        }
+        utils.mixin(D3Navigator.prototype, {
+            render: function() {
+                this.scale = this.zoom.scale();
+                this.container.attr("transform", "scale(" + this.navigatorScale + ")");
+                var node = this.target.node().cloneNode(true);
+                node.removeAttribute("id");
+                d3.selectAll(".navigator .panCanvas").remove();
+                this.base.selectAll(".navigator .canvas").remove();
+                D3Navigator.node.appendChild(node);
+                var targetTransform = SvgUtils.getXYFromTranslate(this.target.attr("transform"));
+                this.frame.attr("transform", "translate(" + -targetTransform[0] / this.scale + "," + -targetTransform[1] / this.scale + ")").select(".background").attr("width", this.width / this.scale).attr("height", this.height / this.scale);
+                this.frame.node().parentNode.appendChild(this.frame.node());
+                d3.select(node).attr("transform", "translate(1,1)");
+            }
+        });
+        function shouldShowNavigator() {
+            return settings.zoom.enabled && settings.navigator.enabled;
+        }
+        function onDragstart(navigator) {
+            var frameTranslate = SvgUtils.getXYFromTranslate(navigator.frame.attr("transform"));
+            navigator.frameX = parseInt(frameTranslate[0], 10);
+            navigator.frameY = parseInt(frameTranslate[1], 10);
+        }
+        function onDrag(navigator) {
+            var topBound = 0, bottomBound = navigator.height - navigator.height / navigator.scale, leftBound = 0, rightBound = navigator.width - navigator.width / navigator.scale;
+            d3.event.sourceEvent.stopImmediatePropagation();
+            navigator.frameX += d3.event.dx;
+            navigator.frameY += d3.event.dy;
+            navigator.frameX = Math.max(Math.min(navigator.frameX, rightBound), leftBound);
+            navigator.frameY = Math.max(Math.min(navigator.frameY, bottomBound), topBound);
+            navigator.frame.attr("transform", "translate(" + navigator.frameX + "," + navigator.frameY + ")");
+            var translate = [ -navigator.frameX * navigator.scale, -navigator.frameY * navigator.scale ];
+            navigator.target.attr("transform", "translate(" + translate + ")scale(" + navigator.scale + ")");
+            navigator.zoom.translate(translate);
+        }
+        function initDefs(svg, width, height) {
+            var svgDefs = svg.append("defs");
+            svgDefs.append("clipPath").attr("id", "navigatorClipPath").attr("class", "navigator clipPath").attr("width", width).attr("height", height).append("rect").attr("class", "background").attr("width", width).attr("height", height);
+        }
+        return D3Navigator;
+    }();
+    var D3ZoomPanControl = function() {
+        function D3ZoomPanControl(container, zoom, target, settings) {
+            this.base = container;
+            this.width = settings.width;
+            this.height = settings.height;
+            this.zoom = zoom;
+            this.target = target;
+            this.zoomScale = settings.zoomPanControl.zoomStep;
+            this.panScale = settings.zoomPanControl.panStep;
+            this.x = settings.zoomPanControl.paddingLeft;
+            this.y = settings.zoomPanControl.paddingTop;
+        }
+        utils.mixin(D3ZoomPanControl.prototype, {
+            render: function() {
+                if (!settings.zoomPanControl.enabled) {
+                    return;
+                }
+                var container = this.base.append("g").attr("id", "zoomPanControl");
+                container.append("circle").attr("class", "wrapperCircle").attr("cx", 50).attr("cy", 50).attr("r", 42);
+                container.append("path").attr("id", "panUp").attr("class", "zoomPanButton").attr("d", "M50 10 l12   20 a40, 70 0 0,0 -24,  0z");
+                container.append("path").attr("id", "panLeft").attr("class", "zoomPanButton").attr("d", "M10 50 l20  -12 a70, 40 0 0,0   0, 24z");
+                container.append("path").attr("id", "panDown").attr("class", "zoomPanButton").attr("d", "M50 90 l12  -20 a40, 70 0 0,1 -24,  0z");
+                container.append("path").attr("id", "panRight").attr("class", "zoomPanButton").attr("d", "M90 50 l-20 -12 a70, 40 0 0,1   0, 24z");
+                container.append("circle").attr("class", "compass").attr("cx", 50).attr("cy", 50).attr("r", 20);
+                container.append("circle").attr("id", "zoomOut").attr("class", "zoomPanButton").attr("cx", 50).attr("cy", 41).attr("r", 8);
+                container.append("circle").attr("id", "zoomIn").attr("class", "zoomPanButton").attr("cx", 50).attr("cy", 59).attr("r", 8);
+                container.append("rect").attr("class", "plus-minus").attr("x", 46).attr("y", 39.5).attr("width", 8).attr("height", 3);
+                container.append("rect").attr("class", "plus-minus").attr("x", 46).attr("y", 57.5).attr("width", 8).attr("height", 3);
+                container.append("rect").attr("class", "plus-minus").attr("x", 48.5).attr("y", 55).attr("width", 3).attr("height", 8);
+                container.attr("transform", "translate(" + this.x + "," + this.y + ")");
+                var control = this;
+                d3.select("#panUp").on("click", function() {
+                    doPan(control, {
+                        x: 0,
+                        y: control.panScale
+                    });
+                });
+                d3.select("#panDown").on("click", function() {
+                    doPan(control, {
+                        x: 0,
+                        y: -control.panScale
+                    });
+                });
+                d3.select("#panLeft").on("click", function() {
+                    doPan(control, {
+                        x: control.panScale,
+                        y: 0
+                    });
+                });
+                d3.select("#panRight").on("click", function() {
+                    doPan(control, {
+                        x: -control.panScale,
+                        y: 0
+                    });
+                });
+                d3.select("#zoomIn").on("click", function() {
+                    doZoom(control, control.zoomScale);
+                });
+                d3.select("#zoomOut").on("click", function() {
+                    doZoom(control, -control.zoomScale);
+                });
+            }
+        });
+        function doZoom(context, newScaleStep) {
+            var targetTransform = SvgUtils.getXYFromTranslate(context.target.attr("transform"));
+            var scale = context.zoom.scale();
+            var newScale = scale + newScaleStep;
+            var originalCanvas = {
+                w: context.width * scale,
+                h: context.height * scale
+            };
+            var newCanvas = {
+                w: context.width * newScale,
+                h: context.height * newScale
+            };
+            var xScale = (originalCanvas.w - newCanvas.w) / 2;
+            var yScale = (originalCanvas.h - newCanvas.h) / 2;
+            var newTransform = [ xScale + targetTransform[0], yScale + targetTransform[1] ];
+            newScale = Math.min(context.zoom.scaleExtent()[1], Math.max(context.zoom.scaleExtent()[0], newScale));
+            var topBound = -context.height * newScale + context.height, bottomBound = 0, leftBound = -context.width * newScale + context.width, rightBound = 0;
+            var translation = [ Math.max(Math.min(newTransform[0], rightBound), leftBound), Math.max(Math.min(newTransform[1], bottomBound), topBound) ];
+            context.target.attr("transform", "translate(" + translation + ")scale(" + newScale + ")");
+            context.zoom.translate(translation).scale(newScale);
+        }
+        function doPan(context, translation) {
+            var scale = context.zoom.scale();
+            var topBound = -context.height * scale + context.height, bottomBound = 0, leftBound = -context.width * scale + context.width, rightBound = 0;
+            var targetTransform = SvgUtils.getXYFromTranslate(context.target.attr("transform"));
+            var frameX = targetTransform[0];
+            var frameY = targetTransform[1];
+            frameX += translation.x;
+            frameY += translation.y;
+            frameX = Math.max(Math.min(frameX, rightBound), leftBound);
+            frameY = Math.max(Math.min(frameY, bottomBound), topBound);
+            context.target.attr("transform", "translate(" + [ frameX, frameY ] + ")scale(" + scale + ")");
+            context.zoom.translate([ frameX, frameY ]);
+        }
+        return D3ZoomPanControl;
+    }();
     var D3Engine = function() {
         function D3Engine() {}
         utils.mixin(D3Engine.prototype, Engine);
         utils.mixin(D3Engine.prototype, {
-            initEngine: function(container, navigatorContainer, width, height) {
+            initEngine: function(settings) {
                 var scale = 1, translation = [ 0, 0 ];
-                this.navigatorContainer = navigatorContainer;
-                var xScale = d3.scale.linear().domain([ -width / 2, width / 2 ]).range([ 0, width ]);
-                var yScale = d3.scale.linear().domain([ -height / 2, height / 2 ]).range([ height, 0 ]);
+                this.navigatorContainer = settings.navigatorContainer;
+                var xScale = d3.scale.linear().domain([ -settings.width / 2, settings.width / 2 ]).range([ 0, settings.width ]);
+                var yScale = d3.scale.linear().domain([ -settings.height / 2, settings.height / 2 ]).range([ settings.height, 0 ]);
                 var zoomHandler = function(newScale) {
                     if (!settings.zoom.enabled) {
                         return;
@@ -1196,30 +1373,30 @@
                         scale = newScale;
                     }
                     if (settings.drag.enabled) {
-                        var tbound = -height * scale + height, bbound = 0, lbound = -width * scale + width, rbound = 0;
+                        var topBound = -settings.height * scale + settings.height, bottomBound = 0, leftBound = -settings.width * scale + settings.width, rightBound = 0;
                         translation = d3.event ? d3.event.translate : [ 0, 0 ];
-                        translation = [ Math.max(Math.min(translation[0], rbound), lbound), Math.max(Math.min(translation[1], bbound), tbound) ];
+                        translation = [ Math.max(Math.min(translation[0], rightBound), leftBound), Math.max(Math.min(translation[1], bottomBound), topBound) ];
                     }
                     d3.select(".panCanvas, .panCanvas .bg").attr("transform", "translate(" + translation + ")" + " scale(" + scale + ")");
                 };
                 function initCommonDefs(svgDefs) {
-                    svgDefs.append("clipPath").attr("id", "wrapperClipPath").attr("class", "wrapper clipPath").append("rect").attr("class", "background").attr("width", width).attr("height", height);
+                    svgDefs.append("clipPath").attr("id", "wrapperClipPath").attr("class", "wrapper clipPath").append("rect").attr("class", "background").attr("width", settings.width).attr("height", settings.height);
                     var outerWrapper = svg.append("g").attr("id", "outerWrapper").attr("class", "wrapper outer");
-                    outerWrapper.append("rect").attr("class", "background").attr("width", width + settings.navigator.wrapperBorder * 2).attr("height", height + settings.navigator.wrapperBorder * 2);
-                    var innerWrapper = outerWrapper.append("g").attr("class", "wrapper inner").attr("clip-path", "url(#wrapperClipPath)").attr("transform", "translate(" + settings.navigator.wrapperBorder + "," + settings.navigator.wrapperBorder + ")").call(zoom);
-                    innerWrapper.append("rect").attr("class", "background").attr("width", width).attr("height", height);
-                    var panCanvas = innerWrapper.append("g").attr("id", "panCanvas").attr("class", "panCanvas").attr("width", width).attr("height", height).attr("transform", "translate(0,0)");
-                    panCanvas.append("rect").attr("class", "background").attr("width", width).attr("height", height);
+                    outerWrapper.append("rect").attr("class", "background").attr("width", settings.width).attr("height", settings.height);
+                    var innerWrapper = outerWrapper.append("g").attr("class", "wrapper inner").attr("clip-path", "url(#wrapperClipPath)").call(zoom);
+                    innerWrapper.append("rect").attr("class", "background").attr("width", settings.width).attr("height", settings.height);
+                    var panCanvas = innerWrapper.append("g").attr("id", "panCanvas").attr("class", "panCanvas").attr("width", settings.width).attr("height", settings.height).attr("transform", "translate(0,0)");
+                    panCanvas.append("rect").attr("class", "background").attr("width", settings.width).attr("height", settings.height);
                     panCanvas.append("g").attr("id", "graphElements").attr("transform", "scale(0.5)");
                 }
                 var zoom = d3.behavior.zoom().x(xScale).y(yScale).scaleExtent([ settings.zoom.minScale, settings.zoom.maxScale ]).on("zoom.canvas", zoomHandler);
-                var svg = this.svg = d3.select(container).append("svg").attr("class", "svg canvas").attr("width", width + settings.navigator.wrapperBorder * 2).attr("height", height + settings.navigator.wrapperBorder * 2).attr("shape-rendering", "auto");
-                svg.append("rect").attr("class", "overlay").attr("width", width).attr("height", height);
+                var svg = this.svg = d3.select(settings.container).append("svg").attr("class", "svg canvas").attr("width", settings.width).attr("height", settings.height);
+                svg.append("rect").attr("class", "overlay").attr("width", settings.width).attr("height", settings.height);
                 var defs = svg.append("defs");
                 initCommonDefs(defs);
                 this.panCanvas = d3.select("#panCanvas");
                 this.graphElements = d3.select("#graphElements");
-                this.navigator = initNavigator(navigatorContainer, zoom, width, height);
+                this.navigator = initNavigator(zoom, settings);
                 initZoomPanControl(svg, zoom);
                 var d3Renderers = ElementRendererProvider.getAll("d3");
                 for (var i = 0; i < d3Renderers.length; i++) {
@@ -1241,18 +1418,15 @@
                 }
             }
         });
-        function initNavigator(container, zoom, width, height) {
-            if (!utils.exists(container)) {
-                return;
+        function initNavigator(zoom, settings) {
+            if (!utils.exists(settings.container)) {
+                return null;
             }
-            var navigatorSvg = d3.select(container).append("svg").attr("width", settings.navigator.paddingLeft * 2 + width * settings.navigator.scale).attr("height", settings.navigator.paddingTop * 2 + height * settings.navigator.scale).attr("class", "svg canvas");
-            var navigator = new Navigator().zoom(zoom).width(width).height(height).target(d3.select("#panCanvas")).navigatorScale(settings.navigator.scale).x(settings.navigator.paddingLeft).y(settings.navigator.paddingTop);
-            navigatorSvg.call(navigator);
-            return navigator;
+            var navigatorSvg = d3.select(settings.navigatorContainer).append("svg").attr("width", settings.width * settings.navigator.scale).attr("height", settings.height * settings.navigator.scale).attr("class", "svg canvas");
+            return new D3Navigator(navigatorSvg, zoom, d3.select("#panCanvas"), settings);
         }
         function initZoomPanControl(container, zoom) {
-            var zoomPanControl = new ZoomPanControl().target(d3.select("#panCanvas")).zoom(zoom).zoomScale(settings.zoomPanControl.zoomScale).panScale(settings.zoomPanControl.panScale).x(settings.zoomPanControl.paddingLeft).y(settings.zoomPanControl.paddingTop);
-            container.call(zoomPanControl);
+            var zoomPanControl = new D3ZoomPanControl(container, zoom, d3.select("#panCanvas"), settings);
             zoomPanControl.render();
         }
         function bindData(svg, type, elements) {
@@ -1314,283 +1488,6 @@
         }
         return D3Engine;
     }();
-    var Navigator = function() {
-        "use strict";
-        var navigatorScale = .15, scale = 1, zoom = null, base = null, target = null, width = 0, height = 0, x = 0, y = 0, frameX = 0, frameY = 0;
-        function shouldShowNavigator() {
-            return settings.zoom.enabled && settings.navigator.enabled;
-        }
-        function initDefs(svg) {
-            var svgDefs = svg.append("defs");
-            svgDefs.append("clipPath").attr("id", "navigatorClipPath").attr("class", "navigator clipPath").attr("width", width).attr("height", height).append("rect").attr("class", "background").attr("width", width).attr("height", height);
-            var filter = svgDefs.append("svg:filter").attr("id", "navigatorDropShadow").attr("x", "-20%").attr("y", "-20%").attr("width", "150%").attr("height", "150%");
-            filter.append("svg:feOffset").attr("result", "offOut").attr("in", "SourceGraphic").attr("dx", "1").attr("dy", "1");
-            filter.append("svg:feColorMatrix").attr("result", "matrixOut").attr("in", "offOut").attr("type", "matrix").attr("values", "0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.1 0 0 0 0 0 0.5 0");
-            filter.append("svg:feGaussianBlur").attr("result", "blurOut").attr("in", "matrixOut").attr("stdDeviation", "10");
-            filter.append("svg:feBlend").attr("in", "SourceGraphic").attr("in2", "blurOut").attr("mode", "normal");
-            var navigatorRadialFill = svgDefs.append("radialGradient").attr({
-                id: "navigatorGradient",
-                gradientUnits: "userSpaceOnUse",
-                cx: "500",
-                cy: "500",
-                r: "400",
-                fx: "500",
-                fy: "500"
-            });
-            navigatorRadialFill.append("stop").attr("offset", "0%").attr("stop-color", "#FFFFFF");
-            navigatorRadialFill.append("stop").attr("offset", "40%").attr("stop-color", "#EEEEEE");
-            navigatorRadialFill.append("stop").attr("offset", "100%").attr("stop-color", "#E0E0E0");
-        }
-        function Navigator(selection) {
-            if (!shouldShowNavigator()) {
-                Navigator.render = function() {
-                    return;
-                };
-                return;
-            }
-            initDefs(selection);
-            base = selection;
-            var container = selection.append("g").attr("class", "navigator").attr("clip-path", "url(#navigatorClipPath)").call(zoom);
-            var navigatorClipPath = container.append("g");
-            zoom.on("zoom.navigator", function() {
-                scale = d3.event.scale;
-            });
-            Navigator.node = navigatorClipPath.node();
-            var frame = navigatorClipPath.append("g").attr("class", "frame");
-            frame.append("rect").attr("class", "background").attr("width", width).attr("height", height).attr("filter", "url(#navigatorDropShadow)");
-            var drag = d3.behavior.drag().on("dragstart.navigator", function() {
-                var frameTranslate = SvgUtils.getXYFromTranslate(frame.attr("transform"));
-                frameX = parseInt(frameTranslate[0], 10);
-                frameY = parseInt(frameTranslate[1], 10);
-            }).on("drag.navigator", function() {
-                var tbound = 0, bbound = height - height / scale, lbound = 0, rbound = width - width / scale;
-                d3.event.sourceEvent.stopImmediatePropagation();
-                frameX += d3.event.dx;
-                frameY += d3.event.dy;
-                frameX = Math.max(Math.min(frameX, rbound), lbound);
-                frameY = Math.max(Math.min(frameY, bbound), tbound);
-                frame.attr("transform", "translate(" + frameX + "," + frameY + ")");
-                var translate = [ -frameX * scale, -frameY * scale ];
-                target.attr("transform", "translate(" + translate + ")scale(" + scale + ")");
-                zoom.translate(translate);
-            });
-            frame.call(drag);
-            Navigator.render = function() {
-                scale = zoom.scale();
-                container.attr("transform", "translate(" + x + "," + y + ")scale(" + navigatorScale + ")");
-                var node = target.node().cloneNode(true);
-                node.removeAttribute("id");
-                d3.selectAll(".navigator .panCanvas").remove();
-                base.selectAll(".navigator .canvas").remove();
-                Navigator.node.appendChild(node);
-                var targetTransform = SvgUtils.getXYFromTranslate(target.attr("transform"));
-                frame.attr("transform", "translate(" + -targetTransform[0] / scale + "," + -targetTransform[1] / scale + ")").select(".background").attr("width", width / scale).attr("height", height / scale);
-                frame.node().parentNode.appendChild(frame.node());
-                d3.select(node).attr("transform", "translate(1,1)");
-            };
-        }
-        Navigator.width = function(value) {
-            if (!arguments.length) {
-                return width;
-            }
-            width = parseInt(value, 10);
-            return this;
-        };
-        Navigator.height = function(value) {
-            if (!arguments.length) {
-                return height;
-            }
-            height = parseInt(value, 10);
-            return this;
-        };
-        Navigator.x = function(value) {
-            if (!arguments.length) {
-                return x;
-            }
-            x = parseInt(value, 10);
-            return this;
-        };
-        Navigator.y = function(value) {
-            if (!arguments.length) {
-                return y;
-            }
-            y = parseInt(value, 10);
-            return this;
-        };
-        Navigator.scale = function(value) {
-            if (!arguments.length) {
-                return scale;
-            }
-            scale = value;
-            return this;
-        };
-        Navigator.navigatorScale = function(value) {
-            if (!arguments.length) {
-                return navigatorScale;
-            }
-            navigatorScale = value;
-            return this;
-        };
-        Navigator.zoom = function(value) {
-            if (!arguments.length) {
-                return zoom;
-            }
-            zoom = value;
-            return this;
-        };
-        Navigator.target = function(value) {
-            if (!arguments.length) {
-                return target;
-            }
-            target = value;
-            width = parseInt(target.attr("width"), 10);
-            height = parseInt(target.attr("height"), 10);
-            return this;
-        };
-        return Navigator;
-    };
-    var ZoomPanControl = function() {
-        "use strict";
-        var navigatorScale = .15, base = null, width = 0, height = 0, zoom = null, target = null, zoomScale = .25, panScale = 50, x = 0, y = 0;
-        function ZoomPanControl(selection) {
-            base = selection;
-            function panUp(event) {
-                doPan(0, panScale);
-            }
-            function panDown(event) {
-                doPan(0, -panScale);
-            }
-            function panLeft(event) {
-                doPan(panScale, 0);
-            }
-            function panRight(event) {
-                doPan(-panScale, 0);
-            }
-            function zoomIn(event) {
-                doZoom(zoomScale);
-            }
-            function zoomOut(event) {
-                doZoom(-zoomScale);
-            }
-            function doZoom(newScaleStep) {
-                var targetTransform = SvgUtils.getXYFromTranslate(target.attr("transform"));
-                var scale = zoom.scale();
-                var newScale = scale + newScaleStep;
-                var originalCanvas = {
-                    w: width * scale,
-                    h: height * scale
-                };
-                var newCanvas = {
-                    w: width * newScale,
-                    h: height * newScale
-                };
-                var xScale = (originalCanvas.w - newCanvas.w) / 2;
-                var yScale = (originalCanvas.h - newCanvas.h) / 2;
-                var newTransform = [ xScale + targetTransform[0], yScale + targetTransform[1] ];
-                newScale = Math.min(zoom.scaleExtent()[1], Math.max(zoom.scaleExtent()[0], newScale));
-                var tbound = -height * newScale + height, bbound = 0, lbound = -width * newScale + width, rbound = 0;
-                var translation = [ Math.max(Math.min(newTransform[0], rbound), lbound), Math.max(Math.min(newTransform[1], bbound), tbound) ];
-                target.attr("transform", "translate(" + translation + ")scale(" + newScale + ")");
-                zoom.translate(translation).scale(newScale);
-            }
-            function doPan(x, y) {
-                var scale = zoom.scale();
-                var tbound = -height * scale + height, bbound = 0, lbound = -width * scale + width, rbound = 0;
-                var targetTransform = SvgUtils.getXYFromTranslate(target.attr("transform"));
-                var frameX = targetTransform[0];
-                var frameY = targetTransform[1];
-                frameX += x;
-                frameY += y;
-                frameX = Math.max(Math.min(frameX, rbound), lbound);
-                frameY = Math.max(Math.min(frameY, bbound), tbound);
-                target.attr("transform", "translate(" + [ frameX, frameY ] + ")scale(" + scale + ")");
-                zoom.translate([ frameX, frameY ]);
-            }
-            ZoomPanControl.render = function() {
-                if (!settings.zoomPanControl.enabled) {
-                    return;
-                }
-                var container = selection.append("g").attr("id", "zoomPanControl");
-                container.append("circle").attr("class", "wrapperCircle").attr("cx", 50).attr("cy", 50).attr("r", 42);
-                container.append("path").attr("id", "panUp").attr("class", "zoomPanButton").attr("d", "M50 10 l12   20 a40, 70 0 0,0 -24,  0z");
-                container.append("path").attr("id", "panLeft").attr("class", "zoomPanButton").attr("d", "M10 50 l20  -12 a70, 40 0 0,0   0, 24z");
-                container.append("path").attr("id", "panDown").attr("class", "zoomPanButton").attr("d", "M50 90 l12  -20 a40, 70 0 0,1 -24,  0z");
-                container.append("path").attr("id", "panRight").attr("class", "zoomPanButton").attr("d", "M90 50 l-20 -12 a70, 40 0 0,1   0, 24z");
-                container.append("circle").attr("class", "compass").attr("cx", 50).attr("cy", 50).attr("r", 20);
-                container.append("circle").attr("id", "zoomOut").attr("class", "zoomPanButton").attr("cx", 50).attr("cy", 41).attr("r", 8);
-                container.append("circle").attr("id", "zoomIn").attr("class", "zoomPanButton").attr("cx", 50).attr("cy", 59).attr("r", 8);
-                container.append("rect").attr("class", "plus-minus").attr("x", 46).attr("y", 39.5).attr("width", 8).attr("height", 3);
-                container.append("rect").attr("class", "plus-minus").attr("x", 46).attr("y", 57.5).attr("width", 8).attr("height", 3);
-                container.append("rect").attr("class", "plus-minus").attr("x", 48.5).attr("y", 55).attr("width", 3).attr("height", 8);
-                container.attr("transform", "translate(" + x + "," + y + ")");
-                d3.select("#panUp").on("click", panUp);
-                d3.select("#panDown").on("click", panDown);
-                d3.select("#panLeft").on("click", panLeft);
-                d3.select("#panRight").on("click", panRight);
-                d3.select("#zoomIn").on("click", zoomIn);
-                d3.select("#zoomOut").on("click", zoomOut);
-            };
-        }
-        ZoomPanControl.width = function(value) {
-            if (!arguments.length) {
-                return width;
-            }
-            width = parseInt(value, 10);
-            return this;
-        };
-        ZoomPanControl.height = function(value) {
-            if (!arguments.length) {
-                return height;
-            }
-            height = parseInt(value, 10);
-            return this;
-        };
-        ZoomPanControl.x = function(value) {
-            if (!arguments.length) {
-                return x;
-            }
-            x = parseInt(value, 10);
-            return this;
-        };
-        ZoomPanControl.y = function(value) {
-            if (!arguments.length) {
-                return y;
-            }
-            y = parseInt(value, 10);
-            return this;
-        };
-        ZoomPanControl.panScale = function(value) {
-            if (!arguments.length) {
-                return panScale;
-            }
-            panScale = value;
-            return this;
-        };
-        ZoomPanControl.zoomScale = function(value) {
-            if (!arguments.length) {
-                return zoomScale;
-            }
-            zoomScale = value;
-            return this;
-        };
-        ZoomPanControl.target = function(value) {
-            if (!arguments.length) {
-                return target;
-            }
-            target = value;
-            width = parseInt(target.attr("width"), 10);
-            height = parseInt(target.attr("height"), 10);
-            return this;
-        };
-        ZoomPanControl.zoom = function(value) {
-            if (!arguments.length) {
-                return zoom;
-            }
-            zoom = value;
-            return this;
-        };
-        return ZoomPanControl;
-    };
     var D3DirectedLineEdgeRenderer = function() {
         return {
             init: function(edge, element) {
@@ -1976,16 +1873,14 @@
         };
     }();
     var Renderer = function() {
-        function Renderer(graph, container, navigatorContainer, engine, instanceSettings) {
+        function Renderer(graph, instanceSettings) {
             utils.checkExists("Graph", graph);
             this.graph = graph;
-            this.container = container;
-            this.navigatorContainer = navigatorContainer;
-            this.engine = utils.isUndefined(engine) ? settings.engine : engine;
-            this.width = instanceSettings.width;
-            this.height = instanceSettings.height;
+            this.container = settings.container;
+            this.navigatorContainer = settings.navigatorContainer;
+            this.engine = utils.isUndefined(instanceSettings.engine) ? settings.engine : instanceSettings.engine;
             this.initialized = false;
-            this.layout = instanceSettings.layout;
+            this.settings = instanceSettings;
             this.vertices = [];
             this.verticesById = {};
             this.edges = [];
@@ -2035,7 +1930,7 @@
                 this.timer.start();
             },
             onAnimationFrame: function() {
-                var running = this.layout.step(this.vertices, this.edges, this.width, this.height);
+                var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height);
                 this.renderFrame();
                 return running;
             },
@@ -2048,7 +1943,7 @@
             },
             init: function() {
                 setUpEventHandlers(this.graph, this);
-                this.engine.init(this.container, this.navigatorContainer, this.width, this.height, this.graph);
+                this.engine.init(this.settings, this.graph);
                 var self = this;
                 this.graph.forEachVertex(function(vertex) {'use strict';
                     self.engine.initVertex(vertex);
@@ -2059,7 +1954,9 @@
         return Renderer;
     }();
     var settings = {
-        engine: new RaphaelEngine(),
+        container: null,
+        navigatorContainer: null,
+        engine: new D3Engine(),
         layout: new RandomLayout(),
         raphael: {
             defaultVertexRenderer: RaphaelRectangleVertexRenderer,
@@ -2094,15 +1991,12 @@
         },
         navigator: {
             enabled: true,
-            paddingTop: 0,
-            paddingLeft: 20,
-            scale: .25,
-            wrapperBorder: 1
+            scale: .25
         },
         zoomPanControl: {
             enabled: true,
-            zoomScale: .25,
-            panScale: 50,
+            zoomStep: .25,
+            panStep: 50,
             paddingTop: 5,
             paddingLeft: 10
         }
@@ -2117,8 +2011,9 @@
     exports.Index = Index;
     exports.RandomLayout = RandomLayout;
     exports.ForceDirectedLayout = ForceDirectedLayout;
-    exports.Navigator = Navigator;
-    exports.ZoomPanControl = ZoomPanControl;
+    exports.D3Navigator = D3Navigator;
+    exports.D3ZoomPanManager = D3ZoomPanManager;
+    exports.D3ZoomPanControl = D3ZoomPanControl;
     exports.D3Engine = D3Engine;
     exports.D3SymbolVertexRenderer = D3SymbolVertexRenderer;
     exports.D3QueryVertexRenderer = D3QueryVertexRenderer;

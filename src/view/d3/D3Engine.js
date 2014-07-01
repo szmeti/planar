@@ -8,18 +8,18 @@ var D3Engine = (function () {
 
   utils.mixin(D3Engine.prototype, {
 
-    initEngine: function (container, navigatorContainer, width, height) {
+    initEngine: function (settings) {
       var scale           = 1,
         translation     = [0,0];
-      this.navigatorContainer = navigatorContainer;
+      this.navigatorContainer = settings.navigatorContainer;
 
       var xScale = d3.scale.linear()
-        .domain([-width / 2, width / 2])
-        .range([0, width]);
+        .domain([-settings.width / 2, settings.width / 2])
+        .range([0, settings.width]);
 
       var yScale = d3.scale.linear()
-        .domain([-height / 2, height / 2])
-        .range([height, 0]);
+        .domain([-settings.height / 2, settings.height / 2])
+        .range([settings.height, 0]);
 
       var zoomHandler = function(newScale) {
         if (!settings.zoom.enabled) { return; }
@@ -29,15 +29,15 @@ var D3Engine = (function () {
           scale = newScale;
         }
         if (settings.drag.enabled) {
-          var tbound = -height * scale + height,
-            bbound = 0,
-            lbound = -width * scale + width,
-            rbound = 0;
+          var topBound = -settings.height * scale + settings.height,
+            bottomBound = 0,
+            leftBound = -settings.width * scale + settings.width,
+            rightBound = 0;
           // limit translation to thresholds
           translation = d3.event ? d3.event.translate : [0, 0];
           translation = [
-            Math.max(Math.min(translation[0], rbound), lbound),
-            Math.max(Math.min(translation[1], bbound), tbound)
+            Math.max(Math.min(translation[0], rightBound), leftBound),
+            Math.max(Math.min(translation[1], bottomBound), topBound)
           ];
         }
 
@@ -51,8 +51,8 @@ var D3Engine = (function () {
           .attr('class', 'wrapper clipPath')
           .append('rect')
           .attr('class', 'background')
-          .attr('width', width)
-          .attr('height', height);
+          .attr('width', settings.width)
+          .attr('height', settings.height);
 
         var outerWrapper = svg.append('g')
           .attr('id','outerWrapper')
@@ -60,31 +60,30 @@ var D3Engine = (function () {
 
         outerWrapper.append('rect')
           .attr('class', 'background')
-          .attr('width', width + settings.navigator.wrapperBorder*2)
-          .attr('height', height + settings.navigator.wrapperBorder*2);
+          .attr('width', settings.width)
+          .attr('height', settings.height);
 
         var innerWrapper = outerWrapper.append('g')
           .attr('class', 'wrapper inner')
           .attr('clip-path', 'url(#wrapperClipPath)')
-          .attr('transform', 'translate(' + (settings.navigator.wrapperBorder) + ',' + (settings.navigator.wrapperBorder) + ')')
           .call(zoom);
 
         innerWrapper.append('rect')
           .attr('class', 'background')
-          .attr('width', width)
-          .attr('height', height);
+          .attr('width', settings.width)
+          .attr('height', settings.height);
 
         var panCanvas = innerWrapper.append('g')
           .attr('id', 'panCanvas')
           .attr('class', 'panCanvas')
-          .attr('width', width)
-          .attr('height', height)
+          .attr('width', settings.width)
+          .attr('height', settings.height)
           .attr('transform', 'translate(0,0)');
 
         panCanvas.append('rect')
           .attr('class', 'background')
-          .attr('width', width)
-          .attr('height', height);
+          .attr('width', settings.width)
+          .attr('height', settings.height);
 
         panCanvas.append('g')
           .attr('id','graphElements')
@@ -97,17 +96,16 @@ var D3Engine = (function () {
         .scaleExtent([settings.zoom.minScale, settings.zoom.maxScale])
         .on('zoom.canvas', zoomHandler);
 
-      var svg = this.svg = d3.select(container)
+      var svg = this.svg = d3.select(settings.container)
         .append('svg')
         .attr('class', 'svg canvas')
-        .attr('width',  width  + (settings.navigator.wrapperBorder*2))
-        .attr('height', height + (settings.navigator.wrapperBorder*2))
-        .attr('shape-rendering', 'auto');
+        .attr('width',  settings.width)
+        .attr('height', settings.height);
 
       svg.append('rect')
         .attr('class', 'overlay')
-        .attr('width', width)
-        .attr('height', height);
+        .attr('width', settings.width)
+        .attr('height', settings.height);
 
       var defs = svg.append('defs');
       
@@ -116,7 +114,7 @@ var D3Engine = (function () {
       this.panCanvas = d3.select('#panCanvas');
       this.graphElements = d3.select('#graphElements');
 
-      this.navigator = initNavigator(navigatorContainer, zoom, width, height);
+      this.navigator = initNavigator(zoom, settings);
       initZoomPanControl(svg,zoom);
 
       var d3Renderers = ElementRendererProvider.getAll('d3');
@@ -146,40 +144,22 @@ var D3Engine = (function () {
 
   });
 
-  function initNavigator(container, zoom, width, height) {
-    if (!utils.exists(container)) {
+  function initNavigator(zoom, settings) {
+    if (!utils.exists(settings.container)) {
       return null;
     }
 
-    var navigatorSvg = d3.select(container)
+    var navigatorSvg = d3.select(settings.navigatorContainer)
       .append('svg')
-      .attr('width',settings.navigator.paddingLeft*2 + (width*settings.navigator.scale))
-      .attr('height', settings.navigator.paddingTop*2 + (height*settings.navigator.scale))
+      .attr('width', settings.width*settings.navigator.scale)
+      .attr('height', settings.height*settings.navigator.scale)
       .attr('class', 'svg canvas');
 
-    var navigator = new Navigator()
-      .zoom(zoom)
-      .width(width)
-      .height(height)
-      .target(d3.select('#panCanvas'))
-      .navigatorScale(settings.navigator.scale)
-      .x(settings.navigator.paddingLeft)
-      .y(settings.navigator.paddingTop);
-
-    navigatorSvg.call(navigator);
-    return navigator;
+    return new D3Navigator(navigatorSvg, zoom, d3.select('#panCanvas'), settings);
   }
 
   function initZoomPanControl(container, zoom) {
-    var zoomPanControl = new ZoomPanControl()
-      .target(d3.select('#panCanvas'))
-      .zoom(zoom)
-      .zoomScale(settings.zoomPanControl.zoomScale)
-      .panScale(settings.zoomPanControl.panScale)
-      .x(settings.zoomPanControl.paddingLeft)
-      .y(settings.zoomPanControl.paddingTop);
-
-    container.call(zoomPanControl);
+    var zoomPanControl = new D3ZoomPanControl(container, zoom, d3.select('#panCanvas'), settings);
     zoomPanControl.render();
   }
 
