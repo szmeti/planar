@@ -83,9 +83,7 @@ var Navigator = function() {
 
   function Navigator(selection) {
     if (!shouldShowNavigator()) {
-      Navigator.render = function () {
-        return;
-      };
+      Navigator.render = function () {};
       return;
     }
 

@@ -148,7 +148,7 @@ var D3Engine = (function () {
 
   function initNavigator(container, zoom, width, height) {
     if (!utils.exists(container)) {
-      return;
+      return null;
     }
 
     var navigatorSvg = d3.select(container)
