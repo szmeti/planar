@@ -40,6 +40,7 @@ var Graph = (function () {
 
       this.vertices[id] = vertex;
       this.trigger('vertexAdded', vertex);
+      this.trigger('graphUpdated');
 
       return vertex;
     },
@@ -66,6 +67,7 @@ var Graph = (function () {
         this.indexManager.removeElement(storedVertex);
         delete this.vertices[storedVertex.id];
         this.trigger('vertexRemoved', storedVertex);
+        this.trigger('graphUpdated');
       }
     },
 
@@ -100,6 +102,7 @@ var Graph = (function () {
       inVertex.inEdges[edge.id] = edge;
 
       this.trigger('edgeAdded', edge);
+      this.trigger('graphUpdated');
 
       return edge;
     },
@@ -118,6 +121,8 @@ var Graph = (function () {
           delete edgeToDelete.outVertex.outEdges[edgeToDelete.id];
           delete edgeToDelete.inVertex.inEdges[edgeToDelete.id];
           this.trigger('edgeRemoved', edge);
+          this.trigger('graphUpdated');
+
         }
       }
     },

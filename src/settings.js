@@ -30,6 +30,7 @@ var settings = {
       'triangle-down': new D3SymbolVertexRenderer('triangle-down'),
       'triangle-up': new D3SymbolVertexRenderer('triangle-up'),
       'query-vertex': D3QueryVertexRenderer,
+      'image-vertex': D3ImageVertexRenderer,
       'query-result-vertex': D3QueryResultVertexRenderer
     },
 
@@ -62,6 +63,10 @@ var settings = {
     panStep: 50,
     paddingTop: 5,
     paddingLeft: 10
+  },
+
+  vertex : {
+    imageUrlPropertyKey : 'imageUrl'
   }
 
 };

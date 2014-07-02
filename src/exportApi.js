@@ -13,6 +13,7 @@ exports.D3ZoomPanManager = D3ZoomPanManager;
 exports.D3VertexManager = D3VertexManager;
 exports.D3ZoomPanControl = D3ZoomPanControl;
 exports.D3Engine = D3Engine;
+exports.D3ImageVertexRenderer = D3ImageVertexRenderer;
 exports.D3SymbolVertexRenderer = D3SymbolVertexRenderer;
 exports.D3QueryVertexRenderer = D3QueryVertexRenderer;
 exports.D3QueryResultVertexRenderer = D3QueryResultVertexRenderer;

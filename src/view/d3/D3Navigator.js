@@ -1,7 +1,7 @@
 /* global D3Navigator: true */
 var D3Navigator = (function() {
 
-  function D3Navigator(selection, zoom, target, settings) {
+  function D3Navigator(selection, zoom, target, settings, graph) {
     this.navigatorScale = settings.navigator.scale;
     this.scale = 1;
     this.zoom = zoom;
@@ -10,6 +10,8 @@ var D3Navigator = (function() {
     this.height = settings.height;
     this.frameX = 0;
     this.frameY = 0;
+    this.renderNavigator = true;
+    this.graph = graph;
 
     if (!shouldShowNavigator()) {
       D3Navigator.render = function () {};
@@ -43,7 +45,7 @@ var D3Navigator = (function() {
       .attr('width', this.width)
       .attr('height', this.height);
 
-    var drag = d3.behavior.drag()
+    var navigatorDrag = d3.behavior.drag()
       .on('dragstart.navigator', function() {
         onDragstart(navigator);
       })
@@ -51,7 +53,15 @@ var D3Navigator = (function() {
         onDrag(navigator);
       });
 
-    this.frame.call(drag);
+    this.frame.call(navigatorDrag);
+
+    graph.on('graphUpdated', function() {
+      reDraw(navigator);
+    });
+
+    graph.on('vertexDrag', function() {
+      reDraw(navigator);
+    });
 
   }
 
@@ -59,6 +69,16 @@ var D3Navigator = (function() {
 
     /** RENDER **/
     render : function() {
+      var targetTransform = SvgUtils.getXYFromTranslate(this.target.attr('transform'));
+      this.frame.attr('transform', 'translate(' + (-targetTransform[0]/this.scale) + ',' + (-targetTransform[1]/this.scale) + ')')
+        .select('.background')
+        .attr('width', this.width/this.scale)
+        .attr('height', this.height/this.scale);
+
+      if (!this.renderNavigator) {
+        return;
+      }
+
       this.scale = this.zoom.scale();
       this.container.attr('transform', 'scale(' + this.navigatorScale + ')');
       var node = this.target.node().cloneNode(true);
@@ -66,15 +86,16 @@ var D3Navigator = (function() {
       d3.selectAll('.navigator .panCanvas').remove();
       this.base.selectAll('.navigator .canvas').remove();
       D3Navigator.node.appendChild(node);
-      var targetTransform = SvgUtils.getXYFromTranslate(this.target.attr('transform'));
-      this.frame.attr('transform', 'translate(' + (-targetTransform[0]/this.scale) + ',' + (-targetTransform[1]/this.scale) + ')')
-        .select('.background')
-        .attr('width', this.width/this.scale)
-        .attr('height', this.height/this.scale);
       this.frame.node().parentNode.appendChild(this.frame.node());
       d3.select(node).attr('transform', 'translate(1,1)');
+      this.renderNavigator = false;
     }
   });
+
+  function reDraw(navigator) {
+    navigator.renderNavigator = true;
+    navigator.render();
+  }
 
   function shouldShowNavigator() {
     return settings.zoom.enabled && settings.navigator.enabled;

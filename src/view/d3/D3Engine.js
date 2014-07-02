@@ -8,7 +8,7 @@ var D3Engine = (function () {
 
   utils.mixin(D3Engine.prototype, {
 
-    initEngine: function (settings) {
+    initEngine: function (settings, graph) {
 
       var svg = this.svg = d3.select(settings.container)
         .append('svg')
@@ -23,7 +23,7 @@ var D3Engine = (function () {
 
       var defs = svg.append('defs');
 
-      this.zoomPanManager = new D3ZoomPanManager(svg, defs, settings);
+      this.zoomPanManager = new D3ZoomPanManager(svg, defs, settings, graph);
       this.zoomPanManager.init();
 
       var d3Renderers = ElementRendererProvider.getAll('d3');
@@ -44,9 +44,7 @@ var D3Engine = (function () {
       translateVertices(vertexSet);
       var vertexManager = new D3VertexManager(vertexEnter);
       vertexManager.addDragToVertices();
-
       updateEdgePositions(edgeSet);
-
       this.zoomPanManager.getNavigator().render();
     }
 

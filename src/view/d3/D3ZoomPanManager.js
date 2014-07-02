@@ -1,7 +1,7 @@
 /* global D3ZoomPanManager: true */
 var D3ZoomPanManager = (function () {
 
-  function D3ZoomPanManager(container, defs, settings) {
+  function D3ZoomPanManager(container, defs, settings, graph) {
     this.scale           = 1;
     this.translation     = [0,0];
     this.xScale = getXScale(settings);
@@ -12,6 +12,7 @@ var D3ZoomPanManager = (function () {
     this.navigator = null;
     this.graphContainer = null;
     this.settings = settings;
+    this.graph = graph;
   }
 
   utils.mixin(D3ZoomPanManager.prototype, {
@@ -25,7 +26,7 @@ var D3ZoomPanManager = (function () {
 
       initCommonDefs(this);
 
-      this.navigator = initNavigator(this.zoom, this.settings);
+      this.navigator = initNavigator(this.zoom, this.settings, this.graph);
       initZoomPanControl(this.svg, this.zoom, this.settings);
     },
 
@@ -82,7 +83,7 @@ var D3ZoomPanManager = (function () {
       .range([settings.height, 0]);
   }
 
-  function initNavigator(zoom, settings) {
+  function initNavigator(zoom, settings, graph) {
     if (!utils.exists(settings.navigatorContainer)) {
       return null;
     }
@@ -93,7 +94,7 @@ var D3ZoomPanManager = (function () {
       .attr('height', settings.height * settings.navigator.scale)
       .attr('class', 'svg canvas');
 
-    return new D3Navigator(navigatorSvg, zoom, d3.select('#panCanvas'), settings);
+    return new D3Navigator(navigatorSvg, zoom, d3.select('#panCanvas'), settings, graph);
   }
 
   function initZoomPanControl(container, zoom, settings) {
