@@ -1178,9 +1178,111 @@
         };
     }();
     var D3ZoomPanManager = function() {
-        function D3ZoomPanManager(settings) {}
-        utils.mixin(D3ZoomPanManager.prototype, {});
+        function D3ZoomPanManager(container, defs, settings) {
+            this.scale = 1;
+            this.translation = [ 0, 0 ];
+            this.xScale = getXScale(settings);
+            this.yScale = getYScale(settings);
+            this.svg = container;
+            this.svgDefs = defs;
+            this.zoom = null;
+            this.navigator = null;
+            this.graphContainer = null;
+            this.settings = settings;
+        }
+        utils.mixin(D3ZoomPanManager.prototype, {
+            init: function() {
+                var context = this;
+                this.zoom = d3.behavior.zoom().x(this.xScale).y(this.yScale).scaleExtent([ this.settings.zoom.minScale, this.settings.zoom.maxScale ]).on("zoom.canvas", this.zoomHandler);
+                initCommonDefs(this);
+                this.navigator = initNavigator(this.zoom, this.settings);
+                initZoomPanControl(this.svg, this.zoom, this.settings);
+            },
+            zoom: function(value) {
+                if (!arguments.length) {
+                    return this.zoom;
+                }
+                this.zoom = value;
+                return this;
+            },
+            zoomHandler: function(newScale) {
+                if (!settings.zoom.enabled) {
+                    return;
+                }
+                if (d3.event) {
+                    this.scale = d3.event.scale;
+                } else {
+                    this.scale = newScale;
+                }
+                if (settings.drag.enabled) {
+                    var topBound = -settings.height * this.scale + settings.height, bottomBound = 0, leftBound = -settings.width * this.scale + settings.width, rightBound = 0;
+                    this.translation = d3.event ? d3.event.translate : [ 0, 0 ];
+                    this.translation = [ Math.max(Math.min(this.translation[0], rightBound), leftBound), Math.max(Math.min(this.translation[1], bottomBound), topBound) ];
+                }
+                d3.select(".panCanvas, .panCanvas .bg").attr("transform", "translate(" + this.translation + ")" + " scale(" + this.scale + ")");
+            },
+            getNavigator: function() {
+                return this.navigator;
+            },
+            getGraphContainer: function() {
+                return this.graphContainer;
+            }
+        });
+        function getXScale(settings) {
+            return d3.scale.linear().domain([ -settings.width / 2, settings.width / 2 ]).range([ 0, settings.width ]);
+        }
+        function getYScale(settings) {
+            return d3.scale.linear().domain([ -settings.height / 2, settings.height / 2 ]).range([ settings.height, 0 ]);
+        }
+        function initNavigator(zoom, settings) {
+            if (!utils.exists(settings.navigatorContainer)) {
+                return null;
+            }
+            var navigatorSvg = d3.select(settings.navigatorContainer).append("svg").attr("width", settings.width * settings.navigator.scale).attr("height", settings.height * settings.navigator.scale).attr("class", "svg canvas");
+            return new D3Navigator(navigatorSvg, zoom, d3.select("#panCanvas"), settings);
+        }
+        function initZoomPanControl(container, zoom, settings) {
+            var zoomPanControl = new D3ZoomPanControl(container, zoom, d3.select("#panCanvas"), settings);
+            zoomPanControl.render();
+        }
+        function initCommonDefs(context) {
+            context.svgDefs.append("clipPath").attr("id", "wrapperClipPath").attr("class", "wrapper clipPath").append("rect").attr("class", "background").attr("width", context.settings.width).attr("height", context.settings.height);
+            var outerWrapper = context.svg.append("g").attr("id", "outerWrapper").attr("class", "wrapper outer");
+            outerWrapper.append("rect").attr("class", "background").attr("width", context.settings.width).attr("height", context.settings.height);
+            var innerWrapper = outerWrapper.append("g").attr("class", "wrapper inner").attr("clip-path", "url(#wrapperClipPath)").call(context.zoom);
+            innerWrapper.append("rect").attr("class", "background").attr("width", context.settings.width).attr("height", context.settings.height);
+            var panCanvas = innerWrapper.append("g").attr("id", "panCanvas").attr("class", "panCanvas").attr("width", context.settings.width).attr("height", context.settings.height).attr("transform", "translate(0,0)");
+            panCanvas.append("rect").attr("class", "background").attr("width", context.settings.width).attr("height", context.settings.height);
+            context.graphContainer = panCanvas.append("g").attr("id", "graphElements").attr("transform", "scale(0.5)");
+        }
         return D3ZoomPanManager;
+    }();
+    var D3VertexManager = function() {
+        function D3VertexManager(element) {
+            this.element = element;
+        }
+        utils.mixin(D3VertexManager.prototype, {
+            addDragToVertices: function() {
+                var drag = d3.behavior.drag();
+                drag.on("dragstart", function(uiVertex) {
+                    d3.event.sourceEvent.stopPropagation();
+                    var graph = uiVertex.vertex.getGraph();
+                    graph.trigger("vertexDragStart", uiVertex);
+                });
+                drag.on("drag", function(uiVertex) {
+                    uiVertex.x = d3.event.x;
+                    uiVertex.y = d3.event.y;
+                    var graph = uiVertex.vertex.getGraph();
+                    graph.trigger("vertexDrag", uiVertex);
+                });
+                drag.on("dragend", function(uiVertex) {
+                    var graph = uiVertex.vertex.getGraph();
+                    graph.trigger("vertexDragEnd", uiVertex);
+                });
+                this.element.call(drag);
+            }
+        });
+        return D3VertexManager;
     }();
     var D3Navigator = function() {
         function D3Navigator(selection, zoom, target, settings) {
@@ -1359,45 +1461,11 @@
         utils.mixin(D3Engine.prototype, Engine);
         utils.mixin(D3Engine.prototype, {
             initEngine: function(settings) {
-                var scale = 1, translation = [ 0, 0 ];
-                this.navigatorContainer = settings.navigatorContainer;
-                var xScale = d3.scale.linear().domain([ -settings.width / 2, settings.width / 2 ]).range([ 0, settings.width ]);
-                var yScale = d3.scale.linear().domain([ -settings.height / 2, settings.height / 2 ]).range([ settings.height, 0 ]);
-                var zoomHandler = function(newScale) {
-                    if (!settings.zoom.enabled) {
-                        return;
-                    }
-                    if (d3.event) {
-                        scale = d3.event.scale;
-                    } else {
-                        scale = newScale;
-                    }
-                    if (settings.drag.enabled) {
-                        var topBound = -settings.height * scale + settings.height, bottomBound = 0, leftBound = -settings.width * scale + settings.width, rightBound = 0;
-                        translation = d3.event ? d3.event.translate : [ 0, 0 ];
-                        translation = [ Math.max(Math.min(translation[0], rightBound), leftBound), Math.max(Math.min(translation[1], bottomBound), topBound) ];
-                    }
-                    d3.select(".panCanvas, .panCanvas .bg").attr("transform", "translate(" + translation + ")" + " scale(" + scale + ")");
-                };
-                function initCommonDefs(svgDefs) {
-                    svgDefs.append("clipPath").attr("id", "wrapperClipPath").attr("class", "wrapper clipPath").append("rect").attr("class", "background").attr("width", settings.width).attr("height", settings.height);
-                    var outerWrapper = svg.append("g").attr("id", "outerWrapper").attr("class", "wrapper outer");
-                    outerWrapper.append("rect").attr("class", "background").attr("width", settings.width).attr("height", settings.height);
-                    var innerWrapper = outerWrapper.append("g").attr("class", "wrapper inner").attr("clip-path", "url(#wrapperClipPath)").call(zoom);
-                    innerWrapper.append("rect").attr("class", "background").attr("width", settings.width).attr("height", settings.height);
-                    var panCanvas = innerWrapper.append("g").attr("id", "panCanvas").attr("class", "panCanvas").attr("width", settings.width).attr("height", settings.height).attr("transform", "translate(0,0)");
-                    panCanvas.append("rect").attr("class", "background").attr("width", settings.width).attr("height", settings.height);
-                    panCanvas.append("g").attr("id", "graphElements").attr("transform", "scale(0.5)");
-                }
-                var zoom = d3.behavior.zoom().x(xScale).y(yScale).scaleExtent([ settings.zoom.minScale, settings.zoom.maxScale ]).on("zoom.canvas", zoomHandler);
                 var svg = this.svg = d3.select(settings.container).append("svg").attr("class", "svg canvas").attr("width", settings.width).attr("height", settings.height);
                 svg.append("rect").attr("class", "overlay").attr("width", settings.width).attr("height", settings.height);
                 var defs = svg.append("defs");
-                initCommonDefs(defs);
-                this.panCanvas = d3.select("#panCanvas");
-                this.graphElements = d3.select("#graphElements");
-                this.navigator = initNavigator(zoom, settings);
-                initZoomPanControl(svg, zoom);
+                this.zoomPanManager = new D3ZoomPanManager(svg, defs, settings);
+                this.zoomPanManager.init();
                 var d3Renderers = ElementRendererProvider.getAll("d3");
                 for (var i = 0; i < d3Renderers.length; i++) {
                     if (typeof d3Renderers[i].initDefs === "function") {
@@ -1406,29 +1474,17 @@
                 }
             },
             beforeRender: function(vertices, edges) {
-                var edgeSet = bindData(this.graphElements, "edge", edges);
+                var edgeSet = bindData(this.zoomPanManager.getGraphContainer(), "edge", edges);
                 addEnterSection("edge", edgeSet);
-                var vertexSet = bindData(this.graphElements, "vertex", vertices);
+                var vertexSet = bindData(this.zoomPanManager.getGraphContainer(), "vertex", vertices);
                 var vertexEnter = addEnterSection("vertex", vertexSet);
                 translateVertices(vertexSet);
-                addDragToVertices(vertexEnter);
+                var vertexManager = new D3VertexManager(vertexEnter);
+                vertexManager.addDragToVertices();
                 updateEdgePositions(edgeSet);
-                if (utils.exists(this.navigatorContainer)) {
-                    this.navigator.render();
-                }
+                this.zoomPanManager.getNavigator().render();
             }
         });
-        function initNavigator(zoom, settings) {
-            if (!utils.exists(settings.container)) {
-                return null;
-            }
-            var navigatorSvg = d3.select(settings.navigatorContainer).append("svg").attr("width", settings.width * settings.navigator.scale).attr("height", settings.height * settings.navigator.scale).attr("class", "svg canvas");
-            return new D3Navigator(navigatorSvg, zoom, d3.select("#panCanvas"), settings);
-        }
-        function initZoomPanControl(container, zoom) {
-            var zoomPanControl = new D3ZoomPanControl(container, zoom, d3.select("#panCanvas"), settings);
-            zoomPanControl.render();
-        }
         function bindData(svg, type, elements) {
             return svg.selectAll("." + type).data(elements, function(uiElement) {
                 return uiElement.id;
@@ -1460,25 +1516,6 @@
             vertexSet.attr("transform", function(uiVertex) {
                 return "translate(" + uiVertex.x + "," + uiVertex.y + ")";
             });
-        }
-        function addDragToVertices(element) {
-            var drag = d3.behavior.drag();
-            drag.on("dragstart", function(uiVertex) {
-                d3.event.sourceEvent.stopPropagation();
-                var graph = uiVertex.vertex.getGraph();
-                graph.trigger("vertexDragStart", uiVertex);
-            });
-            drag.on("drag", function(uiVertex) {
-                uiVertex.x = d3.event.x;
-                uiVertex.y = d3.event.y;
-                var graph = uiVertex.vertex.getGraph();
-                graph.trigger("vertexDrag", uiVertex);
-            });
-            drag.on("dragend", function(uiVertex) {
-                var graph = uiVertex.vertex.getGraph();
-                graph.trigger("vertexDragEnd", uiVertex);
-            });
-            element.call(drag);
         }
         function updateEdgePositions(edgeSet) {
             edgeSet.each(function(uiEdge) {'use strict';
@@ -2013,6 +2050,7 @@
     exports.ForceDirectedLayout = ForceDirectedLayout;
     exports.D3Navigator = D3Navigator;
     exports.D3ZoomPanManager = D3ZoomPanManager;
+    exports.D3VertexManager = D3ZoomPanManager;
     exports.D3ZoomPanControl = D3ZoomPanControl;
     exports.D3Engine = D3Engine;
     exports.D3SymbolVertexRenderer = D3SymbolVertexRenderer;

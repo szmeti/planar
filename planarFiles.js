@@ -28,6 +28,7 @@ planarFiles = {
     'src/view/layout/ForceDirectedLayout.js',
     'src/view/Engine.js',
     'src/view/d3/D3ZoomPanManager.js',
+    'src/view/d3/D3VertexManager.js',
     'src/view/d3/D3Navigator.js',
     'src/view/d3/D3ZoomPanControl.js',
     'src/view/d3/D3Engine.js',
