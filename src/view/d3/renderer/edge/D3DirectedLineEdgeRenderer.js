@@ -4,6 +4,9 @@ var D3DirectedLineEdgeRenderer = (function () {
   return {
 
     init: function (edge, element) {
+      var lineWeight = edge.edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+      var markerEnd = settings.edge.useArrows ? 'url(#arrow)' : '';
+
       var text = element.append('text')
         .attr('id', 'text-of-label-'+ edge.id)
         .attr('x', 10)
@@ -19,8 +22,8 @@ var D3DirectedLineEdgeRenderer = (function () {
       edge.uiElement = element.append('path')
         .attr('id', 'edgeLabel')
         .attr('class', 'directed-edge arrow')
-        .attr('marker-end','url(#arrow)')
-        .attr('style', 'fill: none;stroke: #666;stroke-width: 1.5px;');
+        .attr('marker-end', markerEnd)
+        .attr('style', 'stroke-width: ' + lineWeight + 'px;');
 
       if(edge.edge.label === 'references') {
         edge.uiElement.attr('stroke-dasharray', '5,5');

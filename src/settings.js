@@ -67,6 +67,12 @@ var settings = {
 
   vertex : {
     imageUrlPropertyKey : 'imageUrl'
+  },
+
+  edge : {
+    lineWeightPropertyKey : 'lineWeight',
+    defaultLineWeight : 2,
+    useArrows: true
   }
 
 };

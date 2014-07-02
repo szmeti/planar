@@ -1549,9 +1549,11 @@
     var D3DirectedLineEdgeRenderer = function() {
         return {
             init: function(edge, element) {
+                var lineWeight = edge.edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+                var markerEnd = settings.edge.useArrows ? "url(#arrow)" : "";
                 var text = element.append("text").attr("id", "text-of-label-" + edge.id).attr("x", 10).attr("y", 100).attr("alignment-baseline", "central").attr("text-anchor", "middle").attr("class", "edge-label");
                 text.append("tspan").attr("baseline-shift", "super").text(edge.edge.label);
-                edge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", "url(#arrow)").attr("style", "fill: none;stroke: #666;stroke-width: 1.5px;");
+                edge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", markerEnd).attr("style", "stroke-width: " + lineWeight + "px;");
                 if (edge.edge.label === "references") {
                     edge.uiElement.attr("stroke-dasharray", "5,5");
                 }
@@ -1661,7 +1663,8 @@
     var D3LineEdgeRenderer = function() {
         return {
             init: function(edge, element) {
-                edge.uiElement = element.append("line");
+                var lineWeight = edge.edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+                edge.uiElement = element.append("line").attr("style", "stroke-width: " + lineWeight + "px;");
             },
             initDefs: function(defs) {},
             updatePosition: function(edge) {
@@ -2080,6 +2083,11 @@
         },
         vertex: {
             imageUrlPropertyKey: "imageUrl"
+        },
+        edge: {
+            lineWeightPropertyKey: "lineWeight",
+            defaultLineWeight: 2,
+            useArrows: true
         }
     };
     exports.settings = settings;

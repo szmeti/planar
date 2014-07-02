@@ -4,7 +4,8 @@ var D3LineEdgeRenderer = (function () {
   return {
 
     init: function (edge, element) {
-      edge.uiElement = element.append('line');
+      var lineWeight = edge.edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+      edge.uiElement = element.append('line').attr('style', 'stroke-width: ' + lineWeight + 'px;');
     },
 
     initDefs: function (defs) {},

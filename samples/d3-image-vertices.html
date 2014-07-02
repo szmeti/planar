@@ -151,7 +151,8 @@
         v4.setProperty('alias', 'P1');
         v4.setProperty('entityType', 'Person');
 
-        graph.addEdge(null, v1, v2, "a");
+        var e1 = graph.addEdge(null, v1, v2, "a");
+        e1.setProperty('lineWeight', 10);
         graph.addEdge(null, v2, v3, "b");
         graph.addEdge(null, v3, v1, "c");
         graph.addEdge(null, v3, v4, "d");
