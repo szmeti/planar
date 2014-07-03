@@ -12,6 +12,7 @@ var D3ImageVertexRenderer = (function () {
         .append('svg:image')
         .attr('xlink:href',imageUrl);
 
+      var self = this;
       var img = new Image();
       img.src = imageUrl;
       img.onload = function() {
@@ -24,9 +25,12 @@ var D3ImageVertexRenderer = (function () {
         .attr('y', -height/2);
 
         vertex.getGraph().trigger('graphUpdated');
+        self.drawReadyCallback(uiVertex, element);
       };
 
     },
+
+    asynch : true,
 
     initDefs: function (defs) {}
 

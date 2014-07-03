@@ -1167,6 +1167,64 @@
         });
         return ForceDirectedLayout;
     }();
+    var GraphDecorator = function() {
+        return {
+            init: function(element, container) {
+                if (this.renderer.asynch === true) {
+                    this.renderer.drawReadyCallback = this.doInit;
+                    this.renderer.init(element, container);
+                } else {
+                    this.renderer.init(element, container);
+                    this.doInit(element, container);
+                }
+            },
+            initDefs: function(defs) {
+                this.renderer.initDefs(defs);
+                this.doInitDefs(defs);
+            },
+            updatePosition: function(uiEdge) {
+                this.renderer.updatePosition(uiEdge);
+                this.doUpdatePosition(uiEdge);
+            },
+            doInit: function(element, container) {},
+            doInitDefs: function(defs) {},
+            doUpdatePosition: function(uiEdge) {}
+        };
+    }();
+    var D3EdgeLabelDecorator = function() {
+        function D3EdgeLabelDecorator(rendererToBeDecorated) {
+            this.renderer = rendererToBeDecorated;
+        }
+        utils.mixin(D3EdgeLabelDecorator.prototype, GraphDecorator);
+        utils.mixin(D3EdgeLabelDecorator.prototype, {
+            doInit: function(element, container) {
+                var text = container.append("text").attr("id", "text-of-label-" + element.edge.id).attr("x", 10).attr("y", 100).attr("alignment-baseline", "central").attr("text-anchor", "middle").attr("class", "edge-label");
+                text.append("tspan").attr("baseline-shift", "super").text(element.edge.label);
+                console.log(element.edge.label);
+            }
+        });
+        return D3EdgeLabelDecorator;
+    }();
+    var D3VertexLabelDecorator = function() {
+        function D3VertexLabelDecorator(rendererToBeDecorated, settings) {
+            this.renderer = rendererToBeDecorated;
+            this.doInit = function(element, container) {
+                var containerBox = container.node().getBBox();
+                var edge = containerBox.height / 2;
+                var padding = settings.padding;
+                if (settings.labelTop) {
+                    edge = -edge;
+                    padding = -padding;
+                }
+                var yPosition = edge;
+                yPosition += settings.labelInside ? -padding : padding;
+                var label = element.vertex.getProperty(settings.labelPropertyKey);
+                container.append("text").attr("class", "custom-label").attr("text-anchor", "middle").attr("y", yPosition).text(label);
+            };
+        }
+        utils.mixin(D3VertexLabelDecorator.prototype, GraphDecorator);
+        return D3VertexLabelDecorator;
+    }();
     var Engine = function() {
         return {
             init: function(settings, graph) {
@@ -1551,8 +1609,6 @@
             init: function(edge, element) {
                 var lineWeight = edge.edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
                 var markerEnd = settings.edge.useArrows ? "url(#arrow)" : "";
-                var text = element.append("text").attr("id", "text-of-label-" + edge.id).attr("x", 10).attr("y", 100).attr("alignment-baseline", "central").attr("text-anchor", "middle").attr("class", "edge-label");
-                text.append("tspan").attr("baseline-shift", "super").text(edge.edge.label);
                 edge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", markerEnd).attr("style", "stroke-width: " + lineWeight + "px;");
                 if (edge.edge.label === "references") {
                     edge.uiElement.attr("stroke-dasharray", "5,5");
@@ -1691,6 +1747,7 @@
                 uiVertex.uiElement = element;
                 var imageUrl = vertex.getProperty(settings.vertex.imageUrlPropertyKey);
                 var image = element.append("svg:image").attr("xlink:href", imageUrl);
+                var self = this;
                 var img = new Image();
                 img.src = imageUrl;
                 img.onload = function() {
@@ -1698,8 +1755,10 @@
                     var height = this.height;
                     image.attr("width", width).attr("height", height).attr("x", -width / 2).attr("y", -height / 2);
                     vertex.getGraph().trigger("graphUpdated");
+                    self.drawReadyCallback(uiVertex, element);
                 };
             },
+            asynch: true,
             initDefs: function(defs) {}
         };
     }();
@@ -2044,7 +2103,7 @@
         },
         d3: {
             defaultVertexRenderer: new D3SymbolVertexRenderer("circle"),
-            defaultEdgeRenderer: D3DirectedLineEdgeRenderer,
+            defaultEdgeRenderer: new D3EdgeLabelDecorator(D3DirectedLineEdgeRenderer),
             vertexRenderers: {
                 circle: new D3SymbolVertexRenderer("circle"),
                 cross: new D3SymbolVertexRenderer("cross"),
@@ -2054,10 +2113,23 @@
                 "triangle-up": new D3SymbolVertexRenderer("triangle-up"),
                 "query-vertex": D3QueryVertexRenderer,
                 "image-vertex": D3ImageVertexRenderer,
-                "query-result-vertex": D3QueryResultVertexRenderer
+                "query-result-vertex": D3QueryResultVertexRenderer,
+                "labeled-query-vertex": new D3VertexLabelDecorator(D3QueryVertexRenderer, {
+                    labelInside: true,
+                    labelTop: true,
+                    padding: 10,
+                    labelPropertyKey: "additionalLabel"
+                }),
+                "labeled-image-vertex": new D3VertexLabelDecorator(D3ImageVertexRenderer, {
+                    labelInside: true,
+                    labelTop: false,
+                    padding: 10,
+                    labelPropertyKey: "additionalLabel"
+                })
             },
             edgeRenderers: {
-                line: D3DirectedLineEdgeRenderer
+                "curved-line": D3DirectedLineEdgeRenderer,
+                "labeled-curved-line": new D3EdgeLabelDecorator(D3DirectedLineEdgeRenderer)
             }
         },
         width: 900,
@@ -2104,6 +2176,9 @@
     exports.D3ZoomPanManager = D3ZoomPanManager;
     exports.D3VertexManager = D3VertexManager;
     exports.D3ZoomPanControl = D3ZoomPanControl;
+    exports.GraphDecorator = GraphDecorator;
+    exports.D3VertexLabelDecorator = D3VertexLabelDecorator;
+    exports.D3EdgeLabelDecorator = D3EdgeLabelDecorator;
     exports.D3Engine = D3Engine;
     exports.D3ImageVertexRenderer = D3ImageVertexRenderer;
     exports.D3SymbolVertexRenderer = D3SymbolVertexRenderer;

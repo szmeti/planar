@@ -26,6 +26,8 @@ planarFiles = {
     'src/view/BoundingBoxCalculator.js',
     'src/view/layout/RandomLayout.js',
     'src/view/layout/ForceDirectedLayout.js',
+    'src/view/GraphDecorator.js',
+    'src/view/d3/decorator/{,*/}*.js',
     'src/view/Engine.js',
     'src/view/d3/D3ZoomPanManager.js',
     'src/view/d3/D3VertexManager.js',

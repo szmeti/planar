@@ -43,6 +43,7 @@
             stroke: #999;
             stroke-width: 2;
             cursor: pointer;
+            fill:none;
         }
 
         .edge:hover {
@@ -52,6 +53,7 @@
         .edge-label {
             stroke-width: -0.5;
             stroke: #666666;
+            fill: #666666;
         }
 
         .vertex {
@@ -133,28 +135,59 @@
         var graph = new planar.Graph({container: '#graphCanvas', navigatorContainer: '#navigatorContainer'});
 
         var v1 = graph.addVertex();
-        v1.setProperty(planar.PROP_TYPE, "image-vertex");
+        v1.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
         v1.setProperty("imageUrl", "resources/apple.png");
 
         var v2 = graph.addVertex();
-        v1.setProperty(planar.PROP_TYPE, "image-vertex");
+        v2.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
         v2.setProperty("imageUrl", "resources/bananas.png");
-
-        v2.setProperty(planar.PROP_TYPE, "image-vertex");
+        v2.setProperty('additionalLabel', 'ghi');
 
         var v3 = graph.addVertex();
-        v3.setProperty(planar.PROP_TYPE, "image-vertex");
+        v3.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
         v3.setProperty("imageUrl", "resources/orange.png");
+        v3.setProperty('additionalLabel', 'def');
+
+        var v4Filters = [
+            {
+                propertyKey: 'age',
+                value: 22,
+                predicate: 'LESS_THAN'
+            },
+            {
+                propertyKey: 'firstName',
+                value: 'peter',
+                predicate: 'EQUAL'
+            },
+            {
+                propertyKey: 'surname',
+                value: 'Smi',
+                predicate: 'CONTAINS'
+            },
+            {
+                propertyKey: 'surname',
+                referencedAlias: 'P3',
+                value: 'surname',
+                predicate: 'CONTAINS'
+            }
+        ];
 
         var v4 = graph.addVertex();
-        v4.setProperty(planar.PROP_TYPE, "query-vertex");
+        v4.setProperty(planar.PROP_TYPE, "labeled-query-vertex");
         v4.setProperty('alias', 'P1');
+        v4.setProperty('filters', v4Filters);
         v4.setProperty('entityType', 'Person');
+        v4.setProperty('additionalLabel', 'abc');
+        v4.setProperty('additionalLabel', 'abc');
 
         var e1 = graph.addEdge(null, v1, v2, "a");
-        e1.setProperty('lineWeight', 10);
-        graph.addEdge(null, v2, v3, "b");
-        graph.addEdge(null, v3, v1, "c");
+        e1.setProperty('lineWeight', 5);
+        e1.setProperty(planar.PROP_TYPE, "labeled-curved-line");
+
+        var e2 = graph.addEdge(null, v2, v3, "b");
+        e2.setProperty(planar.PROP_TYPE, "curved-line");
+
+        var e3 = graph.addEdge(null, v3, v1, "c");
         graph.addEdge(null, v3, v4, "d");
         graph.addEdge(null, v4, v2, "e");
 

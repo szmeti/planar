@@ -20,7 +20,7 @@ var settings = {
 
   d3: {
     defaultVertexRenderer: new D3SymbolVertexRenderer('circle'),
-    defaultEdgeRenderer: D3DirectedLineEdgeRenderer,
+    defaultEdgeRenderer: new D3EdgeLabelDecorator(D3DirectedLineEdgeRenderer),
 
     vertexRenderers: {
       'circle': new D3SymbolVertexRenderer('circle'),
@@ -31,11 +31,24 @@ var settings = {
       'triangle-up': new D3SymbolVertexRenderer('triangle-up'),
       'query-vertex': D3QueryVertexRenderer,
       'image-vertex': D3ImageVertexRenderer,
-      'query-result-vertex': D3QueryResultVertexRenderer
+      'query-result-vertex': D3QueryResultVertexRenderer,
+      'labeled-query-vertex' : new D3VertexLabelDecorator(D3QueryVertexRenderer, {
+        labelInside: true,
+        labelTop: true,
+        padding: 10,
+        labelPropertyKey: 'additionalLabel'
+      }),
+      'labeled-image-vertex' : new D3VertexLabelDecorator(D3ImageVertexRenderer,{
+        labelInside: true,
+        labelTop: false,
+        padding: 10,
+        labelPropertyKey: 'additionalLabel'
+      })
     },
 
     edgeRenderers: {
-      'line': D3DirectedLineEdgeRenderer
+      'curved-line': D3DirectedLineEdgeRenderer,
+      'labeled-curved-line': new D3EdgeLabelDecorator(D3DirectedLineEdgeRenderer)
     }
   },
 
