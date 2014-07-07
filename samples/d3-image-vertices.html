@@ -124,6 +124,7 @@
 <div id="container">
     <div id="graphCanvas"></div>
     <div id="navigatorContainer"></div>
+    <button id="saveAsImage">Save as Image</button>
 </div>
 
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
@@ -193,6 +194,11 @@
 
 
         graph.render();
+
+        $('#saveAsImage').click(function() {
+           graph.saveAsImage();
+        });
+
     });
 </script>
 

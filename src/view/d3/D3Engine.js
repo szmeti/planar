@@ -12,6 +12,7 @@ var D3Engine = (function () {
 
       var svg = this.svg = d3.select(settings.container)
         .append('svg')
+        .attr('id','graph-canvas')
         .attr('class', 'svg canvas')
         .attr('width',  settings.width)
         .attr('height', settings.height);
@@ -46,6 +47,11 @@ var D3Engine = (function () {
       vertexManager.addDragToVertices();
       updateEdgePositions(edgeSet);
       this.zoomPanManager.getNavigator().render();
+    },
+
+    saveAsImage: function() {
+      var imageDownloader = new D3SvgImageDownloader(d3.select('#graph-canvas'), true);
+      imageDownloader.download();
     }
 
   });

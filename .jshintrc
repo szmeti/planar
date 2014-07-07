@@ -47,6 +47,7 @@
     "D3VertexManager": false,
     "D3ZoomPanControl": false,
     "D3Engine": false,
+    "D3SvgImageDownloader": false,
     "D3LineEdgeRenderer": false,
     "D3DirectedLineEdgeRenderer": false,
     "DirectedLineEdgeCalculator": false,

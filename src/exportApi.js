@@ -9,6 +9,7 @@ exports.Index = Index;
 exports.RandomLayout = RandomLayout;
 exports.ForceDirectedLayout = ForceDirectedLayout;
 exports.D3Navigator = D3Navigator;
+exports.D3SvgImageDownloader = D3SvgImageDownloader;
 exports.D3ZoomPanManager = D3ZoomPanManager;
 exports.D3VertexManager = D3VertexManager;
 exports.D3ZoomPanControl = D3ZoomPanControl;
