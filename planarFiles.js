@@ -39,6 +39,7 @@ planarFiles = {
     'src/view/raphael/RaphaelRectangleVertexRenderer.js',
     'src/view/ElementRendererProvider.js',
     'src/view/Renderer.js',
+    'src/io/GraphSONReader.js',
     'src/settings.js'
   ],
 
