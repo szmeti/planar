@@ -88,6 +88,10 @@ var Renderer = (function () {
         self.engine.initVertex(vertex);
       });
       this.initialized = true;
+    },
+
+    saveAsImage: function() {
+      this.engine.saveAsImage();
     }
 
   });

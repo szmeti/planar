@@ -29,6 +29,7 @@ planarFiles = {
     'src/view/GraphDecorator.js',
     'src/view/d3/decorator/{,*/}*.js',
     'src/view/Engine.js',
+    'src/view/d3/D3SvgImageDownloader.js',
     'src/view/d3/D3ZoomPanManager.js',
     'src/view/d3/D3VertexManager.js',
     'src/view/d3/D3Navigator.js',

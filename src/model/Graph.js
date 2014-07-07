@@ -233,6 +233,10 @@ var Graph = (function () {
 
     render: function () {
       this.renderer.render();
+    },
+
+    saveAsImage: function () {
+      this.renderer.saveAsImage();
     }
 
   });

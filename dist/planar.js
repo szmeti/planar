@@ -151,6 +151,41 @@
         },
         randomInteger: function(lower, upper) {
             return Math.floor(Math.random() * upper) + lower;
+        },
+        traverse: function(obj, func, ctx) {
+            func(obj, ctx);
+            obj = obj.firstChild;
+            while (obj) {
+                this.traverse(obj, func, ctx);
+                obj = obj.nextSibling;
+            }
+        },
+        convertImgToBase64: function(url, callback, outputFormat) {
+            var canvas = document.createElement("CANVAS"), ctx = canvas.getContext("2d"), img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = function() {
+                var dataURL;
+                canvas.height = img.height;
+                canvas.width = img.width;
+                ctx.drawImage(img, 0, 0);
+                dataURL = canvas.toDataURL(outputFormat);
+                callback(this, dataURL);
+                canvas = null;
+            };
+            img.src = url;
+        },
+        explicitlySetStyle: function(element) {
+            if (element.nodeType !== 1) {
+                return;
+            }
+            var computedStyle = getComputedStyle(element);
+            var computedStyleStr = "";
+            for (var i = 0; i < computedStyle.length; i++) {
+                var key = computedStyle[i];
+                var value = computedStyle.getPropertyValue(key);
+                computedStyleStr += key + ":" + value + ";";
+            }
+            element.setAttribute("style", computedStyleStr);
         }
     };
     var GeometryUtils = {
@@ -610,6 +645,9 @@
             },
             render: function() {
                 this.renderer.render();
+            },
+            saveAsImage: function() {
+                this.renderer.saveAsImage();
             }
         });
         return Graph;
@@ -1238,6 +1276,91 @@
             renderVertex: function() {}
         };
     }();
+    var D3SvgImageDownloader = function() {
+        function D3SvgImageDownloader(element, disablePanControl) {
+            this.svg = element;
+            this.svg.attr("version", 1.1).attr("xmlns", "http://www.w3.org/2000/svg");
+            this.imageVertices = this.svg.selectAll("image").size();
+            this.disablePanControl = disablePanControl || false;
+            this.existingElementStyles = [];
+        }
+        utils.mixin(D3SvgImageDownloader.prototype, {
+            download: function() {
+                utils.traverse(this.svg.node(), modifySvgElements, this);
+            }
+        });
+        function modifySvgElements(element, ctx) {
+            hidePanControl(ctx);
+            changeImageSrcToBase64Uri(element, ctx);
+            collectOriginalStyles(element, ctx);
+            utils.explicitlySetStyle(element);
+        }
+        function changeImageSrcToBase64Uri(element, ctx) {
+            if (element.nodeName.toLowerCase() !== "image") {
+                return;
+            }
+            var imageUrl = d3.select(element).attr("xlink:href");
+            element.onload = function() {
+                vertexImageLoaded(ctx);
+            };
+            utils.convertImgToBase64(imageUrl, function(img, dataUrl) {
+                d3.select(element).attr("xlink:href", dataUrl);
+            }, "image/png");
+        }
+        function vertexImageLoaded(ctx) {
+            ctx.imageVertices--;
+            if (ctx.imageVertices === 0) {
+                var serializer = new XMLSerializer();
+                var svgStr = serializer.serializeToString(ctx.svg.node());
+                var image = new Image();
+                image.src = "data:image/svg+xml;base64," + window.btoa(svgStr);
+                image.onload = function() {
+                    var canvas = document.createElement("canvas");
+                    canvas.width = ctx.svg.attr("width");
+                    canvas.height = ctx.svg.attr("height");
+                    var context = canvas.getContext("2d");
+                    context.drawImage(image, 0, 0);
+                    var a = document.createElement("a");
+                    a.download = "image.png";
+                    a.href = canvas.toDataURL("image/png");
+                    document.body.appendChild(a);
+                    a.click();
+                    restoreSvg(ctx);
+                };
+            }
+        }
+        function collectOriginalStyles(element, ctx) {
+            if (element.nodeType !== 1 || !element.hasAttribute("style")) {
+                return;
+            }
+            var id = Math.floor(Math.random() * 1e5 + 1);
+            var newClass = "has-style-" + element.tagName + "-" + id;
+            element.classList.add(newClass);
+            ctx.existingElementStyles.push({
+                id: newClass,
+                style: element.getAttribute("style")
+            });
+        }
+        function hidePanControl(ctx) {
+            if (!ctx.disablePanControl) {
+                return;
+            }
+            d3.select("#zoomPanControl").attr("style", "display:none;");
+        }
+        function restoreSvg(ctx) {
+            ctx.svg.attr("style", null);
+            ctx.svg.selectAll("*").attr("style", null);
+            for (var i = 0; i < ctx.existingElementStyles.length; i++) {
+                var currentStyle = ctx.existingElementStyles[i];
+                var newClass = "." + currentStyle.id;
+                var element = d3.select(newClass);
+                element.attr("style", currentStyle.style);
+                element.node().classList.remove(currentStyle.id);
+            }
+            d3.select("#zoomPanControl").attr("style", "display:block;");
+        }
+        return D3SvgImageDownloader;
+    }();
     var D3ZoomPanManager = function() {
         function D3ZoomPanManager(container, defs, settings, graph) {
             this.scale = 1;
@@ -1539,7 +1662,7 @@
         utils.mixin(D3Engine.prototype, Engine);
         utils.mixin(D3Engine.prototype, {
             initEngine: function(settings, graph) {
-                var svg = this.svg = d3.select(settings.container).append("svg").attr("class", "svg canvas").attr("width", settings.width).attr("height", settings.height);
+                var svg = this.svg = d3.select(settings.container).append("svg").attr("id", "graph-canvas").attr("class", "svg canvas").attr("width", settings.width).attr("height", settings.height);
                 svg.append("rect").attr("class", "overlay").attr("width", settings.width).attr("height", settings.height);
                 var defs = svg.append("defs");
                 this.zoomPanManager = new D3ZoomPanManager(svg, defs, settings, graph);
@@ -1561,6 +1684,10 @@
                 vertexManager.addDragToVertices();
                 updateEdgePositions(edgeSet);
                 this.zoomPanManager.getNavigator().render();
+            },
+            saveAsImage: function() {
+                var imageDownloader = new D3SvgImageDownloader(d3.select("#graph-canvas"), true);
+                imageDownloader.download();
             }
         });
         function bindData(svg, type, elements) {
@@ -2087,6 +2214,9 @@
                     self.engine.initVertex(vertex);
                 });
                 this.initialized = true;
+            },
+            saveAsImage: function() {
+                this.engine.saveAsImage();
             }
         });
         return Renderer;
@@ -2206,6 +2336,7 @@
     exports.RandomLayout = RandomLayout;
     exports.ForceDirectedLayout = ForceDirectedLayout;
     exports.D3Navigator = D3Navigator;
+    exports.D3SvgImageDownloader = D3SvgImageDownloader;
     exports.D3ZoomPanManager = D3ZoomPanManager;
     exports.D3VertexManager = D3VertexManager;
     exports.D3ZoomPanControl = D3ZoomPanControl;
