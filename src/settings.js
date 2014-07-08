@@ -43,7 +43,9 @@ var settings = {
         labelTop: false,
         padding: 10,
         labelPropertyKey: 'additionalLabel'
-      })
+      }),
+      'bordered-query-vertex' : new D3VertexBorderDecorator(D3QueryVertexRenderer),
+      'bordered-image-vertex' : new D3VertexBorderDecorator(D3ImageVertexRenderer)
     },
 
     edgeRenderers: {
@@ -79,7 +81,15 @@ var settings = {
   },
 
   vertex : {
-    imageUrlPropertyKey : 'imageUrl'
+    imageUrlPropertyKey : 'imageUrl',
+    borderColorPropertyKey : 'borderColor',
+    borderWeightPropertyKey : 'borderWeight',
+    borderRadiusPropertyKey : 'borderRadius',
+    borderPaddingPropertyKey : 'borderPadding',
+    borderColor : '#000000',
+    borderWeight : 2,
+    borderRadius : 0,
+    borderPadding : 5
   },
 
   edge : {

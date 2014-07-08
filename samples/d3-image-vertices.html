@@ -136,18 +136,22 @@
         var graph = new planar.Graph({container: '#graphCanvas', navigatorContainer: '#navigatorContainer'});
 
         var v1 = graph.addVertex();
-        v1.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v1.setProperty(planar.PROP_TYPE, "bordered-image-vertex");
         v1.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/apple.png");
+        v1.setProperty("borderColor", "red");
+        v1.setProperty("borderWeight", "5");
 
         var v2 = graph.addVertex();
-        v2.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v2.setProperty(planar.PROP_TYPE, "bordered-image-vertex");
         v2.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/bananas.png");
-        v2.setProperty('additionalLabel', 'ghi');
+        v2.setProperty("borderColor", "blue");
+        v2.setProperty("borderWeight", "8");
+        v2.setProperty("borderRadius", "8");
 
         var v3 = graph.addVertex();
-        v3.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v3.setProperty(planar.PROP_TYPE, "bordered-image-vertex");
         v3.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/orange.png");
-        v3.setProperty('additionalLabel', 'def');
+        v3.setProperty("borderColor", "green");
 
         var v4Filters = [
             {
