@@ -2,7 +2,7 @@
 var D3VertexLabelDecorator = (function () {
 
   function D3VertexLabelDecorator(rendererToBeDecorated, settings) {
-    this.renderer = rendererToBeDecorated;
+    this.elementRenderer = rendererToBeDecorated;
 
     //if doInit() is called from asynch callback the context will change, so that the settings won't be recognized.
     // Don't move this function from this closure.
@@ -29,7 +29,7 @@ var D3VertexLabelDecorator = (function () {
     };
   }
 
-  utils.mixin(D3VertexLabelDecorator.prototype, GraphDecorator);
+  utils.mixin(D3VertexLabelDecorator.prototype, ElementRendererDecorator);
 
   return D3VertexLabelDecorator;
 

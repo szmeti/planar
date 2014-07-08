@@ -2,10 +2,10 @@
 var D3EdgeLabelDecorator = (function () {
 
   function D3EdgeLabelDecorator(rendererToBeDecorated) {
-    this.renderer = rendererToBeDecorated;
+    this.elementRenderer = rendererToBeDecorated;
   }
 
-  utils.mixin(D3EdgeLabelDecorator.prototype, GraphDecorator);
+  utils.mixin(D3EdgeLabelDecorator.prototype, ElementRendererDecorator);
 
   utils.mixin(D3EdgeLabelDecorator.prototype, {
     doInit: function (element, container) {

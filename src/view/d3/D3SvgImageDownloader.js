@@ -1,8 +1,9 @@
 /* global D3SvgImageDownloader: true */
 var D3SvgImageDownloader = (function () {
 
-  function D3SvgImageDownloader(element, disablePanControl) {
+  function D3SvgImageDownloader(element, graph, disablePanControl) {
     this.svg = element;
+    this.graph = graph;
     this.svg.attr('version', 1.1).attr('xmlns', 'http://www.w3.org/2000/svg');
     this.imageVertices = this.svg.selectAll('image').size();
     this.disablePanControl = disablePanControl || false;
@@ -11,16 +12,17 @@ var D3SvgImageDownloader = (function () {
 
   utils.mixin(D3SvgImageDownloader.prototype, {
     download: function () {
-      utils.traverse(this.svg.node(), modifySvgElements, this);
+      this.graph.trigger('downloadStarted');
+      hidePanControl(this);
+      DomUtils.traverse(this.svg.node(), modifySvgElements, this);
     }
 
   });
 
   function modifySvgElements(element, ctx) {
-    hidePanControl(ctx);
     changeImageSrcToBase64Uri(element, ctx);
     collectOriginalStyles(element, ctx);
-    utils.explicitlySetStyle(element);
+    DomUtils.explicitlySetStyle(element);
   }
 
   function changeImageSrcToBase64Uri(element, ctx) {
@@ -32,7 +34,7 @@ var D3SvgImageDownloader = (function () {
     element.onload = function () {
       vertexImageLoaded(ctx);
     };
-    utils.convertImgToBase64(imageUrl, function (img, dataUrl) {
+    DomUtils.convertImgToBase64(imageUrl, function (img, dataUrl) {
       d3.select(element).attr('xlink:href', dataUrl);
     }, 'image/png');
   }
@@ -61,12 +63,13 @@ var D3SvgImageDownloader = (function () {
         a.click();
 
         restoreSvg(ctx);
+        ctx.graph.trigger('downloadFinished');
       };
     }
   }
 
   function collectOriginalStyles(element, ctx) {
-    if (element.nodeType !== 1 || !element.hasAttribute('style')) {
+    if (element.nodeType !== window.Node.ELEMENT_NODE || !element.hasAttribute('style')) {
       return;
     }
 
@@ -95,7 +98,7 @@ var D3SvgImageDownloader = (function () {
     for (var i = 0; i < ctx.existingElementStyles.length; i++) {
       var currentStyle = ctx.existingElementStyles[i];
       var newClass = '.' + currentStyle.id;
-      var element = d3.select(newClass);
+      var element = d3.select(ctx.svg.node().parentNode).select(newClass);
 
       element.attr('style', currentStyle.style);
       element.node().classList.remove(currentStyle.id);

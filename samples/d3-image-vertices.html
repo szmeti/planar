@@ -137,16 +137,16 @@
 
         var v1 = graph.addVertex();
         v1.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
-        v1.setProperty("imageUrl", "resources/apple.png");
+        v1.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/apple.png");
 
         var v2 = graph.addVertex();
         v2.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
-        v2.setProperty("imageUrl", "resources/bananas.png");
+        v2.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/bananas.png");
         v2.setProperty('additionalLabel', 'ghi');
 
         var v3 = graph.addVertex();
         v3.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
-        v3.setProperty("imageUrl", "resources/orange.png");
+        v3.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/orange.png");
         v3.setProperty('additionalLabel', 'def');
 
         var v4Filters = [
@@ -191,6 +191,21 @@
         var e3 = graph.addEdge(null, v3, v1, "c");
         graph.addEdge(null, v3, v4, "d");
         graph.addEdge(null, v4, v2, "e");
+
+//        var vnFilters = [
+//            {
+//                propertyKey: 'age',
+//                value: 22,
+//                predicate: 'LESS_THAN'
+//            }
+//        ];
+//
+//        for (var i = 0; i < 100; i++) {
+//            var vn = graph.addVertex();
+//            vn.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+//            vn.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/apple.png");
+//            graph.addEdge(null, vn, v2, Math.floor((Math.random() * 10) + 1));
+//        }
 
 
         graph.render();

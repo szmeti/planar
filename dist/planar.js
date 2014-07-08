@@ -151,41 +151,6 @@
         },
         randomInteger: function(lower, upper) {
             return Math.floor(Math.random() * upper) + lower;
-        },
-        traverse: function(obj, func, ctx) {
-            func(obj, ctx);
-            obj = obj.firstChild;
-            while (obj) {
-                this.traverse(obj, func, ctx);
-                obj = obj.nextSibling;
-            }
-        },
-        convertImgToBase64: function(url, callback, outputFormat) {
-            var canvas = document.createElement("CANVAS"), ctx = canvas.getContext("2d"), img = new Image();
-            img.crossOrigin = "Anonymous";
-            img.onload = function() {
-                var dataURL;
-                canvas.height = img.height;
-                canvas.width = img.width;
-                ctx.drawImage(img, 0, 0);
-                dataURL = canvas.toDataURL(outputFormat);
-                callback(this, dataURL);
-                canvas = null;
-            };
-            img.src = url;
-        },
-        explicitlySetStyle: function(element) {
-            if (element.nodeType !== 1) {
-                return;
-            }
-            var computedStyle = getComputedStyle(element);
-            var computedStyleStr = "";
-            for (var i = 0; i < computedStyle.length; i++) {
-                var key = computedStyle[i];
-                var value = computedStyle.getPropertyValue(key);
-                computedStyleStr += key + ":" + value + ";";
-            }
-            element.setAttribute("style", computedStyleStr);
         }
     };
     var GeometryUtils = {
@@ -260,6 +225,42 @@
             var x = split[0] ? split[0].split("(")[1] : 0;
             var y = split[1] ? split[1].split(")")[0] : 0;
             return [ parseInt(x, 10), parseInt(y, 10) ];
+        }
+    };
+    var DomUtils = {
+        traverse: function(domElement, callbackForElements, context) {
+            callbackForElements(domElement, context);
+            domElement = domElement.firstChild;
+            while (domElement) {
+                this.traverse(domElement, callbackForElements, context);
+                domElement = domElement.nextSibling;
+            }
+        },
+        convertImgToBase64: function(url, callback, outputFormat) {
+            var canvas = document.createElement("CANVAS"), ctx = canvas.getContext("2d"), img = new Image();
+            img.onload = function() {
+                var dataURL;
+                canvas.height = img.height;
+                canvas.width = img.width;
+                ctx.drawImage(img, 0, 0);
+                dataURL = canvas.toDataURL(outputFormat);
+                callback(this, dataURL);
+                canvas = null;
+            };
+            img.src = url;
+        },
+        explicitlySetStyle: function(element) {
+            if (element.nodeType !== window.Node.ELEMENT_NODE) {
+                return;
+            }
+            var computedStyle = getComputedStyle(element);
+            var computedStyleStr = "";
+            for (var i = 0; i < computedStyle.length; i++) {
+                var key = computedStyle[i];
+                var value = computedStyle.getPropertyValue(key);
+                computedStyleStr += key + ":" + value + ";";
+            }
+            element.setAttribute("style", computedStyleStr);
         }
     };
     var OUT = 1;
@@ -648,6 +649,9 @@
             },
             saveAsImage: function() {
                 this.renderer.saveAsImage();
+            },
+            getSettings: function() {
+                return this.settings;
             }
         });
         return Graph;
@@ -1205,23 +1209,23 @@
         });
         return ForceDirectedLayout;
     }();
-    var GraphDecorator = function() {
+    var ElementRendererDecorator = function() {
         return {
             init: function(element, container) {
-                if (this.renderer.asynch === true) {
-                    this.renderer.drawReadyCallback = this.doInit;
-                    this.renderer.init(element, container);
+                if (this.elementRenderer.asynch === true) {
+                    this.elementRenderer.drawReadyCallback = this.doInit;
+                    this.elementRenderer.init(element, container);
                 } else {
-                    this.renderer.init(element, container);
+                    this.elementRenderer.init(element, container);
                     this.doInit(element, container);
                 }
             },
             initDefs: function(defs) {
-                this.renderer.initDefs(defs);
+                this.elementRenderer.initDefs(defs);
                 this.doInitDefs(defs);
             },
             updatePosition: function(uiEdge) {
-                this.renderer.updatePosition(uiEdge);
+                this.elementRenderer.updatePosition(uiEdge);
                 this.doUpdatePosition(uiEdge);
             },
             doInit: function(element, container) {},
@@ -1231,9 +1235,9 @@
     }();
     var D3EdgeLabelDecorator = function() {
         function D3EdgeLabelDecorator(rendererToBeDecorated) {
-            this.renderer = rendererToBeDecorated;
+            this.elementRenderer = rendererToBeDecorated;
         }
-        utils.mixin(D3EdgeLabelDecorator.prototype, GraphDecorator);
+        utils.mixin(D3EdgeLabelDecorator.prototype, ElementRendererDecorator);
         utils.mixin(D3EdgeLabelDecorator.prototype, {
             doInit: function(element, container) {
                 var text = container.append("text").attr("id", "text-of-label-" + element.edge.id).attr("x", 10).attr("y", 100).attr("alignment-baseline", "central").attr("text-anchor", "middle").attr("class", "edge-label");
@@ -1244,7 +1248,7 @@
     }();
     var D3VertexLabelDecorator = function() {
         function D3VertexLabelDecorator(rendererToBeDecorated, settings) {
-            this.renderer = rendererToBeDecorated;
+            this.elementRenderer = rendererToBeDecorated;
             this.doInit = function(element, container) {
                 var containerBox = container.node().getBBox();
                 var edge = containerBox.height / 2;
@@ -1259,7 +1263,7 @@
                 container.append("text").attr("class", "custom-label").attr("text-anchor", "middle").attr("y", yPosition).text(label);
             };
         }
-        utils.mixin(D3VertexLabelDecorator.prototype, GraphDecorator);
+        utils.mixin(D3VertexLabelDecorator.prototype, ElementRendererDecorator);
         return D3VertexLabelDecorator;
     }();
     var Engine = function() {
@@ -1277,8 +1281,9 @@
         };
     }();
     var D3SvgImageDownloader = function() {
-        function D3SvgImageDownloader(element, disablePanControl) {
+        function D3SvgImageDownloader(element, graph, disablePanControl) {
             this.svg = element;
+            this.graph = graph;
             this.svg.attr("version", 1.1).attr("xmlns", "http://www.w3.org/2000/svg");
             this.imageVertices = this.svg.selectAll("image").size();
             this.disablePanControl = disablePanControl || false;
@@ -1286,14 +1291,15 @@
         }
         utils.mixin(D3SvgImageDownloader.prototype, {
             download: function() {
-                utils.traverse(this.svg.node(), modifySvgElements, this);
+                this.graph.trigger("downloadStarted");
+                hidePanControl(this);
+                DomUtils.traverse(this.svg.node(), modifySvgElements, this);
             }
         });
         function modifySvgElements(element, ctx) {
-            hidePanControl(ctx);
             changeImageSrcToBase64Uri(element, ctx);
             collectOriginalStyles(element, ctx);
-            utils.explicitlySetStyle(element);
+            DomUtils.explicitlySetStyle(element);
         }
         function changeImageSrcToBase64Uri(element, ctx) {
             if (element.nodeName.toLowerCase() !== "image") {
@@ -1303,7 +1309,7 @@
             element.onload = function() {
                 vertexImageLoaded(ctx);
             };
-            utils.convertImgToBase64(imageUrl, function(img, dataUrl) {
+            DomUtils.convertImgToBase64(imageUrl, function(img, dataUrl) {
                 d3.select(element).attr("xlink:href", dataUrl);
             }, "image/png");
         }
@@ -1326,11 +1332,12 @@
                     document.body.appendChild(a);
                     a.click();
                     restoreSvg(ctx);
+                    ctx.graph.trigger("downloadFinished");
                 };
             }
         }
         function collectOriginalStyles(element, ctx) {
-            if (element.nodeType !== 1 || !element.hasAttribute("style")) {
+            if (element.nodeType !== window.Node.ELEMENT_NODE || !element.hasAttribute("style")) {
                 return;
             }
             var id = Math.floor(Math.random() * 1e5 + 1);
@@ -1353,7 +1360,7 @@
             for (var i = 0; i < ctx.existingElementStyles.length; i++) {
                 var currentStyle = ctx.existingElementStyles[i];
                 var newClass = "." + currentStyle.id;
-                var element = d3.select(newClass);
+                var element = d3.select(ctx.svg.node().parentNode).select(newClass);
                 element.attr("style", currentStyle.style);
                 element.node().classList.remove(currentStyle.id);
             }
@@ -1662,6 +1669,7 @@
         utils.mixin(D3Engine.prototype, Engine);
         utils.mixin(D3Engine.prototype, {
             initEngine: function(settings, graph) {
+                this.graph = graph;
                 var svg = this.svg = d3.select(settings.container).append("svg").attr("id", "graph-canvas").attr("class", "svg canvas").attr("width", settings.width).attr("height", settings.height);
                 svg.append("rect").attr("class", "overlay").attr("width", settings.width).attr("height", settings.height);
                 var defs = svg.append("defs");
@@ -1686,7 +1694,7 @@
                 this.zoomPanManager.getNavigator().render();
             },
             saveAsImage: function() {
-                var imageDownloader = new D3SvgImageDownloader(d3.select("#graph-canvas"), true);
+                var imageDownloader = new D3SvgImageDownloader(d3.select("#graph-canvas"), this.graph, true);
                 imageDownloader.download();
             }
         });
@@ -1732,12 +1740,14 @@
     }();
     var D3DirectedLineEdgeRenderer = function() {
         return {
-            init: function(edge, element) {
-                var lineWeight = edge.edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
-                var markerEnd = settings.edge.useArrows ? "url(#arrow)" : "";
-                edge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", markerEnd).attr("style", "stroke-width: " + lineWeight + "px;");
-                if (edge.edge.label === "references") {
-                    edge.uiElement.attr("stroke-dasharray", "5,5");
+            init: function(uiEdge, element) {
+                var edge = uiEdge.edge;
+                var instanceSettings = edge.getGraph().getSettings();
+                var lineWeight = edge.getProperty(instanceSettings.edge.lineWeightPropertyKey) || instanceSettings.edge.defaultLineWeight;
+                var markerEnd = instanceSettings.edge.useArrows ? "url(#arrow)" : "";
+                uiEdge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", markerEnd).attr("style", "stroke-width: " + lineWeight + "px;");
+                if (edge.label === "references") {
+                    uiEdge.uiElement.attr("stroke-dasharray", "5,5");
                 }
             },
             initDefs: function(defs) {
@@ -1844,9 +1854,11 @@
     }();
     var D3LineEdgeRenderer = function() {
         return {
-            init: function(edge, element) {
-                var lineWeight = edge.edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
-                edge.uiElement = element.append("line").attr("style", "stroke-width: " + lineWeight + "px;");
+            init: function(uiEdge, element) {
+                var edge = uiEdge.edge;
+                var instanceSettings = edge.getGraph().getSettings();
+                var lineWeight = edge.getProperty(instanceSettings.edge.lineWeightPropertyKey) || instanceSettings.edge.defaultLineWeight;
+                uiEdge.uiElement = element.append("line").attr("style", "stroke-width: " + lineWeight + "px;");
             },
             initDefs: function(defs) {},
             updatePosition: function(edge) {
@@ -1871,7 +1883,8 @@
             init: function(uiVertex, element) {
                 var vertex = uiVertex.vertex;
                 uiVertex.uiElement = element;
-                var imageUrl = vertex.getProperty(settings.vertex.imageUrlPropertyKey);
+                var instanceSettings = vertex.getGraph().getSettings();
+                var imageUrl = vertex.getProperty(instanceSettings.vertex.imageUrlPropertyKey);
                 var image = element.append("svg:image").attr("xlink:href", imageUrl);
                 var self = this;
                 var img = new Image();
@@ -2141,9 +2154,9 @@
         function Renderer(graph, instanceSettings) {
             utils.checkExists("Graph", graph);
             this.graph = graph;
-            this.container = settings.container;
-            this.navigatorContainer = settings.navigatorContainer;
-            this.engine = utils.isUndefined(instanceSettings.engine) ? settings.engine : instanceSettings.engine;
+            this.container = instanceSettings.container;
+            this.navigatorContainer = instanceSettings.navigatorContainer;
+            this.engine = instanceSettings.engine;
             this.initialized = false;
             this.settings = instanceSettings;
             this.vertices = [];
@@ -2340,7 +2353,7 @@
     exports.D3ZoomPanManager = D3ZoomPanManager;
     exports.D3VertexManager = D3VertexManager;
     exports.D3ZoomPanControl = D3ZoomPanControl;
-    exports.GraphDecorator = GraphDecorator;
+    exports.ElementRendererDecorator = ElementRendererDecorator;
     exports.D3VertexLabelDecorator = D3VertexLabelDecorator;
     exports.D3EdgeLabelDecorator = D3EdgeLabelDecorator;
     exports.D3Engine = D3Engine;
@@ -2357,6 +2370,7 @@
     exports.Rectangle = Rectangle;
     exports.GeometryUtils = GeometryUtils;
     exports.SvgUtils = SvgUtils;
+    exports.DomUtils = DomUtils;
     exports.OUT = OUT;
     exports.IN = IN;
     exports.BOTH = BOTH;

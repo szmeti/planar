@@ -6,7 +6,9 @@ var D3ImageVertexRenderer = (function () {
     init: function (uiVertex, element) {
       var vertex = uiVertex.vertex;
       uiVertex.uiElement = element;
-      var imageUrl = vertex.getProperty(settings.vertex.imageUrlPropertyKey);
+
+      var instanceSettings = vertex.getGraph().getSettings();
+      var imageUrl = vertex.getProperty(instanceSettings.vertex.imageUrlPropertyKey);
 
       var image = element
         .append('svg:image')

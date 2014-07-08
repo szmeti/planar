@@ -3,9 +3,12 @@ var D3LineEdgeRenderer = (function () {
 
   return {
 
-    init: function (edge, element) {
-      var lineWeight = edge.edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
-      edge.uiElement = element.append('line').attr('style', 'stroke-width: ' + lineWeight + 'px;');
+    init: function (uiEdge, element) {
+      var edge = uiEdge.edge;
+      var instanceSettings = edge.getGraph().getSettings();
+
+      var lineWeight = edge.getProperty(instanceSettings.edge.lineWeightPropertyKey) || instanceSettings.edge.defaultLineWeight;
+      uiEdge.uiElement = element.append('line').attr('style', 'stroke-width: ' + lineWeight + 'px;');
     },
 
     initDefs: function (defs) {},
