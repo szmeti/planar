@@ -9,7 +9,7 @@ var D3Engine = (function () {
   utils.mixin(D3Engine.prototype, {
 
     initEngine: function (settings, graph) {
-
+      this.graph = graph;
       var svg = this.svg = d3.select(settings.container)
         .append('svg')
         .attr('id','graph-canvas')
@@ -50,7 +50,7 @@ var D3Engine = (function () {
     },
 
     saveAsImage: function() {
-      var imageDownloader = new D3SvgImageDownloader(d3.select('#graph-canvas'), true);
+      var imageDownloader = new D3SvgImageDownloader(d3.select('#graph-canvas'), this.graph, true);
       imageDownloader.download();
     }
 

@@ -3,18 +3,21 @@ var D3DirectedLineEdgeRenderer = (function () {
 
   return {
 
-    init: function (edge, element) {
-      var lineWeight = edge.edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
-      var markerEnd = settings.edge.useArrows ? 'url(#arrow)' : '';
+    init: function (uiEdge, element) {
+      var edge = uiEdge.edge;
+      var instanceSettings = edge.getGraph().getSettings();
 
-      edge.uiElement = element.append('path')
+      var lineWeight = edge.getProperty(instanceSettings.edge.lineWeightPropertyKey) || instanceSettings.edge.defaultLineWeight;
+      var markerEnd = instanceSettings.edge.useArrows ? 'url(#arrow)' : '';
+
+      uiEdge.uiElement = element.append('path')
         .attr('id', 'edgeLabel')
         .attr('class', 'directed-edge arrow')
         .attr('marker-end',markerEnd)
         .attr('style', 'stroke-width: ' + lineWeight + 'px;');
 
-      if(edge.edge.label === 'references') {
-        edge.uiElement.attr('stroke-dasharray', '5,5');
+      if(edge.label === 'references') {
+        uiEdge.uiElement.attr('stroke-dasharray', '5,5');
       }
     },
 

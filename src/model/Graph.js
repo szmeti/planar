@@ -237,6 +237,10 @@ var Graph = (function () {
 
     saveAsImage: function () {
       this.renderer.saveAsImage();
+    },
+
+    getSettings: function () {
+      return this.settings;
     }
 
   });

@@ -5,9 +5,9 @@ var Renderer = (function () {
     utils.checkExists('Graph', graph);
 
     this.graph = graph;
-    this.container = settings.container;
-    this.navigatorContainer = settings.navigatorContainer;
-    this.engine = utils.isUndefined(instanceSettings.engine) ? settings.engine : instanceSettings.engine;
+    this.container = instanceSettings.container;
+    this.navigatorContainer = instanceSettings.navigatorContainer;
+    this.engine = instanceSettings.engine;
     this.initialized = false;
     this.settings = instanceSettings;
     this.vertices = [];
