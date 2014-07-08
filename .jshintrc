@@ -81,6 +81,7 @@
     "fail": false,
 
 
-    "QueryResultVertexPropertyPredicate": false
+    "QueryResultVertexPropertyPredicate": false,
+    "GraphSONReader":false
   }
 }

@@ -37,3 +37,4 @@ exports.BOTH = BOTH;
 exports.PROP_TYPE = PROP_TYPE;
 
 exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
+exports.GraphSONReader = GraphSONReader;
