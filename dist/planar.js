@@ -2222,26 +2222,26 @@
         return Renderer;
     }();
     var GraphSONReader = function() {
-        function GraphSONReader() {
-            this.a = 1;
-        }
+        function GraphSONReader() {}
         var copyProperties = function(from, to) {
             for (var property in from) {
-                to.setProperty(property, from[property]);
+                if (property.indexOf("_") !== 0) {
+                    to.setProperty(property, from[property]);
+                }
             }
         };
         utils.mixin(GraphSONReader.prototype, {
             read: function(graph, graphSON) {
-                for (var vertexIndex in graphSON.graph.vertices) {
-                    var graphSONVertex = graphSON.graph.vertices[vertexIndex];
+                for (var i = 0; i < graphSON.graph.vertices.length; i++) {
+                    var graphSONVertex = graphSON.graph.vertices[i];
                     var vertex = graph.getVertex(graphSONVertex._id);
                     if (!utils.exists(vertex)) {
                         vertex = graph.addVertex(graphSONVertex._id);
                     }
                     copyProperties(graphSONVertex, vertex);
                 }
-                for (var edgeIndex in graphSON.graph.edges) {
-                    var graphSONEdge = graphSON.graph.edges[edgeIndex];
+                for (i = 0; i < graphSON.graph.edges.length; i++) {
+                    var graphSONEdge = graphSON.graph.edges[i];
                     var edge = graph.getEdge(graphSONEdge._id);
                     if (!utils.exists(edge)) {
                         var outV = graph.getVertex(graphSONEdge._outV);
