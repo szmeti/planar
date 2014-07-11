@@ -36,7 +36,7 @@ var CircleLayout = (function () {
         for (var i = 0; i < vertices.length; i++) {
           var uiVertex = vertices[i];
           if(uiVertex.started) {
-            this.tween._runFrame(uiVertex);
+            this.tween.runFrame(uiVertex);
             if(uiVertex.finished) {
               finishedVertices++;
             }

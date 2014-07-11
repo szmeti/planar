@@ -23,28 +23,28 @@ describe('Tween', function () {
     expect(vertex.finished).toBeUndefined();
     now = 50;
 
-    tween._runFrame(vertex);
+    tween.runFrame(vertex);
 
     expect(vertex.x).toBeCloseTo(10.0098, 4);
     expect(vertex.y).toBeCloseTo(30.9766, 4);
     expect(vertex.finished).toBeUndefined();
     now = 500;
 
-    tween._runFrame(vertex);
+    tween.runFrame(vertex);
 
     expect(vertex.x).toEqual(15);
     expect(vertex.y).toEqual(530);
     expect(vertex.finished).toBeUndefined();
     now = 600;
 
-    tween._runFrame(vertex);
+    tween.runFrame(vertex);
 
     expect(vertex.x).toEqual(18.75);
     expect(vertex.y).toEqual(905);
     expect(vertex.finished).toBeUndefined();
     now = 1000;
 
-    tween._runFrame(vertex);
+    tween.runFrame(vertex);
 
     expect(vertex.x).toEqual(20);
     expect(vertex.y).toEqual(1030);

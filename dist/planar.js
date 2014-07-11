@@ -2186,9 +2186,9 @@
                 vertex.startTime = Tween.dateNow();
                 vertex.endTime = vertex.startTime + this.duration;
                 vertex.started = true;
-                this._runFrame(vertex);
+                this.runFrame(vertex);
             },
-            _runFrame: function(vertex) {
+            runFrame: function(vertex) {
                 calculateState(vertex, this.duration);
                 vertex.x = this.easing(vertex.currentTime, vertex.endX, vertex.beginX - vertex.endX, this.duration);
                 vertex.y = this.easing(vertex.currentTime, vertex.endY, vertex.beginY - vertex.endY, this.duration);
@@ -2229,7 +2229,7 @@
                     for (var i = 0; i < vertices.length; i++) {
                         var uiVertex = vertices[i];
                         if (uiVertex.started) {
-                            this.tween._runFrame(uiVertex);
+                            this.tween.runFrame(uiVertex);
                             if (uiVertex.finished) {
                                 finishedVertices++;
                             }

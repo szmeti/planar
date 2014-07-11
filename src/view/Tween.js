@@ -21,9 +21,9 @@ var Tween = (function () {
       vertex.startTime = Tween.dateNow();
       vertex.endTime = vertex.startTime + this.duration;
       vertex.started = true;
-      this._runFrame(vertex);
+      this.runFrame(vertex);
     },
-    _runFrame: function (vertex) {
+    runFrame: function (vertex) {
       calculateState(vertex, this.duration);
 
       vertex.x = this.easing(vertex.currentTime, vertex.endX, vertex.beginX - vertex.endX, this.duration);
