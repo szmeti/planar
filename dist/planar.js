@@ -1247,6 +1247,23 @@
         });
         return D3EdgeLabelDecorator;
     }();
+    var D3VertexBorderDecorator = function() {
+        function D3VertexBorderDecorator(rendererToBeDecorated) {
+            this.elementRenderer = rendererToBeDecorated;
+            this.doInit = function(uiElement, container) {
+                var vertex = uiElement.vertex;
+                var instanceSettings = vertex.getGraph().getSettings();
+                var borderColor = vertex.getProperty(instanceSettings.vertex.borderColorPropertyKey) || instanceSettings.vertex.borderColor;
+                var borderWeight = vertex.getProperty(instanceSettings.vertex.borderWeightPropertyKey) || instanceSettings.vertex.borderWeight;
+                var borderRadius = vertex.getProperty(instanceSettings.vertex.borderRadiusPropertyKey) || instanceSettings.vertex.borderRadius;
+                var borderPadding = vertex.getProperty(instanceSettings.vertex.borderPaddingPropertyKey) || instanceSettings.vertex.borderPadding;
+                var containerBox = container.node().getBBox();
+                container.append("rect").attr("x", -containerBox.width / 2 - borderPadding).attr("y", -containerBox.height / 2 - borderPadding).attr("rx", borderRadius).attr("ry", borderRadius).attr("style", "fill:none;stroke:" + borderColor + ";stroke-width:" + borderWeight + "px;").attr("width", containerBox.width + 2 * borderPadding).attr("height", containerBox.height + 2 * borderPadding);
+            };
+        }
+        utils.mixin(D3VertexBorderDecorator.prototype, ElementRendererDecorator);
+        return D3VertexBorderDecorator;
+    }();
     var D3VertexLabelDecorator = function() {
         function D3VertexLabelDecorator(rendererToBeDecorated, settings) {
             this.elementRenderer = rendererToBeDecorated;
@@ -2419,7 +2436,9 @@
                     labelTop: false,
                     padding: 10,
                     labelPropertyKey: "additionalLabel"
-                })
+                }),
+                "bordered-query-vertex": new D3VertexBorderDecorator(D3QueryVertexRenderer),
+                "bordered-image-vertex": new D3VertexBorderDecorator(D3ImageVertexRenderer)
             },
             edgeRenderers: {
                 "curved-line": D3DirectedLineEdgeRenderer,
@@ -2448,7 +2467,15 @@
             paddingLeft: 10
         },
         vertex: {
-            imageUrlPropertyKey: "imageUrl"
+            imageUrlPropertyKey: "imageUrl",
+            borderColorPropertyKey: "borderColor",
+            borderWeightPropertyKey: "borderWeight",
+            borderRadiusPropertyKey: "borderRadius",
+            borderPaddingPropertyKey: "borderPadding",
+            borderColor: "#000000",
+            borderWeight: 2,
+            borderRadius: 0,
+            borderPadding: 5
         },
         edge: {
             lineWeightPropertyKey: "lineWeight",
@@ -2474,6 +2501,7 @@
     exports.D3ZoomPanControl = D3ZoomPanControl;
     exports.ElementRendererDecorator = ElementRendererDecorator;
     exports.D3VertexLabelDecorator = D3VertexLabelDecorator;
+    exports.D3VertexBorderDecorator = D3VertexBorderDecorator;
     exports.D3EdgeLabelDecorator = D3EdgeLabelDecorator;
     exports.D3Engine = D3Engine;
     exports.D3ImageVertexRenderer = D3ImageVertexRenderer;
