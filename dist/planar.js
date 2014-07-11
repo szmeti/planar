@@ -267,6 +267,7 @@
     var IN = 2;
     var BOTH = 3;
     var PROP_TYPE = "_type";
+    var ANIMATION_DURATION = 1e3;
     var EventEmitter = function() {
         return {
             on: function(eventType, callback) {
@@ -2150,6 +2151,123 @@
             }
         };
     }();
+    var Tween = function() {
+        function Tween(duration, easing) {
+            this.duration = duration;
+            this.easing = easing;
+        }
+        var calculateState = function(vertex, duration) {
+            var now = Tween.dateNow();
+            vertex.currentTime = vertex.endTime - now;
+            vertex.state = vertex.currentTime / duration;
+            if (vertex.state < 0) {
+                vertex.state = 0;
+            }
+        };
+        var _runFrame = function(vertex, easing, duration) {
+            calculateState(vertex, duration);
+            vertex.x = easing(vertex.currentTime, vertex.endX, vertex.beginX - vertex.endX, duration);
+            vertex.y = easing(vertex.currentTime, vertex.endY, vertex.beginY - vertex.endY, duration);
+            if (vertex.state === 0) {
+                vertex.finished = true;
+            } else {
+                requestAnimationFrame(function() {'use strict';
+                    _runFrame(vertex, easing, duration);
+                });
+            }
+        };
+        utils.mixin(Tween.prototype, {
+            start: function(vertex) {
+                var duration = this.duration;
+                var easing = this.easing;
+                vertex.state = 1;
+                vertex.startTime = Tween.dateNow();
+                vertex.endTime = vertex.startTime + duration;
+                requestAnimationFrame(function() {'use strict';
+                    _runFrame(vertex, easing, duration);
+                });
+            }
+        });
+        Tween.dateNow = function() {
+            return new Date().getTime();
+        };
+        return Tween;
+    }();
+    var CircleLayout = function() {
+        function CircleLayout() {
+            this.running = true;
+        }
+        var calculateRadius = function(vertexCount) {
+            return vertexCount * 19;
+        };
+        var calculateScale = function(radius, width, height) {
+            var maxRadius = width < height ? width / 2 : height / 2;
+            var scale = maxRadius / (radius + 75);
+            return scale > 1 ? 1 : scale;
+        };
+        utils.mixin(CircleLayout.prototype, {
+            step: function(vertices, edges, width, height, easing, duration) {
+                var finishedVertices = vertices.length;
+                if (this.running) {
+                    finishedVertices = 0;
+                    var tween = new Tween(duration, easing);
+                    var nn = vertices.length;
+                    var radius = calculateRadius(nn);
+                    var scale = calculateScale(radius, width, height);
+                    CircleLayout.setScale(scale);
+                    var cx = width * (.5 / scale);
+                    var cy = height * (.5 / scale);
+                    for (var i = 0; i < vertices.length; i++) {
+                        var vertex = vertices[i];
+                        if (vertex.started) {
+                            if (vertex.finished) {
+                                finishedVertices++;
+                                vertex.vertex.getGraph().trigger("graphUpdated");
+                            }
+                        } else {
+                            CircleLayout.setBeginPoint(vertex, width, height);
+                            vertex.x = vertex.beginX;
+                            vertex.y = vertex.beginY;
+                            var angle = 2 * Math.PI * i / nn;
+                            vertex.endX = Math.cos(angle) * radius + cx;
+                            vertex.endY = Math.sin(angle) * radius + cy;
+                            tween.start(vertex);
+                            vertex.started = true;
+                        }
+                    }
+                }
+                this.running = finishedVertices < vertices.length;
+                return this.running;
+            }
+        });
+        CircleLayout.setScale = function(scale) {
+            d3.select("#graphElements").attr("transform", "scale(" + scale + ")");
+        };
+        CircleLayout.setBeginPoint = function(vertex, width, height) {
+            vertex.beginX = utils.randomInteger(0, width + 1);
+            vertex.beginY = utils.randomInteger(0, height + 1);
+        };
+        return CircleLayout;
+    }();
+    var Easing = function() {
+        function Easing() {}
+        utils.mixin(Easing.prototype, {
+            expoinout: function(t, b, c, d) {
+                if (t === 0) {
+                    return b;
+                }
+                if (t === d) {
+                    return b + c;
+                }
+                t = t / (d / 2);
+                if (t < 1) {
+                    return c / 2 * Math.pow(2, 10 * (t - 1)) + b;
+                }
+                return c / 2 * (-Math.pow(2, -10 * --t) + 2) + b;
+            }
+        });
+        return Easing;
+    }();
     var Renderer = function() {
         function Renderer(graph, instanceSettings) {
             utils.checkExists("Graph", graph);
@@ -2208,7 +2326,7 @@
                 this.timer.start();
             },
             onAnimationFrame: function() {
-                var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height);
+                var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height, this.settings.easing, ANIMATION_DURATION);
                 this.renderFrame();
                 return running;
             },
@@ -2272,7 +2390,7 @@
         container: null,
         navigatorContainer: null,
         engine: new D3Engine(),
-        layout: new RandomLayout(),
+        layout: new CircleLayout(),
         raphael: {
             defaultVertexRenderer: RaphaelRectangleVertexRenderer,
             vertexRenderers: {}
@@ -2336,7 +2454,8 @@
             lineWeightPropertyKey: "lineWeight",
             defaultLineWeight: 2,
             useArrows: true
-        }
+        },
+        easing: new Easing().expoinout
     };
     exports.settings = settings;
     exports.Edge = Edge;
@@ -2375,8 +2494,12 @@
     exports.IN = IN;
     exports.BOTH = BOTH;
     exports.PROP_TYPE = PROP_TYPE;
+    exports.ANIMATION_DURATION = ANIMATION_DURATION;
     exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
     exports.GraphSONReader = GraphSONReader;
+    exports.Tween = Tween;
+    exports.CircleLayout = CircleLayout;
+    exports.Easing = Easing;
 })({}, function() {
     return this;
 }());

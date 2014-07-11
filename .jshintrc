@@ -70,6 +70,7 @@
     "OUT": false,
     "BOTH": false,
     "PROP_TYPE": false,
+    "ANIMATION_DURATION": false,
 
     "describe": false,
     "it": false,
@@ -79,9 +80,17 @@
     "afterEach": false,
     "expect": false,
     "fail": false,
+    "runs": false,
+    "waits": false,
 
 
     "QueryResultVertexPropertyPredicate": false,
-    "GraphSONReader":false
+    "GraphSONReader": false,
+    "Tween": false,
+    "CircleLayout": false,
+    "Easing": false,
+
+
+    "requestAnimationFrame": false
   }
 }

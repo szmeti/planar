@@ -40,6 +40,9 @@ planarFiles = {
     'src/view/raphael/RaphaelEngine.js',
     'src/view/raphael/RaphaelRectangleVertexRenderer.js',
     'src/view/ElementRendererProvider.js',
+    'src/view/Tween.js',
+    'src/view/layout/CircleLayout.js',
+    'src/view/Easing.js',
     'src/view/Renderer.js',
     'src/io/GraphSONReader.js',
     'src/settings.js'
