@@ -65,7 +65,7 @@ var Renderer = (function () {
     },
 
     onAnimationFrame: function () {
-      var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height, this.settings.easing, ANIMATION_DURATION);
+      var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height);
       this.renderFrame();
       return running;
     },

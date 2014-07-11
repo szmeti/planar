@@ -36,10 +36,10 @@ exports.OUT = OUT;
 exports.IN = IN;
 exports.BOTH = BOTH;
 exports.PROP_TYPE = PROP_TYPE;
-exports.ANIMATION_DURATION = ANIMATION_DURATION;
 
 exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
 exports.GraphSONReader = GraphSONReader;
 exports.Tween = Tween;
 exports.CircleLayout = CircleLayout;
+exports.LayoutUtils = LayoutUtils;
 exports.Easing = Easing;

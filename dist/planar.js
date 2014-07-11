@@ -267,7 +267,6 @@
     var IN = 2;
     var BOTH = 3;
     var PROP_TYPE = "_type";
-    var ANIMATION_DURATION = 1e3;
     var EventEmitter = function() {
         return {
             on: function(eventType, callback) {
@@ -2181,28 +2180,21 @@
                 vertex.state = 0;
             }
         };
-        var _runFrame = function(vertex, easing, duration) {
-            calculateState(vertex, duration);
-            vertex.x = easing(vertex.currentTime, vertex.endX, vertex.beginX - vertex.endX, duration);
-            vertex.y = easing(vertex.currentTime, vertex.endY, vertex.beginY - vertex.endY, duration);
-            if (vertex.state === 0) {
-                vertex.finished = true;
-            } else {
-                requestAnimationFrame(function() {'use strict';
-                    _runFrame(vertex, easing, duration);
-                });
-            }
-        };
         utils.mixin(Tween.prototype, {
             start: function(vertex) {
-                var duration = this.duration;
-                var easing = this.easing;
                 vertex.state = 1;
                 vertex.startTime = Tween.dateNow();
-                vertex.endTime = vertex.startTime + duration;
-                requestAnimationFrame(function() {'use strict';
-                    _runFrame(vertex, easing, duration);
-                });
+                vertex.endTime = vertex.startTime + this.duration;
+                vertex.started = true;
+                this._runFrame(vertex);
+            },
+            _runFrame: function(vertex) {
+                calculateState(vertex, this.duration);
+                vertex.x = this.easing(vertex.currentTime, vertex.endX, vertex.beginX - vertex.endX, this.duration);
+                vertex.y = this.easing(vertex.currentTime, vertex.endY, vertex.beginY - vertex.endY, this.duration);
+                if (vertex.state === 0) {
+                    vertex.finished = true;
+                }
             }
         });
         Tween.dateNow = function() {
@@ -2211,8 +2203,9 @@
         return Tween;
     }();
     var CircleLayout = function() {
-        function CircleLayout() {
+        function CircleLayout(duration, easing) {
             this.running = true;
+            this.tween = new Tween(duration, easing);
         }
         var calculateRadius = function(vertexCount) {
             return vertexCount * 19;
@@ -2223,68 +2216,72 @@
             return scale > 1 ? 1 : scale;
         };
         utils.mixin(CircleLayout.prototype, {
-            step: function(vertices, edges, width, height, easing, duration) {
+            step: function(vertices, edges, width, height) {
                 var finishedVertices = vertices.length;
                 if (this.running) {
                     finishedVertices = 0;
-                    var tween = new Tween(duration, easing);
-                    var nn = vertices.length;
-                    var radius = calculateRadius(nn);
+                    var numberOfVertices = vertices.length;
+                    var radius = calculateRadius(numberOfVertices);
                     var scale = calculateScale(radius, width, height);
-                    CircleLayout.setScale(scale);
+                    LayoutUtils.setScale(scale);
                     var cx = width * (.5 / scale);
                     var cy = height * (.5 / scale);
                     for (var i = 0; i < vertices.length; i++) {
-                        var vertex = vertices[i];
-                        if (vertex.started) {
-                            if (vertex.finished) {
+                        var uiVertex = vertices[i];
+                        if (uiVertex.started) {
+                            this.tween._runFrame(uiVertex);
+                            if (uiVertex.finished) {
                                 finishedVertices++;
-                                vertex.vertex.getGraph().trigger("graphUpdated");
                             }
                         } else {
-                            CircleLayout.setBeginPoint(vertex, width, height);
-                            vertex.x = vertex.beginX;
-                            vertex.y = vertex.beginY;
-                            var angle = 2 * Math.PI * i / nn;
-                            vertex.endX = Math.cos(angle) * radius + cx;
-                            vertex.endY = Math.sin(angle) * radius + cy;
-                            tween.start(vertex);
-                            vertex.started = true;
+                            CircleLayout.setBeginPoint(uiVertex, cx, cy);
+                            var angle = 2 * Math.PI * i / numberOfVertices;
+                            uiVertex.endX = Math.cos(angle) * radius + cx;
+                            uiVertex.endY = Math.sin(angle) * radius + cy;
+                            this.tween.start(uiVertex);
                         }
                     }
+                }
+                if (this.running && finishedVertices === vertices.length && vertices.length > 0) {
+                    vertices[0].vertex.getGraph().trigger("graphUpdated");
                 }
                 this.running = finishedVertices < vertices.length;
                 return this.running;
             }
         });
-        CircleLayout.setScale = function(scale) {
-            d3.select("#graphElements").attr("transform", "scale(" + scale + ")");
-        };
-        CircleLayout.setBeginPoint = function(vertex, width, height) {
-            vertex.beginX = utils.randomInteger(0, width + 1);
-            vertex.beginY = utils.randomInteger(0, height + 1);
+        CircleLayout.setBeginPoint = function(uiVertex, cx, cy) {
+            if (utils.isUndefined(uiVertex.x) || utils.isUndefined(uiVertex.y)) {
+                uiVertex.beginX = cx;
+                uiVertex.beginY = cy;
+                uiVertex.x = uiVertex.beginX;
+                uiVertex.y = uiVertex.beginY;
+            } else {
+                uiVertex.beginX = uiVertex.x;
+                uiVertex.beginY = uiVertex.y;
+            }
         };
         return CircleLayout;
     }();
-    var Easing = function() {
-        function Easing() {}
-        utils.mixin(Easing.prototype, {
-            expoinout: function(t, b, c, d) {
-                if (t === 0) {
-                    return b;
-                }
-                if (t === d) {
-                    return b + c;
-                }
-                t = t / (d / 2);
-                if (t < 1) {
-                    return c / 2 * Math.pow(2, 10 * (t - 1)) + b;
-                }
-                return c / 2 * (-Math.pow(2, -10 * --t) + 2) + b;
+    var LayoutUtils = {
+        setScale: function(scale) {
+            d3.select("#graphElements").attr("transform", "scale(" + scale + ")");
+        }
+    };
+    var Easing = {
+        expoInOut: function(time, begin, change, duration) {
+            if (time === 0) {
+                return begin;
             }
-        });
-        return Easing;
-    }();
+            if (time === duration) {
+                return begin + change;
+            }
+            time = time / (duration / 2);
+            if (time < 1) {
+                return change / 2 * Math.pow(2, 10 * (time - 1)) + begin;
+            }
+            return change / 2 * (-Math.pow(2, -10 * --time) + 2) + begin;
+        }
+    };
     var Renderer = function() {
         function Renderer(graph, instanceSettings) {
             utils.checkExists("Graph", graph);
@@ -2343,7 +2340,7 @@
                 this.timer.start();
             },
             onAnimationFrame: function() {
-                var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height, this.settings.easing, ANIMATION_DURATION);
+                var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height);
                 this.renderFrame();
                 return running;
             },
@@ -2407,7 +2404,7 @@
         container: null,
         navigatorContainer: null,
         engine: new D3Engine(),
-        layout: new CircleLayout(),
+        layout: new CircleLayout(1e3, Easing.expoInOut),
         raphael: {
             defaultVertexRenderer: RaphaelRectangleVertexRenderer,
             vertexRenderers: {}
@@ -2481,8 +2478,7 @@
             lineWeightPropertyKey: "lineWeight",
             defaultLineWeight: 2,
             useArrows: true
-        },
-        easing: new Easing().expoinout
+        }
     };
     exports.settings = settings;
     exports.Edge = Edge;
@@ -2522,11 +2518,11 @@
     exports.IN = IN;
     exports.BOTH = BOTH;
     exports.PROP_TYPE = PROP_TYPE;
-    exports.ANIMATION_DURATION = ANIMATION_DURATION;
     exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
     exports.GraphSONReader = GraphSONReader;
     exports.Tween = Tween;
     exports.CircleLayout = CircleLayout;
+    exports.LayoutUtils = LayoutUtils;
     exports.Easing = Easing;
 })({}, function() {
     return this;

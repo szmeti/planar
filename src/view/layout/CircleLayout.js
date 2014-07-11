@@ -1,8 +1,9 @@
 /* global CircleLayout: true */
 var CircleLayout = (function () {
 
-  function CircleLayout() {
+  function CircleLayout(duration, easing) {
     this.running = true;
+    this.tween = new Tween(duration, easing);
   }
 
   var calculateRadius = function (vertexCount) {
@@ -17,43 +18,42 @@ var CircleLayout = (function () {
 
   utils.mixin(CircleLayout.prototype, {
 
-    step: function (vertices, edges, width, height, easing, duration) {
+    step: function (vertices, edges, width, height) {
       var finishedVertices = vertices.length;
 
       if (this.running) {
         finishedVertices = 0;
-        var tween = new Tween(duration, easing);
 
-        var nn = vertices.length;
-        var radius = calculateRadius(nn);
+        var numberOfVertices = vertices.length;
+        var radius = calculateRadius(numberOfVertices);
         var scale = calculateScale(radius, width, height);
 
-        CircleLayout.setScale(scale);
+        LayoutUtils.setScale(scale);
 
         var cx = width * (0.5 / scale);
         var cy = height * (0.5 / scale);
 
         for (var i = 0; i < vertices.length; i++) {
-          var vertex = vertices[i];
-          if(vertex.started) {
-            if(vertex.finished) {
+          var uiVertex = vertices[i];
+          if(uiVertex.started) {
+            this.tween._runFrame(uiVertex);
+            if(uiVertex.finished) {
               finishedVertices++;
-              vertex.vertex.getGraph().trigger('graphUpdated');
             }
           } else {
-            CircleLayout.setBeginPoint(vertex, width, height);
+            CircleLayout.setBeginPoint(uiVertex, cx, cy);
 
-            vertex.x = vertex.beginX;
-            vertex.y = vertex.beginY;
+            var angle = (2*Math.PI*i) / numberOfVertices;
+            uiVertex.endX = Math.cos(angle)*radius + cx;
+            uiVertex.endY = Math.sin(angle)*radius + cy;
 
-            var angle = (2*Math.PI*i) / nn;
-            vertex.endX = Math.cos(angle)*radius + cx;
-            vertex.endY = Math.sin(angle)*radius + cy;
-
-            tween.start(vertex);
-            vertex.started = true;
+            this.tween.start(uiVertex);
           }
         }
+      }
+
+      if (this.running && finishedVertices === vertices.length && vertices.length > 0) {
+        vertices[0].vertex.getGraph().trigger('graphUpdated');
       }
 
       this.running = finishedVertices < vertices.length;
@@ -62,13 +62,16 @@ var CircleLayout = (function () {
 
   });
 
-  CircleLayout.setScale = function (scale) {
-    d3.select('#graphElements').attr('transform', 'scale(' + scale + ')');
-  };
-
-  CircleLayout.setBeginPoint = function (vertex, width, height) {
-    vertex.beginX = utils.randomInteger(0, width + 1);
-    vertex.beginY = utils.randomInteger(0, height + 1);
+  CircleLayout.setBeginPoint = function (uiVertex, cx, cy) {
+    if(utils.isUndefined(uiVertex.x) || utils.isUndefined(uiVertex.y)) {
+      uiVertex.beginX = cx;
+      uiVertex.beginY = cy;
+      uiVertex.x = uiVertex.beginX;
+      uiVertex.y = uiVertex.beginY;
+    } else {
+      uiVertex.beginX = uiVertex.x;
+      uiVertex.beginY = uiVertex.y;
+    }
   };
 
   return CircleLayout;

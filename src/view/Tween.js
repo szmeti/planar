@@ -15,28 +15,24 @@ var Tween = (function () {
     }
   };
 
-  var _runFrame = function (vertex, easing, duration) {
-    calculateState(vertex, duration);
-
-    vertex.x = easing(vertex.currentTime, vertex.endX, vertex.beginX - vertex.endX, duration);
-    vertex.y = easing(vertex.currentTime, vertex.endY, vertex.beginY - vertex.endY, duration);
-
-    if (vertex.state === 0) {
-      vertex.finished = true;
-    } else {
-      requestAnimationFrame(function () {_runFrame(vertex, easing, duration);});
-    }
-
-  };
-
   utils.mixin(Tween.prototype, {
     start: function (vertex) {
-      var duration = this.duration;
-      var easing = this.easing;
       vertex.state = 1;
       vertex.startTime = Tween.dateNow();
-      vertex.endTime = vertex.startTime + duration;
-      requestAnimationFrame(function () {_runFrame(vertex, easing, duration);});
+      vertex.endTime = vertex.startTime + this.duration;
+      vertex.started = true;
+      this._runFrame(vertex);
+    },
+    _runFrame: function (vertex) {
+      calculateState(vertex, this.duration);
+
+      vertex.x = this.easing(vertex.currentTime, vertex.endX, vertex.beginX - vertex.endX, this.duration);
+      vertex.y = this.easing(vertex.currentTime, vertex.endY, vertex.beginY - vertex.endY, this.duration);
+
+      if (vertex.state === 0) {
+        vertex.finished = true;
+      }
+
     }
   });
 

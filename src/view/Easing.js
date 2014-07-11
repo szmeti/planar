@@ -1,23 +1,16 @@
 /* global Easing: true */
-var Easing = (function () {
-
-  function Easing() {}
-
-  utils.mixin(Easing.prototype, {
-    expoinout: function (t, b, c, d) {
-      if (t===0) {
-        return b;
-      }
-      if (t===d) {
-        return b+c;
-      }
-      t = t/(d/2);
-      if (t < 1) {
-        return c/2 * Math.pow(2, 10 * (t - 1)) + b;
-      }
-      return c/2 * (-Math.pow(2, -10 * --t) + 2) + b;
+var Easing = {
+  expoInOut: function (time, begin, change, duration) {
+    if (time===0) {
+      return begin;
     }
-  });
-
-  return Easing;
-}());
+    if (time===duration) {
+      return begin+change;
+    }
+    time = time/(duration/2);
+    if (time < 1) {
+      return change/2 * Math.pow(2, 10 * (time - 1)) + begin;
+    }
+    return change/2 * (-Math.pow(2, -10 * --time) + 2) + begin;
+  }
+};

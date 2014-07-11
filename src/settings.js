@@ -8,7 +8,7 @@ var settings = {
 
   engine: new D3Engine(),
 
-  layout: new CircleLayout(),
+  layout: new CircleLayout(1000, Easing.expoInOut),
 
   raphael: {
     defaultVertexRenderer: RaphaelRectangleVertexRenderer,
@@ -96,8 +96,6 @@ var settings = {
     lineWeightPropertyKey : 'lineWeight',
     defaultLineWeight : 2,
     useArrows: true
-  },
-
-  easing: new Easing().expoinout
+  }
 
 };
