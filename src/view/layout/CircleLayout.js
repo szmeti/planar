@@ -6,9 +6,11 @@ var CircleLayout = (function () {
     this.tween = new Tween(duration, easing);
   }
 
+  CircleLayout.MIN_RADIUS = 100;
+
   var calculateRadius = function (vertexCount) {
     var radius = vertexCount * 19;
-    return radius < 100 ? 100 : radius;
+    return radius < CircleLayout.MIN_RADIUS ? CircleLayout.MIN_RADIUS : radius;
   };
 
   var calculateScale = function (radius, width, height) {
@@ -34,7 +36,8 @@ var CircleLayout = (function () {
         var cx = width * (0.5 / scale);
         var cy = height * (0.5 / scale);
 
-        for (var i = 0, j = 0; i < vertices.length; i++, j++) {
+        var indexOnCircle = 0;
+        for (var i = 0; i < vertices.length; i++) {
           var uiVertex = vertices[i];
           if(uiVertex.started) {
             this.tween.runFrame(uiVertex);
@@ -46,9 +49,8 @@ var CircleLayout = (function () {
             if (!utils.isUndefined(ignoredVertex) && ignoredVertex.id === uiVertex.id) {
               uiVertex.endX = cx;
               uiVertex.endY = cy;
-              j--;
             } else {
-              var angle = (2*Math.PI*j) / numberOfVertices;
+              var angle = (2*Math.PI*indexOnCircle++) / numberOfVertices;
               uiVertex.endX = Math.cos(angle)*radius + cx;
               uiVertex.endY = Math.sin(angle)*radius + cy;
             }
