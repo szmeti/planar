@@ -88,6 +88,7 @@
     "GraphSONReader": false,
     "Tween": false,
     "CircleLayout": false,
+    "WheelLayout": false,
     "LayoutUtils": false,
     "Easing": false,
 

@@ -7,7 +7,8 @@ var CircleLayout = (function () {
   }
 
   var calculateRadius = function (vertexCount) {
-    return vertexCount * 19;
+    var radius = vertexCount * 19;
+    return radius < 100 ? 100 : radius;
   };
 
   var calculateScale = function (radius, width, height) {
@@ -18,13 +19,13 @@ var CircleLayout = (function () {
 
   utils.mixin(CircleLayout.prototype, {
 
-    step: function (vertices, edges, width, height) {
+    step: function (vertices, edges, width, height, ignoredVertex) {
       var finishedVertices = vertices.length;
 
       if (this.running) {
         finishedVertices = 0;
 
-        var numberOfVertices = vertices.length;
+        var numberOfVertices = utils.isUndefined(ignoredVertex) ? vertices.length : vertices.length - 1;
         var radius = calculateRadius(numberOfVertices);
         var scale = calculateScale(radius, width, height);
 
@@ -33,7 +34,7 @@ var CircleLayout = (function () {
         var cx = width * (0.5 / scale);
         var cy = height * (0.5 / scale);
 
-        for (var i = 0; i < vertices.length; i++) {
+        for (var i = 0, j = 0; i < vertices.length; i++, j++) {
           var uiVertex = vertices[i];
           if(uiVertex.started) {
             this.tween.runFrame(uiVertex);
@@ -42,10 +43,15 @@ var CircleLayout = (function () {
             }
           } else {
             CircleLayout.setBeginPoint(uiVertex, cx, cy);
-
-            var angle = (2*Math.PI*i) / numberOfVertices;
-            uiVertex.endX = Math.cos(angle)*radius + cx;
-            uiVertex.endY = Math.sin(angle)*radius + cy;
+            if (!utils.isUndefined(ignoredVertex) && ignoredVertex.id === uiVertex.id) {
+              uiVertex.endX = cx;
+              uiVertex.endY = cy;
+              j--;
+            } else {
+              var angle = (2*Math.PI*j) / numberOfVertices;
+              uiVertex.endX = Math.cos(angle)*radius + cx;
+              uiVertex.endY = Math.sin(angle)*radius + cy;
+            }
 
             this.tween.start(uiVertex);
           }

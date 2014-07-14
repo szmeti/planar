@@ -47,6 +47,10 @@ var Renderer = (function () {
       utils.remove(uiEdge, renderer.edges);
       delete renderer.edgesById[uiEdge.id];
     });
+
+    graph.on('vertexClicked', function (event, vertex) {
+      this.selectedVertex = vertex;
+    });
   }
 
   utils.mixin(Renderer.prototype, {
@@ -65,7 +69,7 @@ var Renderer = (function () {
     },
 
     onAnimationFrame: function () {
-      var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height);
+      var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height, this.selectedVertex);
       this.renderFrame();
       return running;
     },
