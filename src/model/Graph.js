@@ -241,6 +241,10 @@ var Graph = (function () {
 
     getSettings: function () {
       return this.settings;
+    },
+
+    filteredView: function() {
+      return new ElementFilterManager(this);
     }
 
   });

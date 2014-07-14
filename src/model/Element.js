@@ -83,6 +83,14 @@ var Element = (function () {
       return value;
     },
 
+    copyProperties: function(to) {
+      for(var i = 0;  i < this.getPropertyKeys().length; i++) {
+        var key = this.getPropertyKeys()[i];
+        var value = this.getProperty(key);
+        to.setProperty(key, value);
+      }
+    },
+
     getId: function () {
       return this.id;
     },

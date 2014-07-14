@@ -267,6 +267,11 @@
     var IN = 2;
     var BOTH = 3;
     var PROP_TYPE = "_type";
+    var AND = "and";
+    var OR = "or";
+    var VERTEX_FILTER = "vertex";
+    var EDGE_FILTER = "edge";
+    var BOTH_FILTER = "both";
     var EventEmitter = function() {
         return {
             on: function(eventType, callback) {
@@ -652,6 +657,9 @@
             },
             getSettings: function() {
                 return this.settings;
+            },
+            filter: function(filters) {
+                return new ElementFilterManager(this);
             }
         });
         return Graph;
@@ -2363,8 +2371,117 @@
             lineWeightPropertyKey: "lineWeight",
             defaultLineWeight: 2,
             useArrows: true
+        },
+        filter: {
+            vertexFilterOperator: AND,
+            edgeFilterOperator: AND,
+            features: {
+                aggregated: false,
+                normal: true,
+                filteredOnly: false,
+                filteredAggregatedOnly: false
+            }
         }
     };
+    var ElementFilterManager = function() {
+        function ElementFilterManager(graph) {
+            utils.checkExists("Graph", graph);
+            this.graph = graph;
+            this.filters = null;
+            this.features = null;
+        }
+        utils.mixin(ElementFilterManager.prototype, {
+            getFilteredGraph: function() {
+                var visibleVertices = applyFilters(this.graph.vertices, this.filters, this.filterSettings.vertexFilterOperator);
+                var visibleEdges = applyFilters(this.graph.edges, this.filters, this.filterSettings.edgeFilterOperator);
+            }
+        });
+        function applyFilters(elements, filters, operator) {
+            if (!utils.isArray(elements)) {
+                elements = [ elements ];
+            }
+            var result = [];
+            for (var i = 0; i < elements.length; i++) {
+                var currentElements = elements[i];
+                if (utils.isOfType(elements[i], Vertex) || utils.isOfType(elements[i], Edge)) {
+                    currentElements = [ currentElements ];
+                }
+                for (var id in currentElements) {
+                    var element = currentElements[id];
+                    var filtered = checkFiltered(element, filters, operator);
+                    if (!filtered) {
+                        result.push(element);
+                    }
+                }
+            }
+            return result;
+        }
+        function checkFiltered(element, filters, operator) {
+            var nonMatchedFilters = 0;
+            var filterCount = filters.length;
+            for (var j = 0; j < filterCount; j++) {
+                var currentFilter = filters[j];
+                if (!filterCanBeApplied(element, currentFilter)) {
+                    continue;
+                }
+                if (!currentFilter.getQuery().matches(element)) {
+                    nonMatchedFilters++;
+                }
+            }
+            return operator === AND ? nonMatchedFilters > 0 : nonMatchedFilters === filterCount;
+        }
+        function filterCanBeApplied(element, filter) {
+            return utils.isOfType(element, Vertex) && filter.getElementType() === VERTEX_FILTER || utils.isOfType(element, Edge) && filter.getElementType() === EDGE_FILTER || filter.getElementType() === BOTH_FILTER;
+        }
+        function checkFeatures(features) {
+            var disabledFeatures = 0;
+            var featuresCount = 0;
+            for (var feature in features) {
+                if (features.hasOwnProperty(feature)) {
+                    disabledFeatures += !feature ? 1 : 0;
+                } else {
+                    throw {
+                        message: feature + " must be specified"
+                    };
+                }
+                featuresCount++;
+            }
+            if (disabledFeatures === featuresCount) {
+                throw {
+                    name: "NoFeaturesEnabled",
+                    message: "At least one feature must be enabled"
+                };
+            }
+        }
+        return ElementFilterManager;
+    }();
+    var ElementFilter = function() {
+        function ElementFilter(name, query, activeFlag, elementType) {
+            this.name = name;
+            this.count = 0;
+            this.query = query;
+            this.activeFlag = activeFlag;
+            this.elementType = elementType || BOTH_FILTER;
+        }
+        utils.mixin(ElementFilter.prototype, {
+            getQuery: function() {
+                return this.query;
+            },
+            getActiveFlag: function() {
+                return this.activeFlag;
+            },
+            getElementType: function() {
+                return this.elementType;
+            },
+            getCount: function() {
+                return this.count;
+            },
+            getName: function() {
+                return this.name;
+            }
+        });
+        return ElementFilter;
+    }();
     exports.settings = settings;
     exports.Edge = Edge;
     exports.Vertex = Vertex;
@@ -2375,6 +2492,8 @@
     exports.Index = Index;
     exports.RandomLayout = RandomLayout;
     exports.ForceDirectedLayout = ForceDirectedLayout;
+    exports.ElementFilterManager = ElementFilterManager;
+    exports.ElementFilter = ElementFilter;
     exports.D3Navigator = D3Navigator;
     exports.D3SvgImageDownloader = D3SvgImageDownloader;
     exports.D3ZoomPanManager = D3ZoomPanManager;
@@ -2403,6 +2522,11 @@
     exports.IN = IN;
     exports.BOTH = BOTH;
     exports.PROP_TYPE = PROP_TYPE;
+    exports.AND = AND;
+    exports.OR = OR;
+    exports.BOTH_FILTER = BOTH_FILTER;
+    exports.VERTEX_FILTER = VERTEX_FILTER;
+    exports.EDGE_FILTER = EDGE_FILTER;
     exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
     exports.GraphSONReader = GraphSONReader;
 })({}, function() {
