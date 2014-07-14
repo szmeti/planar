@@ -88,9 +88,19 @@
     "afterEach": false,
     "expect": false,
     "fail": false,
+    "runs": false,
+    "waits": false,
 
 
     "QueryResultVertexPropertyPredicate": false,
-    "GraphSONReader":false
+    "GraphSONReader": false,
+    "Tween": false,
+    "CircleLayout": false,
+    "WheelLayout": false,
+    "LayoutUtils": false,
+    "Easing": false,
+
+
+    "requestAnimationFrame": false
   }
 }

@@ -46,3 +46,8 @@ exports.EDGE_FILTER = EDGE_FILTER;
 
 exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
 exports.GraphSONReader = GraphSONReader;
+exports.Tween = Tween;
+exports.CircleLayout = CircleLayout;
+exports.WheelLayout = WheelLayout;
+exports.LayoutUtils = LayoutUtils;
+exports.Easing = Easing;

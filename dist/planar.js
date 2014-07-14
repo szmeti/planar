@@ -2175,6 +2175,148 @@
             }
         };
     }();
+    var Tween = function() {
+        function Tween(duration, easing) {
+            this.duration = duration;
+            this.easing = easing;
+        }
+        var calculateState = function(vertex, duration) {
+            var now = Tween.dateNow();
+            vertex.currentTime = vertex.endTime - now;
+            vertex.state = vertex.currentTime / duration;
+            if (vertex.state < 0) {
+                vertex.state = 0;
+            }
+        };
+        utils.mixin(Tween.prototype, {
+            start: function(vertex) {
+                vertex.state = 1;
+                vertex.startTime = Tween.dateNow();
+                vertex.endTime = vertex.startTime + this.duration;
+                vertex.started = true;
+                this.runFrame(vertex);
+            },
+            runFrame: function(vertex) {
+                calculateState(vertex, this.duration);
+                vertex.x = this.easing(vertex.currentTime, vertex.endX, vertex.beginX - vertex.endX, this.duration);
+                vertex.y = this.easing(vertex.currentTime, vertex.endY, vertex.beginY - vertex.endY, this.duration);
+                if (vertex.state === 0) {
+                    vertex.finished = true;
+                }
+            }
+        });
+        Tween.dateNow = function() {
+            return new Date().getTime();
+        };
+        return Tween;
+    }();
+    var CircleLayout = function() {
+        function CircleLayout(duration, easing) {
+            this.running = true;
+            this.tween = new Tween(duration, easing);
+        }
+        CircleLayout.MIN_RADIUS = 100;
+        var calculateRadius = function(vertexCount) {
+            var radius = vertexCount * 19;
+            return radius < CircleLayout.MIN_RADIUS ? CircleLayout.MIN_RADIUS : radius;
+        };
+        var calculateScale = function(radius, width, height) {
+            var maxRadius = width < height ? width / 2 : height / 2;
+            var scale = maxRadius / (radius + 75);
+            return scale > 1 ? 1 : scale;
+        };
+        utils.mixin(CircleLayout.prototype, {
+            step: function(vertices, edges, width, height, ignoredVertex) {
+                var finishedVertices = vertices.length;
+                if (this.running) {
+                    finishedVertices = 0;
+                    var numberOfVertices = utils.isUndefined(ignoredVertex) ? vertices.length : vertices.length - 1;
+                    var radius = calculateRadius(numberOfVertices);
+                    var scale = calculateScale(radius, width, height);
+                    LayoutUtils.setScale(scale);
+                    var cx = width * (.5 / scale);
+                    var cy = height * (.5 / scale);
+                    var indexOnCircle = 0;
+                    for (var i = 0; i < vertices.length; i++) {
+                        var uiVertex = vertices[i];
+                        if (uiVertex.started) {
+                            this.tween.runFrame(uiVertex);
+                            if (uiVertex.finished) {
+                                finishedVertices++;
+                            }
+                        } else {
+                            CircleLayout.setBeginPoint(uiVertex, cx, cy);
+                            if (!utils.isUndefined(ignoredVertex) && ignoredVertex.id === uiVertex.id) {
+                                uiVertex.endX = cx;
+                                uiVertex.endY = cy;
+                            } else {
+                                var angle = 2 * Math.PI * indexOnCircle++ / numberOfVertices;
+                                uiVertex.endX = Math.cos(angle) * radius + cx;
+                                uiVertex.endY = Math.sin(angle) * radius + cy;
+                            }
+                            this.tween.start(uiVertex);
+                        }
+                    }
+                }
+                if (this.running && finishedVertices === vertices.length && vertices.length > 0) {
+                    vertices[0].vertex.getGraph().trigger("graphUpdated");
+                }
+                this.running = finishedVertices < vertices.length;
+                return this.running;
+            }
+        });
+        CircleLayout.setBeginPoint = function(uiVertex, cx, cy) {
+            if (utils.isUndefined(uiVertex.x) || utils.isUndefined(uiVertex.y)) {
+                uiVertex.beginX = cx;
+                uiVertex.beginY = cy;
+                uiVertex.x = uiVertex.beginX;
+                uiVertex.y = uiVertex.beginY;
+            } else {
+                uiVertex.beginX = uiVertex.x;
+                uiVertex.beginY = uiVertex.y;
+            }
+        };
+        return CircleLayout;
+    }();
+    var WheelLayout = function() {
+        function WheelLayout(duration, easing) {
+            this.running = true;
+            this.circleLayout = new CircleLayout(duration, easing);
+        }
+        utils.mixin(WheelLayout.prototype, {
+            step: function(vertices, edges, width, height, selectedVertex) {
+                if (this.running) {
+                    var centerVertex = selectedVertex;
+                    if (vertices.length > 0 && utils.isUndefined(selectedVertex)) {
+                        centerVertex = vertices[0];
+                    }
+                    this.running = this.circleLayout.step(vertices, edges, width, height, centerVertex);
+                }
+                return this.running;
+            }
+        });
+        return WheelLayout;
+    }();
+    var LayoutUtils = {
+        setScale: function(scale) {
+            d3.select("#graphElements").attr("transform", "scale(" + scale + ")");
+        }
+    };
+    var Easing = {
+        expoInOut: function(time, begin, change, duration) {
+            if (time === 0) {
+                return begin;
+            }
+            if (time === duration) {
+                return begin + change;
+            }
+            time = time / (duration / 2);
+            if (time < 1) {
+                return change / 2 * Math.pow(2, 10 * (time - 1)) + begin;
+            }
+            return change / 2 * (-Math.pow(2, -10 * --time) + 2) + begin;
+        }
+    };
     var Renderer = function() {
         function Renderer(graph, instanceSettings) {
             utils.checkExists("Graph", graph);
@@ -2220,6 +2362,9 @@
                 utils.remove(uiEdge, renderer.edges);
                 delete renderer.edgesById[uiEdge.id];
             });
+            graph.on("vertexClicked", function(event, vertex) {
+                this.selectedVertex = vertex;
+            });
         }
         utils.mixin(Renderer.prototype, {
             render: function(steps) {
@@ -2233,7 +2378,7 @@
                 this.timer.start();
             },
             onAnimationFrame: function() {
-                var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height);
+                var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height, this.selectedVertex);
                 this.renderFrame();
                 return running;
             },
@@ -2297,7 +2442,7 @@
         container: null,
         navigatorContainer: null,
         engine: new D3Engine(),
-        layout: new RandomLayout(),
+        layout: new WheelLayout(1e3, Easing.expoInOut),
         raphael: {
             defaultVertexRenderer: RaphaelRectangleVertexRenderer,
             vertexRenderers: {}
@@ -2529,6 +2674,11 @@
     exports.EDGE_FILTER = EDGE_FILTER;
     exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
     exports.GraphSONReader = GraphSONReader;
+    exports.Tween = Tween;
+    exports.CircleLayout = CircleLayout;
+    exports.WheelLayout = WheelLayout;
+    exports.LayoutUtils = LayoutUtils;
+    exports.Easing = Easing;
 })({}, function() {
     return this;
 }());
