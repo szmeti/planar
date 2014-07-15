@@ -83,9 +83,10 @@ var Element = (function () {
       return value;
     },
 
-    copyProperties: function(to) {
-      for(var i = 0;  i < this.getPropertyKeys().length; i++) {
-        var key = this.getPropertyKeys()[i];
+    copyPropertiesTo: function(to) {
+      var propertyKeys = this.getPropertyKeys();
+      for(var i = 0;  i < propertyKeys.length; i++) {
+        var key = propertyKeys[i];
         var value = this.getProperty(key);
         to.setProperty(key, value);
       }

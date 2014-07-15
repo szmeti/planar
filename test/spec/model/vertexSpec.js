@@ -27,7 +27,7 @@ describe('Vertex', function () {
 
     var newGraph = new Graph();
     var v1Copy = newGraph.addVertex();
-    v1.copyProperties(v1Copy);
+    v1.copyPropertiesTo(v1Copy);
 
     expect(v1Copy.getPropertyKeys().length).toBe(2);
     expect(v1Copy.getProperty('name')).toBe('marko');

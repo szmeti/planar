@@ -133,6 +133,13 @@
                 };
             }
         },
+        checkArgument: function(predicate, message) {
+            if (!predicate) {
+                throw {
+                    message: message
+                };
+            }
+        },
         checkType: function(name, obj, type) {
             if (!this.isOfType(obj, type)) {
                 throw {
@@ -381,6 +388,14 @@
                 delete this.properties[key];
                 this.graph.indexManager.removeKeyIndexValue(key, value, this);
                 return value;
+            },
+            copyPropertiesTo: function(to) {
+                var propertyKeys = this.getPropertyKeys();
+                for (var i = 0; i < propertyKeys.length; i++) {
+                    var key = propertyKeys[i];
+                    var value = this.getProperty(key);
+                    to.setProperty(key, value);
+                }
             },
             getId: function() {
                 return this.id;
@@ -658,7 +673,7 @@
             getSettings: function() {
                 return this.settings;
             },
-            filter: function(filters) {
+            filteredView: function() {
                 return new ElementFilterManager(this);
             }
         });
@@ -854,6 +869,22 @@
         }
         return IndexManager;
     }();
+    var HasFilter = function() {
+        function HasFilter(key, predicate, value, disabledFilters) {
+            utils.checkExists("Key", key);
+            utils.checkExists("Predicate", predicate);
+            this.key = key;
+            this.predicate = predicate;
+            this.value = value;
+            this.disabledFilters = disabledFilters;
+        }
+        utils.mixin(HasFilter.prototype, {
+            matches: function(element) {
+                return this.predicate.evaluate(element.getProperty(this.key, this.disabledFilters), this.value);
+            }
+        });
+        return HasFilter;
+    }();
     var LabelFilter = function() {
         function LabelFilter() {
             this.labels = utils.convertVarArgs(arguments);
@@ -869,6 +900,39 @@
             }
         });
         return LabelFilter;
+    }();
+    var HasFilters = function() {
+        return {
+            initHasFilters: function() {
+                this.hasFilters = [];
+            },
+            has: function(key, value1, value2, disabledFilters) {
+                disabledFilters = disabledFilters || [];
+                if (!utils.isUndefined(value2) && value2 !== null) {
+                    this.hasFilters.push(new HasFilter(key, value1, value2, disabledFilters));
+                } else if (!utils.isUndefined(value1) && value1 !== null) {
+                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, value1, disabledFilters));
+                } else {
+                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, null, disabledFilters));
+                }
+                return this;
+            },
+            hasNot: function(key, value, disabledFilters) {
+                disabledFilters = disabledFilters || [];
+                if (utils.isUndefined(value) || value === null) {
+                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, null, disabledFilters));
+                } else {
+                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, value, disabledFilters));
+                }
+                return this;
+            },
+            interval: function(key, startValue, endValue, disabledFilters) {
+                disabledFilters = disabledFilters || [];
+                this.hasFilters.push(new HasFilter(key, Compare.GREATER_THAN_EQUAL, startValue, disabledFilters));
+                this.hasFilters.push(new HasFilter(key, Compare.LESS_THAN, endValue, disabledFilters));
+                return this;
+            }
+        };
     }();
     var Compare = function() {
         return {
@@ -912,6 +976,12 @@
                     return utils.indexOf(first, second) > -1;
                 }
             },
+            HAS_ELEMENT: {
+                evaluate: function(first, second) {
+                    utils.checkArray("First argument", first);
+                    return utils.indexOf(second, first) > -1;
+                }
+            },
             NOT_IN: {
                 evaluate: function(first, second) {
                     utils.checkArray("Second argument", second);
@@ -919,22 +989,6 @@
                 }
             }
         };
-    }();
-    var HasFilter = function() {
-        function HasFilter(key, predicate, value, disabledFilters) {
-            utils.checkExists("Key", key);
-            utils.checkExists("Predicate", predicate);
-            this.key = key;
-            this.predicate = predicate;
-            this.value = value;
-            this.disabledFilters = disabledFilters;
-        }
-        utils.mixin(HasFilter.prototype, {
-            matches: function(element) {
-                return this.predicate.evaluate(element.getProperty(this.key, this.disabledFilters), this.value);
-            }
-        });
-        return HasFilter;
     }();
     var Query = function() {
         function filterElements(elements, filters, queryLimit, resultExtractor) {
@@ -972,39 +1026,13 @@
             }
             return result;
         }
-        return {
+        return utils.mixin({
             initQuery: function() {
                 this.queryLimit = Number.MAX_VALUE;
-                this.hasFilters = [];
+                this.initHasFilters();
             },
             limit: function(limit) {
                 this.queryLimit = limit;
-                return this;
-            },
-            has: function(key, value1, value2, disabledFilters) {
-                disabledFilters = disabledFilters || [];
-                if (!utils.isUndefined(value2) && value2 !== null) {
-                    this.hasFilters.push(new HasFilter(key, value1, value2, disabledFilters));
-                } else if (!utils.isUndefined(value1) && value1 !== null) {
-                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, value1, disabledFilters));
-                } else {
-                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, null, disabledFilters));
-                }
-                return this;
-            },
-            hasNot: function(key, value, disabledFilters) {
-                disabledFilters = disabledFilters || [];
-                if (utils.isUndefined(value) || value === null) {
-                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, null, disabledFilters));
-                } else {
-                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, value, disabledFilters));
-                }
-                return this;
-            },
-            interval: function(key, startValue, endValue, disabledFilters) {
-                disabledFilters = disabledFilters || [];
-                this.hasFilters.push(new HasFilter(key, Compare.GREATER_THAN_EQUAL, startValue, disabledFilters));
-                this.hasFilters.push(new HasFilter(key, Compare.LESS_THAN, endValue, disabledFilters));
                 return this;
             },
             edges: function() {
@@ -1019,7 +1047,7 @@
                 filters = filters.concat(this.hasFilters);
                 return filterElements(elements, filters, this.queryLimit, this.resultExtractor(this));
             }
-        };
+        }, HasFilters);
     }();
     var VertexQuery = function() {
         function VertexQuery(vertex) {
@@ -2516,36 +2544,167 @@
             lineWeightPropertyKey: "lineWeight",
             defaultLineWeight: 2,
             useArrows: true
-        },
-        filter: {
-            vertexFilterOperator: AND,
-            edgeFilterOperator: AND,
-            features: {
-                aggregated: false,
-                normal: true,
-                filteredOnly: false,
-                filteredAggregatedOnly: false
-            }
         }
     };
     var ElementFilterManager = function() {
         function ElementFilterManager(graph) {
             utils.checkExists("Graph", graph);
             this.graph = graph;
-            this.filters = null;
-            this.features = null;
+            this.vertexOperator = AND;
+            this.edgeOperator = AND;
+            this.executed = false;
+            this.filters = [];
+            initResults(this);
         }
         utils.mixin(ElementFilterManager.prototype, {
-            getFilteredGraph: function() {
-                var visibleVertices = applyFilters(this.graph.vertices, this.filters, this.filterSettings.vertexFilterOperator);
-                var visibleEdges = applyFilters(this.graph.edges, this.filters, this.filterSettings.edgeFilterOperator);
+            addFilter: function(newFilter) {
+                newFilter = newFilter || new ElementFilter();
+                this.filters.push(newFilter);
+                return newFilter;
+            },
+            vertexFilterOperator: function(operator) {
+                utils.checkArgument(operator === AND || operator === OR, "Operator can be only AND or OR");
+                this.vertexOperator = operator;
+                return this;
+            },
+            edgeFilterOperator: function(operator) {
+                utils.checkArgument(operator === AND || operator === OR, "Operator can be only AND or OR");
+                this.edgeOperator = operator;
+                return this;
+            },
+            getNormalGraph: function() {
+                if (!this.executed) {
+                    filterGraph(this);
+                }
+                return this.normalGraph;
+            },
+            getAggragatedGraph: function() {
+                if (!this.executed) {
+                    filterGraph(this);
+                }
+                return this.aggregatedGraph;
+            },
+            getFilteredVertices: function() {
+                if (!this.executed) {
+                    filterGraph(this);
+                }
+                return this.filteredVertices;
+            },
+            getFilteredEdges: function() {
+                if (!this.executed) {
+                    filterGraph(this);
+                }
+                return this.filteredEdges;
+            },
+            getFilteredAggregatedVertices: function() {
+                if (!this.executed) {
+                    filterGraph(this);
+                }
+                return this.filteredAggregatedVertices;
+            },
+            getFilteredAggregatedEdges: function() {
+                if (!this.executed) {
+                    filterGraph(this);
+                }
+                return this.filteredAggregatedEdges;
+            },
+            reset: function() {
+                this.executed = false;
+                initResults(this);
+                resetFilterCounters(this.filters);
+                return this;
             }
         });
-        function applyFilters(elements, filters, operator) {
+        function initResults(context) {
+            context.normalGraph = new Graph();
+            context.aggregatedGraph = new Graph();
+            context.filteredVertices = [];
+            context.filteredEdges = [];
+            context.filteredAggregatedVertices = [];
+            context.filteredAggregatedEdges = [];
+        }
+        function filterGraph(context) {
+            applyFilters(context.graph.getVertices(), context, filterVertices);
+            applyFilters(context.graph.getEdges(), context, filterEdges);
+            context.executed = true;
+        }
+        function filterVertices(vertex, context, filtered) {
+            if (!filtered) {
+                addVertexToGraph(context.normalGraph, vertex);
+                addVertexToGraph(context.aggregatedGraph, vertex);
+            } else {
+                context.filteredVertices.push(vertex);
+                context.filteredAggregatedVertices.push(vertex);
+            }
+        }
+        function addVertexToGraph(graph, vertex) {
+            var newVertex = graph.addVertex(vertex.id);
+            vertex.copyPropertiesTo(newVertex);
+        }
+        function addEdgeToGraph(graph, edge) {
+            var newEdge = graph.addEdge(edge.id, edge.outVertex, edge.inVertex, edge.label);
+            edge.copyPropertiesTo(newEdge);
+        }
+        function filterEdges(edge, context, filtered) {
+            var inVertex = context.normalGraph.getVertex(edge.inVertex.id);
+            var outVertex = context.normalGraph.getVertex(edge.outVertex.id);
+            var existingVertices = inVertex !== null && outVertex !== null;
+            if (existingVertices && !filtered) {
+                addEdgeToGraph(context.normalGraph, edge);
+                addAggregatedEdgeToGraph(context, edge);
+            } else {
+                addAggregatedEdgeToFilteredList(context, edge);
+                context.filteredEdges.push(edge);
+            }
+        }
+        function addAggregatedEdgeToFilteredList(context, edge) {
+            for (var i = 0; i < context.filteredEdges.length; i++) {
+                var filteredEdge = context.filteredEdges[i];
+                var connectsSameVertices = edge.connects(filteredEdge.inVertex, filteredEdge.outVertex);
+                if (connectsSameVertices) {
+                    var strength = edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+                    strength += filteredEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+                    var newEdge = createSingleAggregatedEdge(filteredEdge.outVertex, filteredEdge.inVertex, strength, context);
+                    context.filteredAggregatedEdges.push(newEdge);
+                }
+            }
+        }
+        function createSingleAggregatedEdge(outVertex, inVertex, strength, context) {
+            var id = utils.generateId();
+            while (context.aggregatedGraph.getEdge(id) !== null) {
+                id = utils.generateId();
+            }
+            var newEdge = new Edge(id, outVertex, inVertex, null, context.aggregatedGraph);
+            newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
+            return newEdge;
+        }
+        function addAggregatedEdgeToGraph(context, edge) {
+            var inVertex = context.aggregatedGraph.getVertex(edge.inVertex.id);
+            var outVertex = context.aggregatedGraph.getVertex(edge.outVertex.id);
+            var settings = context.graph.getSettings();
+            var strength = edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+            var inVertexEdges = inVertex.getEdges(BOTH);
+            if (inVertexEdges.length < 1) {
+                var newEdge = context.aggregatedGraph.addEdge(null, outVertex, inVertex);
+                newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
+            } else {
+                findConnectedEdgesAndAggregate(inVertexEdges, outVertex, strength);
+            }
+        }
+        function findConnectedEdgesAndAggregate(sourceVertexEdges, destinationVertex, currentStrength) {
+            for (var i = 0; i < sourceVertexEdges.length; i++) {
+                var currentEdge = sourceVertexEdges[i];
+                var connectedWithDestinationVertex = currentEdge.inVertex === destinationVertex || currentEdge.outVertex === destinationVertex;
+                if (connectedWithDestinationVertex) {
+                    currentStrength += currentEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+                    currentEdge.setProperty(settings.edge.lineWeightPropertyKey, currentStrength);
+                }
+            }
+        }
+        function applyFilters(elements, context, filterCallback) {
             if (!utils.isArray(elements)) {
                 elements = [ elements ];
             }
-            var result = [];
             for (var i = 0; i < elements.length; i++) {
                 var currentElements = elements[i];
                 if (utils.isOfType(elements[i], Vertex) || utils.isOfType(elements[i], Edge)) {
@@ -2553,76 +2712,83 @@
                 }
                 for (var id in currentElements) {
                     var element = currentElements[id];
+                    var filters = context.filters;
+                    var operator = utils.isOfType(element, Vertex) ? context.vertexOperator : context.edgeOperator;
                     var filtered = checkFiltered(element, filters, operator);
-                    if (!filtered) {
-                        result.push(element);
-                    }
+                    filterCallback(element, context, filtered);
                 }
             }
-            return result;
         }
         function checkFiltered(element, filters, operator) {
             var nonMatchedFilters = 0;
             var filterCount = filters.length;
             for (var j = 0; j < filterCount; j++) {
+                var filterMatched = true;
                 var currentFilter = filters[j];
                 if (!filterCanBeApplied(element, currentFilter)) {
                     continue;
                 }
-                if (!currentFilter.getQuery().matches(element)) {
+                var hasFilters = currentFilter.hasFilters;
+                for (var k = 0; k < hasFilters.length; k++) {
+                    if (!hasFilters[k].matches(element)) {
+                        filterMatched = false;
+                    }
+                }
+                if (filterMatched) {
+                    currentFilter.count(currentFilter.count() + 1);
+                } else if (currentFilter.active()) {
                     nonMatchedFilters++;
                 }
             }
             return operator === AND ? nonMatchedFilters > 0 : nonMatchedFilters === filterCount;
         }
         function filterCanBeApplied(element, filter) {
-            return utils.isOfType(element, Vertex) && filter.getElementType() === VERTEX_FILTER || utils.isOfType(element, Edge) && filter.getElementType() === EDGE_FILTER || filter.getElementType() === BOTH_FILTER;
+            return utils.isOfType(element, Vertex) && filter.type() === VERTEX_FILTER || utils.isOfType(element, Edge) && filter.type() === EDGE_FILTER || filter.type() === BOTH_FILTER;
         }
-        function checkFeatures(features) {
-            var disabledFeatures = 0;
-            var featuresCount = 0;
-            for (var feature in features) {
-                if (features.hasOwnProperty(feature)) {
-                    disabledFeatures += !feature ? 1 : 0;
-                } else {
-                    throw {
-                        message: feature + " must be specified"
-                    };
-                }
-                featuresCount++;
-            }
-            if (disabledFeatures === featuresCount) {
-                throw {
-                    name: "NoFeaturesEnabled",
-                    message: "At least one feature must be enabled"
-                };
+        function resetFilterCounters(filters) {
+            for (var i = 0; i < filters.length; i++) {
+                filters[i].count(0);
             }
         }
         return ElementFilterManager;
     }();
     var ElementFilter = function() {
-        function ElementFilter(name, query, activeFlag, elementType) {
-            this.name = name;
-            this.count = 0;
-            this.query = query;
-            this.activeFlag = activeFlag;
-            this.elementType = elementType || BOTH_FILTER;
+        function ElementFilter() {
+            this.filterName = null;
+            this.elementCount = 0;
+            this.activeFlag = true;
+            this.elementType = BOTH_FILTER;
+            this.initHasFilters();
         }
+        utils.mixin(ElementFilter.prototype, HasFilters);
         utils.mixin(ElementFilter.prototype, {
-            getQuery: function() {
-                return this.query;
+            active: function(value) {
+                if (!arguments.length) {
+                    return this.activeFlag;
+                }
+                this.activeFlag = value;
+                return this;
             },
-            getActiveFlag: function() {
-                return this.activeFlag;
+            type: function(value) {
+                if (!arguments.length) {
+                    return this.elementType;
+                }
+                this.elementType = value;
+                return this;
             },
-            getElementType: function() {
-                return this.elementType;
+            count: function(value) {
+                if (!arguments.length) {
+                    return this.elementCount;
+                }
+                this.elementCount = value;
+                return this;
             },
-            getCount: function() {
-                return this.count;
-            },
-            getName: function() {
-                return this.name;
+            name: function(value) {
+                if (!arguments.length) {
+                    return this.filterName;
+                }
+                this.filterName = value;
+                return this;
             }
         });
         return ElementFilter;

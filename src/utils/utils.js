@@ -161,6 +161,14 @@ var utils = {
     }
   },
 
+  checkArgument: function(predicate, message) {
+    if (!predicate) {
+      throw {
+        message: message
+      };
+    }
+  },
+
   checkType: function (name, obj, type) {
     if (!this.isOfType(obj, type)) {
       throw {
