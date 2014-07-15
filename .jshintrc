@@ -97,6 +97,7 @@
     "Tween": false,
     "CircleLayout": false,
     "WheelLayout": false,
+    "GridLayout": false,
     "LayoutUtils": false,
     "Easing": false,
 

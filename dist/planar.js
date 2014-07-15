@@ -2325,6 +2325,67 @@
         });
         return WheelLayout;
     }();
+    var GridLayout = function() {
+        function GridLayout(duration, easing) {
+            this.running = true;
+            this.tween = new Tween(duration, easing);
+        }
+        GridLayout.NODE_WIDTH = 75;
+        var calculateScale = function(width, height, rows, cols) {
+            var widthScale = cols === 1 ? 1 : width / ((cols - 1) * (width / (cols - 1) + GridLayout.NODE_WIDTH));
+            var heightScale = rows === 1 ? 1 : height / ((rows - 1) * (height / (rows - 1) + GridLayout.NODE_WIDTH));
+            var scale = Math.min(widthScale, heightScale);
+            return scale > 1 ? 1 : scale;
+        };
+        utils.mixin(GridLayout.prototype, {
+            step: function(vertices, edges, width, height) {
+                var finishedVertices = vertices.length;
+                if (this.running) {
+                    finishedVertices = 0;
+                    var numberOfVertices = vertices.length;
+                    var rows = Math.floor(Math.sqrt(numberOfVertices));
+                    var cols = rows === 0 ? 0 : Math.floor(numberOfVertices / rows) + 1;
+                    var h = height - GridLayout.NODE_WIDTH;
+                    var w = width - 2 * GridLayout.NODE_WIDTH;
+                    var scale = calculateScale(w, h, rows, cols);
+                    var bx = 2 * GridLayout.NODE_WIDTH / scale;
+                    var by = GridLayout.NODE_WIDTH;
+                    LayoutUtils.setScale(scale);
+                    for (var i = 0; i < vertices.length; i++) {
+                        var uiVertex = vertices[i];
+                        if (uiVertex.started) {
+                            this.tween.runFrame(uiVertex);
+                            if (uiVertex.finished) {
+                                finishedVertices++;
+                            }
+                        } else {
+                            GridLayout.setBeginPoint(uiVertex, bx, by);
+                            uiVertex.endX = bx + w * (i % cols / cols) + i % cols * GridLayout.NODE_WIDTH;
+                            uiVertex.endY = by + h * (Math.floor(i / cols) / rows) + Math.floor(i / cols) * GridLayout.NODE_WIDTH;
+                            this.tween.start(uiVertex);
+                        }
+                    }
+                }
+                if (this.running && finishedVertices === vertices.length && vertices.length > 0) {
+                    vertices[0].vertex.getGraph().trigger("graphUpdated");
+                }
+                this.running = finishedVertices < vertices.length;
+                return this.running;
+            }
+        });
+        GridLayout.setBeginPoint = function(uiVertex, bx, by) {
+            if (utils.isUndefined(uiVertex.x) || utils.isUndefined(uiVertex.y)) {
+                uiVertex.beginX = bx;
+                uiVertex.beginY = by;
+                uiVertex.x = bx;
+                uiVertex.y = by;
+            } else {
+                uiVertex.beginX = uiVertex.x;
+                uiVertex.beginY = uiVertex.y;
+            }
+        };
+        return GridLayout;
+    }();
     var LayoutUtils = {
         setScale: function(scale) {
             d3.select("#graphElements").attr("transform", "scale(" + scale + ")");
@@ -2470,7 +2531,7 @@
         container: null,
         navigatorContainer: null,
         engine: new D3Engine(),
-        layout: new WheelLayout(1e3, Easing.expoInOut),
+        layout: new GridLayout(1e3, Easing.expoInOut),
         raphael: {
             defaultVertexRenderer: RaphaelRectangleVertexRenderer,
             vertexRenderers: {}
@@ -2628,95 +2689,13 @@
             applyFilters(context.graph.getEdges(), context, filterEdges);
             context.executed = true;
         }
-        function filterVertices(vertex, context, filtered) {
-            if (!filtered) {
-                addVertexToGraph(context.normalGraph, vertex);
-                addVertexToGraph(context.aggregatedGraph, vertex);
-            } else {
-                context.filteredVertices.push(vertex);
-                context.filteredAggregatedVertices.push(vertex);
-            }
-        }
-        function addVertexToGraph(graph, vertex) {
-            var newVertex = graph.addVertex(vertex.id);
-            vertex.copyPropertiesTo(newVertex);
-        }
-        function addEdgeToGraph(graph, edge) {
-            var newEdge = graph.addEdge(edge.id, edge.outVertex, edge.inVertex, edge.label);
-            edge.copyPropertiesTo(newEdge);
-        }
-        function filterEdges(edge, context, filtered) {
-            var inVertex = context.normalGraph.getVertex(edge.inVertex.id);
-            var outVertex = context.normalGraph.getVertex(edge.outVertex.id);
-            var existingVertices = inVertex !== null && outVertex !== null;
-            if (existingVertices && !filtered) {
-                addEdgeToGraph(context.normalGraph, edge);
-                addAggregatedEdgeToGraph(context, edge);
-            } else {
-                addAggregatedEdgeToFilteredList(context, edge);
-                context.filteredEdges.push(edge);
-            }
-        }
-        function addAggregatedEdgeToFilteredList(context, edge) {
-            for (var i = 0; i < context.filteredEdges.length; i++) {
-                var filteredEdge = context.filteredEdges[i];
-                var connectsSameVertices = edge.connects(filteredEdge.inVertex, filteredEdge.outVertex);
-                if (connectsSameVertices) {
-                    var strength = edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
-                    strength += filteredEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
-                    var newEdge = createSingleAggregatedEdge(filteredEdge.outVertex, filteredEdge.inVertex, strength, context);
-                    context.filteredAggregatedEdges.push(newEdge);
-                }
-            }
-        }
-        function createSingleAggregatedEdge(outVertex, inVertex, strength, context) {
-            var id = utils.generateId();
-            while (context.aggregatedGraph.getEdge(id) !== null) {
-                id = utils.generateId();
-            }
-            var newEdge = new Edge(id, outVertex, inVertex, null, context.aggregatedGraph);
-            newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
-            return newEdge;
-        }
-        function addAggregatedEdgeToGraph(context, edge) {
-            var inVertex = context.aggregatedGraph.getVertex(edge.inVertex.id);
-            var outVertex = context.aggregatedGraph.getVertex(edge.outVertex.id);
-            var settings = context.graph.getSettings();
-            var strength = edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
-            var inVertexEdges = inVertex.getEdges(BOTH);
-            if (inVertexEdges.length < 1) {
-                var newEdge = context.aggregatedGraph.addEdge(null, outVertex, inVertex);
-                newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
-            } else {
-                findConnectedEdgesAndAggregate(inVertexEdges, outVertex, strength);
-            }
-        }
-        function findConnectedEdgesAndAggregate(sourceVertexEdges, destinationVertex, currentStrength) {
-            for (var i = 0; i < sourceVertexEdges.length; i++) {
-                var currentEdge = sourceVertexEdges[i];
-                var connectedWithDestinationVertex = currentEdge.inVertex === destinationVertex || currentEdge.outVertex === destinationVertex;
-                if (connectedWithDestinationVertex) {
-                    currentStrength += currentEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
-                    currentEdge.setProperty(settings.edge.lineWeightPropertyKey, currentStrength);
-                }
-            }
-        }
         function applyFilters(elements, context, filterCallback) {
-            if (!utils.isArray(elements)) {
-                elements = [ elements ];
-            }
             for (var i = 0; i < elements.length; i++) {
-                var currentElements = elements[i];
-                if (utils.isOfType(elements[i], Vertex) || utils.isOfType(elements[i], Edge)) {
-                    currentElements = [ currentElements ];
-                }
-                for (var id in currentElements) {
-                    var element = currentElements[id];
-                    var filters = context.filters;
-                    var operator = utils.isOfType(element, Vertex) ? context.vertexOperator : context.edgeOperator;
-                    var filtered = checkFiltered(element, filters, operator);
-                    filterCallback(element, context, filtered);
-                }
+                var element = elements[i];
+                var filters = context.filters;
+                var operator = utils.isOfType(element, Vertex) ? context.vertexOperator : context.edgeOperator;
+                var filtered = checkFiltered(element, filters, operator);
+                filterCallback(element, context, filtered);
             }
         }
         function checkFiltered(element, filters, operator) {
@@ -2744,6 +2723,85 @@
         }
         function filterCanBeApplied(element, filter) {
             return utils.isOfType(element, Vertex) && filter.type() === VERTEX_FILTER || utils.isOfType(element, Edge) && filter.type() === EDGE_FILTER || filter.type() === BOTH_FILTER;
+        }
+        function filterVertices(vertex, context, filtered) {
+            if (!filtered) {
+                addVertexToGraph(context.normalGraph, vertex);
+                addVertexToGraph(context.aggregatedGraph, vertex);
+            } else {
+                context.filteredVertices.push(vertex);
+                context.filteredAggregatedVertices.push(vertex);
+            }
+        }
+        function addVertexToGraph(graph, vertex) {
+            var newVertex = graph.addVertex(vertex.id);
+            vertex.copyPropertiesTo(newVertex);
+        }
+        function filterEdges(edge, context, filtered) {
+            var inVertex = context.normalGraph.getVertex(edge.getInVertex().id);
+            var outVertex = context.normalGraph.getVertex(edge.getOutVertex().id);
+            var existingVertices = inVertex !== null && outVertex !== null;
+            if (existingVertices && !filtered) {
+                addEdgeToGraph(context.normalGraph, edge);
+                addAggregatedEdgeToGraph(context, edge);
+            } else {
+                addAggregatedEdgeToFilteredList(context, edge);
+                context.filteredEdges.push(edge);
+            }
+        }
+        function addAggregatedEdgeToGraph(context, edge) {
+            var inVertex = context.aggregatedGraph.getVertex(edge.getInVertex().id);
+            var outVertex = context.aggregatedGraph.getVertex(edge.getOutVertex().id);
+            var settings = context.graph.getSettings();
+            var strength = edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+            var inVertexEdges = inVertex.getEdges(BOTH);
+            if (inVertexEdges.length < 1) {
+                var newEdge = context.aggregatedGraph.addEdge(null, outVertex, inVertex);
+                newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
+            } else {
+                findConnectedEdgesAndAggregate(inVertexEdges, inVertex, outVertex, strength);
+            }
+        }
+        function addEdgeToGraph(graph, edge) {
+            var newEdge = graph.addEdge(edge.id, edge.getOutVertex(), edge.getInVertex(), edge.label);
+            edge.copyPropertiesTo(newEdge);
+        }
+        function addAggregatedEdgeToFilteredList(context, edge) {
+            var strength = edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+            var wasConnection = false;
+            for (var i = 0; i < context.filteredAggregatedEdges.length; i++) {
+                var filteredEdge = context.filteredAggregatedEdges[i];
+                var connectsSameVertices = edge.connects(filteredEdge.getInVertex(), filteredEdge.getOutVertex());
+                if (connectsSameVertices) {
+                    wasConnection = true;
+                    strength += filteredEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+                    filteredEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
+                    break;
+                }
+            }
+            if (context.filteredAggregatedEdges.length < 1 || !wasConnection) {
+                var newEdge = createSingleAggregatedEdge(edge.getOutVertex(), edge.getInVertex(), strength, context);
+                context.filteredAggregatedEdges.push(newEdge);
+            }
+        }
+        function createSingleAggregatedEdge(outVertex, inVertex, strength, context) {
+            var id = utils.generateId();
+            while (context.aggregatedGraph.getEdge(id) !== null) {
+                id = utils.generateId();
+            }
+            var newEdge = new Edge(id, outVertex, inVertex, null, context.aggregatedGraph);
+            newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
+            return newEdge;
+        }
+        function findConnectedEdgesAndAggregate(sourceVertexEdges, sourceVertex, destinationVertex, currentStrength) {
+            for (var i = 0; i < sourceVertexEdges.length; i++) {
+                var currentEdge = sourceVertexEdges[i];
+                var connectedWithDestinationVertex = currentEdge.connects(sourceVertex, destinationVertex);
+                if (connectedWithDestinationVertex) {
+                    currentStrength += currentEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+                    currentEdge.setProperty(settings.edge.lineWeightPropertyKey, currentStrength);
+                }
+            }
         }
         function resetFilterCounters(filters) {
             for (var i = 0; i < filters.length; i++) {
@@ -2843,6 +2901,7 @@
     exports.Tween = Tween;
     exports.CircleLayout = CircleLayout;
     exports.WheelLayout = WheelLayout;
+    exports.GridLayout = GridLayout;
     exports.LayoutUtils = LayoutUtils;
     exports.Easing = Easing;
 })({}, function() {

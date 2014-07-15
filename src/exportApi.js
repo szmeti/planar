@@ -49,5 +49,6 @@ exports.GraphSONReader = GraphSONReader;
 exports.Tween = Tween;
 exports.CircleLayout = CircleLayout;
 exports.WheelLayout = WheelLayout;
+exports.GridLayout = GridLayout;
 exports.LayoutUtils = LayoutUtils;
 exports.Easing = Easing;
