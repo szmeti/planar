@@ -8,7 +8,7 @@ var settings = {
 
   engine: new D3Engine(),
 
-  layout: new WheelLayout(1000, Easing.expoInOut),
+  layout: new GridLayout(1000, Easing.expoInOut),
 
   raphael: {
     defaultVertexRenderer: RaphaelRectangleVertexRenderer,
