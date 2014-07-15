@@ -265,6 +265,18 @@ describe('FilterManager', function () {
     expect(filteredAggregatedEdge2.getProperty(settings.edge.lineWeightPropertyKey)).toBe(9);
   });
 
+  it('verifies filtering with labels', function () {
+    var filterManager = graph.filteredView();
+    filterManager.addFilter().type(EDGE_FILTER).label('ab','ba');
+
+    var normal = filterManager.getNormalGraph();
+    var edges = normal.query().edges();
+    expect(edges.length).toBe(2);
+
+    expect(edges[0].getLabel()).toBe('ab');
+    expect(edges[1].getLabel()).toBe('ba');
+  });
+
   function haveSameProperties(v1, v2) {
     var propertyKeys = v1.getPropertyKeys();
     expect(propertyKeys.length).toBe(v2.getPropertyKeys().length);

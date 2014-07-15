@@ -6,6 +6,7 @@ var ElementFilter = (function () {
     this.elementCount = 0;
     this.activeFlag = true;
     this.elementType = BOTH_FILTER;
+    this.labelFilterActivated = false;
     this.initHasFilters();
   }
 
@@ -25,6 +26,9 @@ var ElementFilter = (function () {
       if (!arguments.length) {
         return this.elementType;
       }
+      utils.checkArgument(
+        !this.labelFilterActivated || value === EDGE_FILTER,
+        'If label filter added the type could not be changed.');
       this.elementType = value;
       return this;
     },
@@ -43,7 +47,16 @@ var ElementFilter = (function () {
       }
       this.filterName = value;
       return this;
+    },
+
+    label: function () {
+      var labels = utils.convertVarArgs(arguments);
+      this.hasFilters.push(new LabelFilter(labels));
+      this.labelFilterActivated = true;
+      this.elementType = EDGE_FILTER;
+      return this;
     }
+
   });
 
   return ElementFilter;
