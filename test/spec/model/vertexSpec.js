@@ -18,6 +18,22 @@ describe('Vertex', function () {
     expect(graph.getVertex(v.getId())).toBe(graph.getVertex(v.getId()));
   });
 
+  it('should copy properties', function () {
+    var graph = new Graph();
+
+    var v1 = graph.addVertex();
+    v1.setProperty('name', 'marko');
+    v1.setProperty('location', 'everywhere');
+
+    var newGraph = new Graph();
+    var v1Copy = newGraph.addVertex();
+    v1.copyPropertiesTo(v1Copy);
+
+    expect(v1Copy.getPropertyKeys().length).toBe(2);
+    expect(v1Copy.getProperty('name')).toBe('marko');
+    expect(v1Copy.getProperty('location')).toBe('everywhere');
+  });
+
   it('should not allow duplicate IDs', function () {
     var graph = new Graph();
 

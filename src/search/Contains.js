@@ -10,6 +10,13 @@ var Contains = (function () {
       }
     },
 
+    HAS_ELEMENT: {
+      evaluate: function (first, second) {
+        utils.checkArray('First argument', first);
+        return utils.indexOf(second, first) > -1;
+      }
+    },
+
     NOT_IN: {
       evaluate: function (first, second) {
         utils.checkArray('Second argument', second);
