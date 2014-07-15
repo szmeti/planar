@@ -2330,10 +2330,11 @@
             this.running = true;
             this.tween = new Tween(duration, easing);
         }
+        GridLayout.NODE_WIDTH = 75;
         var calculateScale = function(width, height, rows, cols) {
-            var widthScale = cols === 1 ? 1 : width / ((cols - 1) * (width / (cols - 1) + 75));
-            var heightScale = rows === 1 ? 1 : height / ((rows - 1) * (height / (rows - 1) + 75));
-            var scale = Math.min.apply(Math, [ widthScale, heightScale ]);
+            var widthScale = cols === 1 ? 1 : width / ((cols - 1) * (width / (cols - 1) + GridLayout.NODE_WIDTH));
+            var heightScale = rows === 1 ? 1 : height / ((rows - 1) * (height / (rows - 1) + GridLayout.NODE_WIDTH));
+            var scale = Math.min(widthScale, heightScale);
             return scale > 1 ? 1 : scale;
         };
         utils.mixin(GridLayout.prototype, {
@@ -2344,11 +2345,11 @@
                     var numberOfVertices = vertices.length;
                     var rows = Math.floor(Math.sqrt(numberOfVertices));
                     var cols = rows === 0 ? 0 : Math.floor(numberOfVertices / rows) + 1;
-                    var h = height - 75;
-                    var w = width - 150;
+                    var h = height - GridLayout.NODE_WIDTH;
+                    var w = width - 2 * GridLayout.NODE_WIDTH;
                     var scale = calculateScale(w, h, rows, cols);
-                    var bx = 150 / scale;
-                    var by = 75;
+                    var bx = 2 * GridLayout.NODE_WIDTH / scale;
+                    var by = GridLayout.NODE_WIDTH;
                     LayoutUtils.setScale(scale);
                     for (var i = 0; i < vertices.length; i++) {
                         var uiVertex = vertices[i];
@@ -2359,8 +2360,8 @@
                             }
                         } else {
                             GridLayout.setBeginPoint(uiVertex, bx, by);
-                            uiVertex.endX = bx + w * (i % cols / cols) + i % cols * 75;
-                            uiVertex.endY = by + h * (Math.floor(i / cols) / rows) + Math.floor(i / cols) * 75;
+                            uiVertex.endX = bx + w * (i % cols / cols) + i % cols * GridLayout.NODE_WIDTH;
+                            uiVertex.endY = by + h * (Math.floor(i / cols) / rows) + Math.floor(i / cols) * GridLayout.NODE_WIDTH;
                             this.tween.start(uiVertex);
                         }
                     }
