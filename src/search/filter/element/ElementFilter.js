@@ -3,6 +3,7 @@ var ElementFilter = (function () {
 
   function ElementFilter() {
     this.filterName = null;
+    this.id = null;
     this.elementCount = 0;
     this.activeFlag = true;
     this.elementType = BOTH_FILTER;
@@ -13,6 +14,14 @@ var ElementFilter = (function () {
   utils.mixin(ElementFilter.prototype, HasFilters);
 
   utils.mixin(ElementFilter.prototype, {
+
+    id: function (value) {
+      if (!arguments.length) {
+        return this.id;
+      }
+      this.id = value;
+      return this;
+    },
 
     active: function (value) {
       if (!arguments.length) {
