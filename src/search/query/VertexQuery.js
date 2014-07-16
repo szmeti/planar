@@ -34,7 +34,7 @@ var VertexQuery = (function () {
     },
 
     getBaseFilters: function () {
-      return this.queryLabels.length > 0 ? [new LabelFilter(this.queryLabels)] : [];
+      return this.queryLabels.length > 0 ? [new LabelCondition(this.queryLabels)] : [];
     },
 
     resultExtractor: function (self) {

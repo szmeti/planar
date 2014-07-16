@@ -1,7 +1,7 @@
-/* global HasFilter: true */
-var HasFilter = (function () {
+/* global HasCondition: true */
+var HasCondition = (function () {
 
-  function HasFilter(key, predicate, value, disabledFilters) {
+  function HasCondition(key, predicate, value, disabledFilters) {
     utils.checkExists('Key', key);
     utils.checkExists('Predicate', predicate);
 
@@ -11,7 +11,7 @@ var HasFilter = (function () {
     this.disabledFilters = disabledFilters;
   }
 
-  utils.mixin(HasFilter.prototype, {
+  utils.mixin(HasCondition.prototype, {
 
     matches: function (element) {
       return this.predicate.evaluate(element.getProperty(this.key, this.disabledFilters), this.value);
@@ -19,6 +19,6 @@ var HasFilter = (function () {
 
   });
 
-  return HasFilter;
+  return HasCondition;
 
 }());

@@ -12,7 +12,7 @@ var GraphQuery = (function () {
   utils.mixin(GraphQuery.prototype, {
 
     getInitialEdges: function () {
-      var edges = this.graph.indexManager.fetchFirstMatching(Edge, this.hasFilters);
+      var edges = this.graph.indexManager.fetchFirstMatching(Edge, this.hasConditions);
 
       if (!edges) {
         edges = this.graph.edges;
@@ -22,7 +22,7 @@ var GraphQuery = (function () {
     },
 
     getInitialVertices: function () {
-      var vertices = this.graph.indexManager.fetchFirstMatching(Vertex, this.hasFilters);
+      var vertices = this.graph.indexManager.fetchFirstMatching(Vertex, this.hasConditions);
 
       if (!vertices) {
         vertices = this.graph.vertices;

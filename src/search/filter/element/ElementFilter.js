@@ -8,10 +8,10 @@ var ElementFilter = (function () {
     this.activeFlag = true;
     this.elementType = BOTH_FILTER;
     this.labelFilterActivated = false;
-    this.initHasFilters();
+    this.initHasConditions();
   }
 
-  utils.mixin(ElementFilter.prototype, HasFilters);
+  utils.mixin(ElementFilter.prototype, HasConditions);
 
   utils.mixin(ElementFilter.prototype, {
 
@@ -58,9 +58,15 @@ var ElementFilter = (function () {
       return this;
     },
 
+    addCondition: function(condition) {
+      utils.checkExists('Condition', condition);
+      this.hasConditions.push(condition);
+      return this;
+    },
+
     label: function () {
       var labels = utils.convertVarArgs(arguments);
-      this.hasFilters.push(new LabelFilter(labels));
+      this.hasConditions.push(new LabelCondition(labels));
       this.labelFilterActivated = true;
       this.elementType = EDGE_FILTER;
       return this;

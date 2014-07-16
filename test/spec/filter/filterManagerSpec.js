@@ -277,6 +277,18 @@ describe('FilterManager', function () {
     expect(edges[1].getLabel()).toBe('ba');
   });
 
+  it('verifies add condition to filters', function () {
+    var filterManager = graph.filteredView();
+    filterManager.addFilter().type(EDGE_FILTER).addCondition(new LabelCondition('ab', 'ba'));
+
+    var normal = filterManager.getNormalGraph();
+    var edges = normal.query().edges();
+    expect(edges.length).toBe(2);
+
+    expect(edges[0].getLabel()).toBe('ab');
+    expect(edges[1].getLabel()).toBe('ba');
+  });
+
   function haveSameProperties(v1, v2) {
     var propertyKeys = v1.getPropertyKeys();
     expect(propertyKeys.length).toBe(v2.getPropertyKeys().length);
