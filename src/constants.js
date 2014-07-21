@@ -7,6 +7,7 @@
 /* global VERTEX_FILTER: true */
 /* global EDGE_FILTER: true */
 /* global BOTH_FILTER: true */
+/* global NODE_WIDTH: true */
 var OUT = 1;
 var IN = 2;
 var BOTH = 3;
@@ -16,3 +17,4 @@ var OR = 'or';
 var VERTEX_FILTER = 'vertex';
 var EDGE_FILTER = 'edge';
 var BOTH_FILTER = 'both';
+var NODE_WIDTH = 75;

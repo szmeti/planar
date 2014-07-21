@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 sample</title>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF8">
+
+    <style type="text/css">
+        body{
+            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+            font-size: 14px;
+            color: #666666;
+            text-shadow: 0 1px 0 #ffffff;
+        }
+
+        #container {
+            /*background-color: #eceaf3;*/
+            clear:both;
+        }
+
+        .canvas .wrapper.outer > .background {
+            fill: #000000;
+        }
+        .canvas .wrapper.inner > .background {
+            cursor: move;
+        }
+        .canvas .background {
+            fill: #F6F6F6;
+            stroke: #333333;
+            cursor: move;
+        }
+        .canvas .panCanvas {
+            cursor: move;
+        }
+
+        .canvas .navigator .frame .background {
+            fill-opacity: 0.4;
+            fill: #7c7c7c;
+            cursor: move;
+        }
+
+        .edge {
+            stroke: #999;
+            stroke-width: 2;
+            cursor: pointer;
+            fill:none;
+        }
+
+        .edge:hover {
+            stroke-width: 15;
+        }
+
+        .edge-label {
+            stroke-width: -0.5;
+            stroke: #666666;
+            fill: #666666;
+        }
+
+        .vertex {
+            cursor: pointer;
+        }
+
+        svg {
+            /*border: 1px solid #808080*/;
+        }
+
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+
+        .divider {
+            stroke: #b3b3b3;
+        }
+
+        .query-vertex-box {
+            fill:url(#queryVertexDefaultFillScheme);
+            fill-opacity:1;
+            stroke: #b3b3b3;
+            stroke-width:1;
+        }
+
+        .alias-label {
+            font-weight: bold;
+        }
+
+        .wrapperCircle {
+            vector-effect: non-scaling-stroke;
+            fill-opacity: 1;
+            fill: rgb(85, 85, 85);
+            fill-opacity: 0.3;
+        }
+
+        .compass {
+            fill: rgb(206, 206, 206);
+            stroke: rgba(19, 19, 24, 0.92);
+            stroke-miterlimit: 6;
+            stroke-linecap: round;
+        }
+
+        .plus-minus {
+            fill: #e4e4e4;
+            pointer-events: none;
+        }
+
+        .zoomPanButton:hover{
+           stroke-width: 2;
+        }
+
+        #graphCanvas {
+            float: left;
+        }
+
+        #navigatorContainer {
+            margin-left: 20px;
+            float: left;
+        }
+
+
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <div id="graphCanvas"></div>
+    <div id="navigatorContainer"></div>
+</div>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script type="text/javascript" src="../bower_components/d3/d3.js"></script>
+<script type="text/javascript" src="../dist/planar.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var graph = new planar.Graph({container: '#graphCanvas', navigatorContainer: '#navigatorContainer'});
+
+        var v1 = graph.addVertex();
+        v1.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v1.setProperty("imageUrl", "resources/person-icon.png");
+        v1.setProperty("additionalLabel", "1");
+
+        var v2 = graph.addVertex();
+        v2.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v2.setProperty("imageUrl", "resources/person-icon.png");
+        v2.setProperty("additionalLabel", "2");
+
+        var v3 = graph.addVertex();
+        v3.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v3.setProperty("imageUrl", "resources/person-icon.png");
+        v3.setProperty("additionalLabel", "3");
+
+        var v4 = graph.addVertex();
+        v4.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v4.setProperty("imageUrl", "resources/person-icon.png");
+        v4.setProperty("additionalLabel", "4");
+
+        var v5 = graph.addVertex();
+        v5.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v5.setProperty("imageUrl", "resources/person-icon.png");
+        v5.setProperty("additionalLabel", "5");
+
+        var v6 = graph.addVertex();
+        v6.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v6.setProperty("imageUrl", "resources/person-icon.png");
+        v6.setProperty("additionalLabel", "6");
+
+        var v7 = graph.addVertex();
+        v7.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v7.setProperty("imageUrl", "resources/person-icon.png");
+        v7.setProperty("additionalLabel", "7");
+
+        var v8 = graph.addVertex();
+        v8.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v8.setProperty("imageUrl", "resources/person-icon.png");
+        v8.setProperty("additionalLabel", "8");
+
+        var v9 = graph.addVertex();
+        v9.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v9.setProperty("imageUrl", "resources/person-icon.png");
+        v9.setProperty("additionalLabel", "9");
+
+        var v10 = graph.addVertex();
+        v10.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v10.setProperty("imageUrl", "resources/person-icon.png");
+        v10.setProperty("additionalLabel", "10");
+
+        var v11 = graph.addVertex();
+        v11.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v11.setProperty("imageUrl", "resources/person-icon.png");
+        v11.setProperty("additionalLabel", "11");
+
+        var v12 = graph.addVertex();
+        v12.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v12.setProperty("imageUrl", "resources/person-icon.png");
+        v12.setProperty("additionalLabel", "12");
+
+        var v13 = graph.addVertex();
+        v13.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v13.setProperty("imageUrl", "resources/person-icon.png");
+        v13.setProperty("additionalLabel", "13");
+
+        var v14 = graph.addVertex();
+        v14.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v14.setProperty("imageUrl", "resources/person-icon.png");
+        v14.setProperty("additionalLabel", "14");
+
+        var v15 = graph.addVertex();
+        v15.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v15.setProperty("imageUrl", "resources/person-icon.png");
+        v15.setProperty("additionalLabel", "15");
+
+        var v16 = graph.addVertex();
+        v16.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v16.setProperty("imageUrl", "resources/person-icon.png");
+        v16.setProperty("additionalLabel", "16");
+
+        var v17 = graph.addVertex();
+        v17.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v17.setProperty("imageUrl", "resources/person-icon.png");
+        v17.setProperty("additionalLabel", "17");
+
+        var v18 = graph.addVertex();
+        v18.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v18.setProperty("imageUrl", "resources/person-icon.png");
+        v18.setProperty("additionalLabel", "18");
+
+        var v19 = graph.addVertex();
+        v19.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v19.setProperty("imageUrl", "resources/person-icon.png");
+        v19.setProperty("additionalLabel", "19");
+
+        var v20 = graph.addVertex();
+        v20.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v20.setProperty("imageUrl", "resources/person-icon.png");
+        v20.setProperty("additionalLabel", "20");
+
+        var v21 = graph.addVertex();
+        v21.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v21.setProperty("imageUrl", "resources/person-icon.png");
+        v21.setProperty("additionalLabel", "21");
+
+        var v22 = graph.addVertex();
+        v22.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v22.setProperty("imageUrl", "resources/person-icon.png");
+        v22.setProperty("additionalLabel", "22");
+
+        var v23 = graph.addVertex();
+        v23.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v23.setProperty("imageUrl", "resources/person-icon.png");
+        v23.setProperty("additionalLabel", "23");
+
+        var v24 = graph.addVertex();
+        v24.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v24.setProperty("imageUrl", "resources/person-icon.png");
+        v24.setProperty("additionalLabel", "24");
+
+        var v25 = graph.addVertex();
+        v25.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v25.setProperty("imageUrl", "resources/person-icon.png");
+        v25.setProperty("additionalLabel", "25");
+
+        var v26 = graph.addVertex();
+        v26.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v26.setProperty("imageUrl", "resources/person-icon.png");
+        v26.setProperty("additionalLabel", "26");
+
+        var v27 = graph.addVertex();
+        v27.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v27.setProperty("imageUrl", "resources/person-icon.png");
+        v27.setProperty("additionalLabel", "27");
+
+        var v28 = graph.addVertex();
+        v28.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v28.setProperty("imageUrl", "resources/person-icon.png");
+        v28.setProperty("additionalLabel", "28");
+
+        var v29 = graph.addVertex();
+        v29.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v29.setProperty("imageUrl", "resources/person-icon.png");
+        v29.setProperty("additionalLabel", "29");
+
+        graph.addEdge(null, v1, v6, "knows");
+        graph.addEdge(null, v1, v7, "knows");
+        graph.addEdge(null, v1, v3, "knows");
+        graph.addEdge(null, v7, v5, "knows");
+        graph.addEdge(null, v6, v8, "knows");
+        graph.addEdge(null, v6, v4, "knows");
+        graph.addEdge(null, v8, v2, "knows");
+        graph.addEdge(null, v3, v9, "knows");
+        graph.addEdge(null, v1, v10, "knows");
+        graph.addEdge(null, v1, v11, "knows");
+        graph.addEdge(null, v8, v12, "knows");
+        graph.addEdge(null, v8, v13, "knows");
+        graph.addEdge(null, v19, v14, "knows");
+        graph.addEdge(null, v19, v15, "knows");
+        graph.addEdge(null, v19, v16, "knows");
+        graph.addEdge(null, v11, v17, "knows");
+        graph.addEdge(null, v11, v18, "knows");
+        graph.addEdge(null, v11, v19, "knows");
+        graph.addEdge(null, v19, v20, "knows");
+        graph.addEdge(null, v19, v21, "knows");
+
+        graph.addEdge(null, v22, v23, "knows");
+        graph.addEdge(null, v22, v24, "knows");
+        graph.addEdge(null, v22, v25, "knows");
+
+        graph.addEdge(null, v26, v27, "knows");
+        graph.addEdge(null, v26, v28, "knows");
+        graph.addEdge(null, v26, v29, "knows");
+
+        graph.render();
+    });
+</script>
+
+</body>
+</html>

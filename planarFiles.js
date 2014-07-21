@@ -45,6 +45,7 @@ planarFiles = {
     'src/view/layout/CircleLayout.js',
     'src/view/layout/WheelLayout.js',
     'src/view/layout/GridLayout.js',
+    'src/view/layout/NodeLinkTreeLayout.js',
     'src/view/layout/LayoutUtils.js',
     'src/view/Easing.js',
     'src/view/Renderer.js',

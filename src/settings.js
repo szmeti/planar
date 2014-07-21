@@ -8,7 +8,7 @@ var settings = {
 
   engine: new D3Engine(),
 
-  layout: new GridLayout(1000, Easing.expoInOut),
+  layout: new NodeLinkTreeLayout(1000, Easing.expoInOut),
 
   raphael: {
     defaultVertexRenderer: RaphaelRectangleVertexRenderer,

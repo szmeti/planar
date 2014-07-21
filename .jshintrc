@@ -79,6 +79,7 @@
     "VERTEX_FILTER": false,
     "EDGE_FILTER": false,
     "BOTH_FILTER": false,
+    "NODE_WIDTH": false,
 
     "describe": false,
     "it": false,
@@ -98,6 +99,7 @@
     "CircleLayout": false,
     "WheelLayout": false,
     "GridLayout": false,
+    "NodeLinkTreeLayout": false,
     "LayoutUtils": false,
     "Easing": false,
 

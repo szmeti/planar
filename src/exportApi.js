@@ -43,6 +43,7 @@ exports.OR = OR;
 exports.BOTH_FILTER = BOTH_FILTER;
 exports.VERTEX_FILTER = VERTEX_FILTER;
 exports.EDGE_FILTER = EDGE_FILTER;
+exports.NODE_WIDTH = NODE_WIDTH;
 
 exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
 exports.GraphSONReader = GraphSONReader;
@@ -50,5 +51,6 @@ exports.Tween = Tween;
 exports.CircleLayout = CircleLayout;
 exports.WheelLayout = WheelLayout;
 exports.GridLayout = GridLayout;
+exports.NodeLinkTreeLayout = NodeLinkTreeLayout;
 exports.LayoutUtils = LayoutUtils;
 exports.Easing = Easing;
