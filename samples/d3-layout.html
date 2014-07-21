@@ -122,6 +122,12 @@
 <body>
 
 <div id="container">
+    <div>
+        <button id="circleLayout">Circle</button>
+        <button id="wheelLayout">Wheel</button>
+        <button id="gridLayout">Grid</button>
+        <button id="treeLayout">Tree</button>
+    </div>
     <div id="graphCanvas"></div>
     <div id="navigatorContainer"></div>
 </div>
@@ -309,6 +315,22 @@
         graph.addEdge(null, v26, v29, "knows");
 
         graph.render();
+
+        $('#circleLayout').on('click', function () {
+            graph.renderer.changeLayout('circle');
+        });
+
+        $('#wheelLayout').on('click', function () {
+            graph.renderer.changeLayout('wheel');
+        });
+
+        $('#gridLayout').on('click', function () {
+            graph.renderer.changeLayout('grid');
+        });
+
+        $('#treeLayout').on('click', function () {
+            graph.renderer.changeLayout('tree');
+        });
     });
 </script>
 

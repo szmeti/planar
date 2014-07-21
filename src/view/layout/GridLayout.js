@@ -35,12 +35,10 @@ var GridLayout = (function () {
         var bx = (2 * NODE_WIDTH) / scale;
         var by = NODE_WIDTH;
 
-        LayoutUtils.setScale(scale);
-
         for (var i = 0; i < vertices.length; i++) {
           var uiVertex = vertices[i];
           if(uiVertex.started) {
-            this.tween.runFrame(uiVertex);
+            this.tween.runFrame(uiVertex, scale);
             if(uiVertex.finished) {
               finishedVertices++;
             }
@@ -48,7 +46,7 @@ var GridLayout = (function () {
             GridLayout.setBeginPoint(uiVertex, bx, by);
             uiVertex.endX = bx + w * ((i % cols) / (cols)) + (i % cols) * NODE_WIDTH;
             uiVertex.endY = by + h * (Math.floor(i / cols) / (rows)) + Math.floor(i / cols) * NODE_WIDTH;
-            this.tween.start(uiVertex);
+            this.tween.start(uiVertex, scale);
           }
         }
       }

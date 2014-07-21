@@ -31,8 +31,6 @@ var CircleLayout = (function () {
         var radius = calculateRadius(numberOfVertices);
         var scale = calculateScale(radius, width, height);
 
-        LayoutUtils.setScale(scale);
-
         var cx = width * (0.5 / scale);
         var cy = height * (0.5 / scale);
 
@@ -40,7 +38,7 @@ var CircleLayout = (function () {
         for (var i = 0; i < vertices.length; i++) {
           var uiVertex = vertices[i];
           if(uiVertex.started) {
-            this.tween.runFrame(uiVertex);
+            this.tween.runFrame(uiVertex, scale);
             if(uiVertex.finished) {
               finishedVertices++;
             }
@@ -55,7 +53,7 @@ var CircleLayout = (function () {
               uiVertex.endY = Math.sin(angle)*radius + cy;
             }
 
-            this.tween.start(uiVertex);
+            this.tween.start(uiVertex, scale);
           }
         }
       }

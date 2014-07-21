@@ -6,7 +6,6 @@ describe('CircleLayout', function () {
   var circleLayout;
 
   beforeEach(function () {
-    circleLayout = new CircleLayout(1000, Easing.expoInOut);
     now = 0;
     Tween.dateNow = function () {
       return now;
@@ -15,6 +14,12 @@ describe('CircleLayout', function () {
     LayoutUtils.setScale = function (scale) {
       actualScale = scale;
     };
+
+    LayoutUtils.getScale = function () {
+      return 1;
+    };
+
+    circleLayout = new CircleLayout(1000, Easing.expoInOut);
   });
 
   it('should calculate location of 3 vertices', function () {
@@ -156,7 +161,7 @@ describe('CircleLayout', function () {
 
     circleLayout.step(vertices, null, 900, 680);
 
-    expect(actualScale).toBeCloseTo(0.9971, 4);
+    expect(actualScale).toEqual(1);
 
     expect(v1.x).toBeCloseTo(451.3235, 4);
     expect(v1.y).toEqual(341);
@@ -186,7 +191,7 @@ describe('CircleLayout', function () {
     circleLayout.step(vertices, null, 900, 680);
 
 
-    expect(actualScale).toBeCloseTo(0.9971, 4);
+    expect(actualScale).toBeCloseTo(0.9985, 4);
 
     expect(v1.x).toBeCloseTo(584.3235, 4);
     expect(v1.y).toEqual(341);

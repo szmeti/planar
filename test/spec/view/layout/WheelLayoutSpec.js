@@ -156,7 +156,7 @@ describe('WheelLayout', function () {
 
     wheelLayout.step(vertices, null, 900, 680);
 
-    expect(actualScale).toBeCloseTo(0.9971, 4);
+    expect(actualScale).toEqual(1);
 
     expect(v1.x).toBeCloseTo(451.3235, 4);
     expect(v1.y).toEqual(341);
@@ -186,7 +186,7 @@ describe('WheelLayout', function () {
     wheelLayout.step(vertices, null, 900, 680);
 
 
-    expect(actualScale).toBeCloseTo(0.9971, 4);
+    expect(actualScale).toBeCloseTo(0.9985, 4);
 
     expect(v1.x).toBeCloseTo(451.3235, 4);
     expect(v1.y).toEqual(341);

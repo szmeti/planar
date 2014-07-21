@@ -241,7 +241,7 @@ var NodeLinkTreeLayout = (function () {
           var uiVertex = vertices[i];
 
           if (uiVertex.started) {
-            this.tween.runFrame(uiVertex);
+            this.tween.runFrame(uiVertex, this.scale);
             if (uiVertex.finished) {
               finishedVertices++;
             }
@@ -287,12 +287,12 @@ var NodeLinkTreeLayout = (function () {
             }
           }
 
-          LayoutUtils.setScale(calculateScale(self, width, height));
+          this.scale = calculateScale(self, width, height);
 
           for (i = 0; i < vertices.length; i++) {
             var vertex = vertices[i];
             NodeLinkTreeLayout.setBeginPoint(vertex, root);
-            this.tween.start(vertex);
+            this.tween.start(vertex, this.scale);
           }
         }
 

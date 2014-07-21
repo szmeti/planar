@@ -31,7 +31,7 @@ describe('GridLayout', function () {
 
     gridLayout.step(vertices, null, 900, 680);
 
-    expect(actualScale).toBeCloseTo(0.8333, 4);
+    expect(actualScale).toEqual(1);
 
     expect(v1.x).toEqual(10);
     expect(v1.y).toEqual(10);
@@ -67,7 +67,7 @@ describe('GridLayout', function () {
 
     gridLayout.step(vertices, null, 900, 680);
 
-    expect(actualScale).toBeCloseTo(0.8333, 4);
+    expect(actualScale).toBeCloseTo(0.9167, 4);
 
     expect(v1.x).toEqual(95);
     expect(v1.y).toEqual(42.5);
@@ -186,7 +186,7 @@ describe('GridLayout', function () {
 
     gridLayout.step(vertices, null, 900, 680);
 
-    expect(actualScale).toBeCloseTo(0.7143, 4);
+    expect(actualScale).toEqual(1);
 
     expect(v1.x).toEqual(210);
     expect(v1.y).toEqual(75);
@@ -215,7 +215,7 @@ describe('GridLayout', function () {
 
     gridLayout.step(vertices, null, 900, 680);
 
-    expect(actualScale).toBeCloseTo(0.7143, 4);
+    expect(actualScale).toBeCloseTo(0.8571, 4);
 
     expect(v1.x).toEqual(210);
     expect(v1.y).toEqual(75);

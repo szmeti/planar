@@ -16,18 +16,20 @@ var Tween = (function () {
   };
 
   utils.mixin(Tween.prototype, {
-    start: function (vertex) {
+    start: function (vertex, scale) {
       vertex.state = 1;
       vertex.startTime = Tween.dateNow();
       vertex.endTime = vertex.startTime + this.duration;
       vertex.started = true;
-      this.runFrame(vertex);
+      this.runFrame(vertex, scale);
     },
-    runFrame: function (vertex) {
+    runFrame: function (vertex, scale) {
       calculateState(vertex, this.duration);
 
       vertex.x = this.easing(vertex.currentTime, vertex.endX, vertex.beginX - vertex.endX, this.duration);
       vertex.y = this.easing(vertex.currentTime, vertex.endY, vertex.beginY - vertex.endY, this.duration);
+
+      LayoutUtils.setScale(this.easing(vertex.currentTime, scale, LayoutUtils.getScale() - scale, this.duration));
 
       if (vertex.state === 0) {
         vertex.finished = true;

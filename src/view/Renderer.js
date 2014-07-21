@@ -14,6 +14,7 @@ var Renderer = (function () {
     this.verticesById = {};
     this.edges = [];
     this.edgesById = {};
+    this.layout = this.settings.layout;
   }
 
   function setUpEventHandlers(graph, renderer) {
@@ -69,7 +70,7 @@ var Renderer = (function () {
     },
 
     onAnimationFrame: function () {
-      var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height, this.selectedVertex);
+      var running = this.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height, this.selectedVertex);
       this.renderFrame();
       return running;
     },
@@ -96,6 +97,18 @@ var Renderer = (function () {
 
     saveAsImage: function() {
       this.engine.saveAsImage();
+    },
+
+    changeLayout: function (layout) {
+      for(var i = 0; i < this.vertices.length ; i++) {
+        var uiVertex = this.vertices[i];
+        uiVertex.started = false;
+        uiVertex.finished = false;
+        uiVertex.endX = undefined;
+        uiVertex.endY = undefined;
+      }
+      var Layout = this.settings.layouts[layout];
+      this.layout = new Layout(1000, Easing.expoInOut);
     }
 
   });

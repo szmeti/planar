@@ -8,7 +8,14 @@ var settings = {
 
   engine: new D3Engine(),
 
-  layout: new NodeLinkTreeLayout(1000, Easing.expoInOut),
+  layout: new CircleLayout(1000, Easing.expoInOut),
+
+  layouts: {
+    'circle': CircleLayout,
+    'wheel': WheelLayout,
+    'grid': GridLayout,
+    'tree': NodeLinkTreeLayout
+  },
 
   raphael: {
     defaultVertexRenderer: RaphaelRectangleVertexRenderer,

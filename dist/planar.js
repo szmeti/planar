@@ -2218,17 +2218,18 @@
             }
         };
         utils.mixin(Tween.prototype, {
-            start: function(vertex) {
+            start: function(vertex, scale) {
                 vertex.state = 1;
                 vertex.startTime = Tween.dateNow();
                 vertex.endTime = vertex.startTime + this.duration;
                 vertex.started = true;
-                this.runFrame(vertex);
+                this.runFrame(vertex, scale);
             },
-            runFrame: function(vertex) {
+            runFrame: function(vertex, scale) {
                 calculateState(vertex, this.duration);
                 vertex.x = this.easing(vertex.currentTime, vertex.endX, vertex.beginX - vertex.endX, this.duration);
                 vertex.y = this.easing(vertex.currentTime, vertex.endY, vertex.beginY - vertex.endY, this.duration);
+                LayoutUtils.setScale(this.easing(vertex.currentTime, scale, LayoutUtils.getScale() - scale, this.duration));
                 if (vertex.state === 0) {
                     vertex.finished = true;
                 }
@@ -2262,14 +2263,13 @@
                     var numberOfVertices = utils.isUndefined(ignoredVertex) ? vertices.length : vertices.length - 1;
                     var radius = calculateRadius(numberOfVertices);
                     var scale = calculateScale(radius, width, height);
-                    LayoutUtils.setScale(scale);
                     var cx = width * (.5 / scale);
                     var cy = height * (.5 / scale);
                     var indexOnCircle = 0;
                     for (var i = 0; i < vertices.length; i++) {
                         var uiVertex = vertices[i];
                         if (uiVertex.started) {
-                            this.tween.runFrame(uiVertex);
+                            this.tween.runFrame(uiVertex, scale);
                             if (uiVertex.finished) {
                                 finishedVertices++;
                             }
@@ -2283,7 +2283,7 @@
                                 uiVertex.endX = Math.cos(angle) * radius + cx;
                                 uiVertex.endY = Math.sin(angle) * radius + cy;
                             }
-                            this.tween.start(uiVertex);
+                            this.tween.start(uiVertex, scale);
                         }
                     }
                 }
@@ -2350,11 +2350,10 @@
                     var scale = calculateScale(w, h, rows, cols);
                     var bx = 2 * NODE_WIDTH / scale;
                     var by = NODE_WIDTH;
-                    LayoutUtils.setScale(scale);
                     for (var i = 0; i < vertices.length; i++) {
                         var uiVertex = vertices[i];
                         if (uiVertex.started) {
-                            this.tween.runFrame(uiVertex);
+                            this.tween.runFrame(uiVertex, scale);
                             if (uiVertex.finished) {
                                 finishedVertices++;
                             }
@@ -2362,7 +2361,7 @@
                             GridLayout.setBeginPoint(uiVertex, bx, by);
                             uiVertex.endX = bx + w * (i % cols / cols) + i % cols * NODE_WIDTH;
                             uiVertex.endY = by + h * (Math.floor(i / cols) / rows) + Math.floor(i / cols) * NODE_WIDTH;
-                            this.tween.start(uiVertex);
+                            this.tween.start(uiVertex, scale);
                         }
                     }
                 }
@@ -2583,7 +2582,7 @@
                     for (var i = 0; i < vertices.length; i++) {
                         var uiVertex = vertices[i];
                         if (uiVertex.started) {
-                            this.tween.runFrame(uiVertex);
+                            this.tween.runFrame(uiVertex, this.scale);
                             if (uiVertex.finished) {
                                 finishedVertices++;
                             }
@@ -2622,11 +2621,11 @@
                                 secondWalk(root, -root.prelim, self, width, NodeLinkTreeLayout.PADDING);
                             }
                         }
-                        LayoutUtils.setScale(calculateScale(self, width, height));
+                        this.scale = calculateScale(self, width, height);
                         for (i = 0; i < vertices.length; i++) {
                             var vertex = vertices[i];
                             NodeLinkTreeLayout.setBeginPoint(vertex, root);
-                            this.tween.start(vertex);
+                            this.tween.start(vertex, this.scale);
                         }
                     }
                 }
@@ -2653,6 +2652,15 @@
     var LayoutUtils = {
         setScale: function(scale) {
             d3.select("#graphElements").attr("transform", "scale(" + scale + ")");
+        },
+        getScale: function() {
+            var graphElements = d3.select("#graphElements");
+            if (graphElements.empty()) {
+                return 1;
+            } else {
+                var transform = graphElements.attr("transform");
+                return transform.substring(6, transform.length - 1);
+            }
         }
     };
     var Easing = {
@@ -2683,6 +2691,7 @@
             this.verticesById = {};
             this.edges = [];
             this.edgesById = {};
+            this.layout = this.settings.layout;
         }
         function setUpEventHandlers(graph, renderer) {
             graph.on("vertexAdded", function(event, vertex) {
@@ -2731,7 +2740,7 @@
                 this.timer.start();
             },
             onAnimationFrame: function() {
-                var running = this.settings.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height, this.selectedVertex);
+                var running = this.layout.step(this.vertices, this.edges, this.settings.width, this.settings.height, this.selectedVertex);
                 this.renderFrame();
                 return running;
             },
@@ -2753,6 +2762,17 @@
             },
             saveAsImage: function() {
                 this.engine.saveAsImage();
+            },
+            changeLayout: function(layout) {
+                for (var i = 0; i < this.vertices.length; i++) {
+                    var uiVertex = this.vertices[i];
+                    uiVertex.started = false;
+                    uiVertex.finished = false;
+                    uiVertex.endX = undefined;
+                    uiVertex.endY = undefined;
+                }
+                var Layout = this.settings.layouts[layout];
+                this.layout = new Layout(1e3, Easing.expoInOut);
             }
         });
         return Renderer;
@@ -2795,7 +2815,13 @@
         container: null,
         navigatorContainer: null,
         engine: new D3Engine(),
-        layout: new NodeLinkTreeLayout(1e3, Easing.expoInOut),
+        layout: new CircleLayout(1e3, Easing.expoInOut),
+        layouts: {
+            circle: CircleLayout,
+            wheel: WheelLayout,
+            grid: GridLayout,
+            tree: NodeLinkTreeLayout
+        },
         raphael: {
             defaultVertexRenderer: RaphaelRectangleVertexRenderer,
             vertexRenderers: {}

@@ -89,7 +89,7 @@ describe('NodeLinkTreeLayout', function () {
 
     nodeLinkTreeLayout.step(vertices, null, 900, 680);
 
-    expect(actualScale).toBeCloseTo(0.9167, 4);
+    expect(actualScale).toEqual(1);
 
     expect(v1.children.length).toEqual(5);
     expect(v1.children[0].id).toEqual(v6.id);
@@ -325,7 +325,7 @@ describe('NodeLinkTreeLayout', function () {
 
     nodeLinkTreeLayout.step(vertices, null, 900, 680);
 
-    expect(actualScale).toBeCloseTo(0.9167, 4);
+    expect(actualScale).toBeCloseTo(0.9583, 4);
 
     expect(v1.children.length).toEqual(5);
     expect(v1.children[0].id).toEqual(v6.id);
@@ -1068,7 +1068,7 @@ describe('NodeLinkTreeLayout', function () {
 
     nodeLinkTreeLayout.step(vertices, null, 900, 680);
 
-    expect(actualScale).toBeCloseTo(0.8643, 4);
+    expect(actualScale).toEqual(1);
 
     expect(v1.children.length).toEqual(2);
     expect(v1.children[0].id).toEqual(v2.id);
@@ -1170,7 +1170,7 @@ describe('NodeLinkTreeLayout', function () {
 
     nodeLinkTreeLayout.step(vertices, null, 900, 680);
 
-    expect(actualScale).toBeCloseTo(0.8643, 4);
+    expect(actualScale).toBeCloseTo(0.9321, 4);
 
     expect(v1.children.length).toEqual(2);
     expect(v1.children[0].id).toEqual(v2.id);
