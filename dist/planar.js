@@ -870,8 +870,8 @@
         }
         return IndexManager;
     }();
-    var HasFilter = function() {
-        function HasFilter(key, predicate, value, disabledFilters) {
+    var HasCondition = function() {
+        function HasCondition(key, predicate, value, disabledFilters) {
             utils.checkExists("Key", key);
             utils.checkExists("Predicate", predicate);
             this.key = key;
@@ -879,18 +879,18 @@
             this.value = value;
             this.disabledFilters = disabledFilters;
         }
-        utils.mixin(HasFilter.prototype, {
+        utils.mixin(HasCondition.prototype, {
             matches: function(element) {
                 return this.predicate.evaluate(element.getProperty(this.key, this.disabledFilters), this.value);
             }
         });
-        return HasFilter;
+        return HasCondition;
     }();
-    var LabelFilter = function() {
-        function LabelFilter() {
+    var LabelCondition = function() {
+        function LabelCondition() {
             this.labels = utils.convertVarArgs(arguments);
         }
-        utils.mixin(LabelFilter.prototype, {
+        utils.mixin(LabelCondition.prototype, {
             matches: function(element) {
                 for (var i = 0; i < this.labels.length; i++) {
                     if (this.labels[i] === element.getLabel()) {
@@ -900,37 +900,37 @@
                 return false;
             }
         });
-        return LabelFilter;
+        return LabelCondition;
     }();
-    var HasFilters = function() {
+    var HasConditions = function() {
         return {
-            initHasFilters: function() {
-                this.hasFilters = [];
+            initHasConditions: function() {
+                this.hasConditions = [];
             },
             has: function(key, value1, value2, disabledFilters) {
                 disabledFilters = disabledFilters || [];
                 if (!utils.isUndefined(value2) && value2 !== null) {
-                    this.hasFilters.push(new HasFilter(key, value1, value2, disabledFilters));
+                    this.hasConditions.push(new HasCondition(key, value1, value2, disabledFilters));
                 } else if (!utils.isUndefined(value1) && value1 !== null) {
-                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, value1, disabledFilters));
+                    this.hasConditions.push(new HasCondition(key, Compare.EQUAL, value1, disabledFilters));
                 } else {
-                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, null, disabledFilters));
+                    this.hasConditions.push(new HasCondition(key, Compare.NOT_EQUAL, null, disabledFilters));
                 }
                 return this;
             },
             hasNot: function(key, value, disabledFilters) {
                 disabledFilters = disabledFilters || [];
                 if (utils.isUndefined(value) || value === null) {
-                    this.hasFilters.push(new HasFilter(key, Compare.EQUAL, null, disabledFilters));
+                    this.hasConditions.push(new HasCondition(key, Compare.EQUAL, null, disabledFilters));
                 } else {
-                    this.hasFilters.push(new HasFilter(key, Compare.NOT_EQUAL, value, disabledFilters));
+                    this.hasConditions.push(new HasCondition(key, Compare.NOT_EQUAL, value, disabledFilters));
                 }
                 return this;
             },
             interval: function(key, startValue, endValue, disabledFilters) {
                 disabledFilters = disabledFilters || [];
-                this.hasFilters.push(new HasFilter(key, Compare.GREATER_THAN_EQUAL, startValue, disabledFilters));
-                this.hasFilters.push(new HasFilter(key, Compare.LESS_THAN, endValue, disabledFilters));
+                this.hasConditions.push(new HasCondition(key, Compare.GREATER_THAN_EQUAL, startValue, disabledFilters));
+                this.hasConditions.push(new HasCondition(key, Compare.LESS_THAN, endValue, disabledFilters));
                 return this;
             }
         };
@@ -1030,7 +1030,7 @@
         return utils.mixin({
             initQuery: function() {
                 this.queryLimit = Number.MAX_VALUE;
-                this.initHasFilters();
+                this.initHasConditions();
             },
             limit: function(limit) {
                 this.queryLimit = limit;
@@ -1039,16 +1039,16 @@
             edges: function() {
                 var elements = this.getInitialEdges();
                 var filters = this.getBaseFilters();
-                filters = filters.concat(this.hasFilters);
+                filters = filters.concat(this.hasConditions);
                 return filterElements(elements, filters, this.queryLimit);
             },
             vertices: function() {
                 var elements = this.getInitialVertices();
                 var filters = this.getBaseFilters();
-                filters = filters.concat(this.hasFilters);
+                filters = filters.concat(this.hasConditions);
                 return filterElements(elements, filters, this.queryLimit, this.resultExtractor(this));
             }
-        }, HasFilters);
+        }, HasConditions);
     }();
     var VertexQuery = function() {
         function VertexQuery(vertex) {
@@ -1076,7 +1076,7 @@
                 return filterByDirection(this.queryDirection, this.vertex);
             },
             getBaseFilters: function() {
-                return this.queryLabels.length > 0 ? [ new LabelFilter(this.queryLabels) ] : [];
+                return this.queryLabels.length > 0 ? [ new LabelCondition(this.queryLabels) ] : [];
             },
             resultExtractor: function(self) {
                 return function(edge) {
@@ -1118,14 +1118,14 @@
         utils.mixin(GraphQuery.prototype, Query);
         utils.mixin(GraphQuery.prototype, {
             getInitialEdges: function() {
-                var edges = this.graph.indexManager.fetchFirstMatching(Edge, this.hasFilters);
+                var edges = this.graph.indexManager.fetchFirstMatching(Edge, this.hasConditions);
                 if (!edges) {
                     edges = this.graph.edges;
                 }
                 return edges;
             },
             getInitialVertices: function() {
-                var vertices = this.graph.indexManager.fetchFirstMatching(Vertex, this.hasFilters);
+                var vertices = this.graph.indexManager.fetchFirstMatching(Vertex, this.hasConditions);
                 if (!vertices) {
                     vertices = this.graph.vertices;
                 }
@@ -2971,9 +2971,9 @@
                 if (!filterCanBeApplied(element, currentFilter)) {
                     continue;
                 }
-                var hasFilters = currentFilter.hasFilters;
-                for (var k = 0; k < hasFilters.length; k++) {
-                    if (!hasFilters[k].matches(element)) {
+                var hasConditions = currentFilter.hasConditions;
+                for (var k = 0; k < hasConditions.length; k++) {
+                    if (!hasConditions[k].matches(element)) {
                         filterMatched = false;
                     }
                 }
@@ -3080,9 +3080,9 @@
             this.elementCount = 0;
             this.activeFlag = true;
             this.elementType = BOTH_FILTER;
-            this.initHasFilters();
+            this.initHasConditions();
         }
-        utils.mixin(ElementFilter.prototype, HasFilters);
+        utils.mixin(ElementFilter.prototype, HasConditions);
         utils.mixin(ElementFilter.prototype, {
             active: function(value) {
                 if (!arguments.length) {

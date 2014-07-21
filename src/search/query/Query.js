@@ -47,7 +47,7 @@ var Query = (function () {
 
     initQuery: function () {
       this.queryLimit = Number.MAX_VALUE;
-      this.initHasFilters();
+      this.initHasConditions();
     },
 
     limit: function (limit) {
@@ -58,17 +58,17 @@ var Query = (function () {
     edges: function () {
       var elements = this.getInitialEdges();
       var filters = this.getBaseFilters();
-      filters = filters.concat(this.hasFilters);
+      filters = filters.concat(this.hasConditions);
       return filterElements(elements, filters, this.queryLimit);
     },
 
     vertices: function () {
       var elements = this.getInitialVertices();
       var filters = this.getBaseFilters();
-      filters = filters.concat(this.hasFilters);
+      filters = filters.concat(this.hasConditions);
       return filterElements(elements, filters, this.queryLimit, this.resultExtractor(this));
     }
 
-  }, HasFilters);
+  }, HasConditions);
 
 }());

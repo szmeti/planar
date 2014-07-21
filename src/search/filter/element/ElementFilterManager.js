@@ -129,9 +129,9 @@ var ElementFilterManager = (function () {
         continue;
       }
 
-      var hasFilters = currentFilter.hasFilters;
-      for (var k = 0; k < hasFilters.length; k++) {
-        if (!hasFilters[k].matches(element)) {
+      var hasConditions = currentFilter.hasConditions;
+      for (var k = 0; k < hasConditions.length; k++) {
+        if (!hasConditions[k].matches(element)) {
           filterMatched = false;
         }
       }

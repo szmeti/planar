@@ -1,11 +1,11 @@
-/* global LabelFilter: true */
-var LabelFilter = (function () {
+/* global LabelCondition: true */
+var LabelCondition = (function () {
 
-  function LabelFilter() {
+  function LabelCondition() {
     this.labels = utils.convertVarArgs(arguments);
   }
 
-  utils.mixin(LabelFilter.prototype, {
+  utils.mixin(LabelCondition.prototype, {
 
     matches: function (element) {
       for (var i = 0; i < this.labels.length; i++) {
@@ -18,6 +18,6 @@ var LabelFilter = (function () {
 
   });
 
-  return LabelFilter;
+  return LabelCondition;
 
 }());
