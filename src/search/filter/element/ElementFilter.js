@@ -3,7 +3,7 @@ var ElementFilter = (function () {
 
   function ElementFilter() {
     this.filterName = null;
-    this.id = null;
+    this.filterId = null;
     this.elementCount = 0;
     this.activeFlag = true;
     this.elementType = BOTH_FILTER;
@@ -17,9 +17,9 @@ var ElementFilter = (function () {
 
     id: function (value) {
       if (!arguments.length) {
-        return this.id;
+        return this.filterId;
       }
-      this.id = value;
+      this.filterId = value;
       return this;
     },
 
