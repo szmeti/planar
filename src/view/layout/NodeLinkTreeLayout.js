@@ -80,51 +80,51 @@ var NodeLinkTreeLayout = (function () {
   var apportion = function (uiVertex, defaultAncestor) {
     var leftSibling = getLeftSibling(uiVertex);
     if (!utils.isUndefined(leftSibling)) {
-      var vip = uiVertex;
-      var vop = uiVertex;
-      var vin = leftSibling;
-      var von = uiVertex.parent.children[0];
+      var vertexInsideRightSubtree = uiVertex;
+      var vertexOutsideRightSubtree = uiVertex;
+      var vertexInsideLeftSubtree = leftSibling;
+      var vertexOutsideLeftSubtree = uiVertex.parent.children[0];
 
-      var sip = vip.mod;
-      var sin = vin.mod;
-      var sop = vop.mod;
-      var son = von.mod;
+      var summedModifierInsideRightSubtree = vertexInsideRightSubtree.mod;
+      var summedModifierInsideLeftSubtree = vertexInsideLeftSubtree.mod;
+      var summedModifierOutsideRightSubtree = vertexOutsideRightSubtree.mod;
+      var summedModifierOutsideLeftSubtree = vertexOutsideLeftSubtree.mod;
 
-      var nr = nextRight(vin);
-      var nl = nextLeft(vip);
-      while (!utils.isUndefined(nr) && !utils.isUndefined(nl)) {
-        vin = nr;
-        vip = nl;
-        von = nextLeft(von);
-        vop = nextRight(vop);
+      var nextRightVertex = nextRight(vertexInsideLeftSubtree);
+      var nextLeftVertex = nextLeft(vertexInsideRightSubtree);
+      while (!utils.isUndefined(nextRightVertex) && !utils.isUndefined(nextLeftVertex)) {
+        vertexInsideLeftSubtree = nextRightVertex;
+        vertexInsideRightSubtree = nextLeftVertex;
+        vertexOutsideLeftSubtree = nextLeft(vertexOutsideLeftSubtree);
+        vertexOutsideRightSubtree = nextRight(vertexOutsideRightSubtree);
 
-        vop.ancestor = uiVertex;
+        vertexOutsideRightSubtree.ancestor = uiVertex;
 
-        var shift = (vin.prelim + sin) - (vip.prelim + sip) + distance(vin, vip, false);
+        var shift = (vertexInsideLeftSubtree.prelim + summedModifierInsideLeftSubtree) - (vertexInsideRightSubtree.prelim + summedModifierInsideRightSubtree) + distance(vertexInsideLeftSubtree, vertexInsideRightSubtree, false);
 
         if (shift > 0) {
-          moveSubtree(ancestor(vin, uiVertex, defaultAncestor), uiVertex, shift);
-          sip =  sip + shift;
-          sop = sop + shift;
+          moveSubtree(ancestor(vertexInsideLeftSubtree, uiVertex, defaultAncestor), uiVertex, shift);
+          summedModifierInsideRightSubtree =  summedModifierInsideRightSubtree + shift;
+          summedModifierOutsideRightSubtree = summedModifierOutsideRightSubtree + shift;
         }
 
-        sin += vin.mod;
-        sip += vip.mod;
-        son += von.mod;
-        sop += vop.mod;
+        summedModifierInsideLeftSubtree += vertexInsideLeftSubtree.mod;
+        summedModifierInsideRightSubtree += vertexInsideRightSubtree.mod;
+        summedModifierOutsideLeftSubtree += vertexOutsideLeftSubtree.mod;
+        summedModifierOutsideRightSubtree += vertexOutsideRightSubtree.mod;
 
-        nr = nextRight(vin);
-        nl = nextLeft(vip);
+        nextRightVertex = nextRight(vertexInsideLeftSubtree);
+        nextLeftVertex = nextLeft(vertexInsideRightSubtree);
       }
 
-      if (!utils.isUndefined(nr) && utils.isUndefined(nextRight(vop))) {
-        vop.thread = nr;
-        vop.mod += sin - sop;
+      if (!utils.isUndefined(nextRightVertex) && utils.isUndefined(nextRight(vertexOutsideRightSubtree))) {
+        vertexOutsideRightSubtree.thread = nextRightVertex;
+        vertexOutsideRightSubtree.mod += summedModifierInsideLeftSubtree - summedModifierOutsideRightSubtree;
       }
 
-      if(!utils.isUndefined(nl) && utils.isUndefined(nextLeft(von))) {
-        von.thread = nl;
-        von.mod += sip - son;
+      if(!utils.isUndefined(nextLeftVertex) && utils.isUndefined(nextLeft(vertexOutsideLeftSubtree))) {
+        vertexOutsideLeftSubtree.thread = nextLeftVertex;
+        vertexOutsideLeftSubtree.mod += summedModifierInsideRightSubtree - summedModifierOutsideLeftSubtree;
         defaultAncestor = uiVertex;
       }
     }
@@ -147,18 +147,18 @@ var NodeLinkTreeLayout = (function () {
     }
   };
 
-  var moveSubtree = function (wn, wp, shift) {
-    var subtrees = wp.number - wn.number;
-    wp.change -= shift / subtrees;
-    wp.shift += shift;
-    wn.change += shift / subtrees;
-    wp.prelim += shift;
-    wp.mod += shift;
+  var moveSubtree = function (vertexLeft, vertexRight, shift) {
+    var subtrees = vertexRight.number - vertexLeft.number;
+    vertexRight.change -= shift / subtrees;
+    vertexRight.shift += shift;
+    vertexLeft.change += shift / subtrees;
+    vertexRight.prelim += shift;
+    vertexRight.mod += shift;
   };
 
-  var ancestor = function (vin, v, defaultAncestor) {
-    if (vin.ancestor.parent === v.parent) {
-      return vin.ancestor;
+  var ancestor = function (vertexInsideLeftSubtree, uiVertex, defaultAncestor) {
+    if (vertexInsideLeftSubtree.ancestor.parent === uiVertex.parent) {
+      return vertexInsideLeftSubtree.ancestor;
     } else {
       return defaultAncestor;
     }
@@ -195,18 +195,18 @@ var NodeLinkTreeLayout = (function () {
     return (siblings ? NodeLinkTreeLayout.SIBLING_NODE_DISTANCE : NodeLinkTreeLayout.SUBTREE_DISTANCE) + NODE_WIDTH;
   };
 
-  var secondWalk = function secondWalk(uiVertex, m, self, width, leftMostX) {
-    var defaultX = (width / 2) + uiVertex.prelim + m;
+  var secondWalk = function secondWalk(uiVertex, modifier, self, width, leftMostX) {
+    var defaultX = (width / 2) + uiVertex.prelim + modifier;
 
     if (defaultX < leftMostX) {
       leftMostX = defaultX;
     }
 
     for(var i = 0; i < uiVertex.children.length; i++) {
-      leftMostX = secondWalk(uiVertex.children[i], m + uiVertex.mod, self, width, leftMostX);
+      leftMostX = secondWalk(uiVertex.children[i], modifier + uiVertex.mod, self, width, leftMostX);
     }
 
-    uiVertex.endX = (width / 2) + uiVertex.prelim + m + (NodeLinkTreeLayout.PADDING - leftMostX);
+    uiVertex.endX = (width / 2) + uiVertex.prelim + modifier + (NodeLinkTreeLayout.PADDING - leftMostX);
     uiVertex.endY = uiVertex.depth * NodeLinkTreeLayout.DEPTH_DISTANCE + NodeLinkTreeLayout.PADDING;
 
     if (uiVertex.endX > self.maxX) {
