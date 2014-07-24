@@ -440,7 +440,7 @@
                 }
             },
             getOtherVertex: function(vertex) {
-                return this.inVertex === vertex ? this.outVertex : vertex;
+                return this.inVertex.getId() === vertex.getId() ? this.outVertex : vertex;
             },
             remove: function() {
                 this.graph.removeEdge(this);
@@ -3142,6 +3142,14 @@
                     return this.elementCount;
                 }
                 this.elementCount = value;
+                return this;
+            },
+            incrementCount: function() {
+                this.elementCount++;
+                return this;
+            },
+            decrementCount: function() {
+                this.elementCount--;
                 return this;
             },
             name: function(value) {

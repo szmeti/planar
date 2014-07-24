@@ -51,12 +51,14 @@ var ElementFilter = (function () {
     },
 
     incrementCount: function (value) {
-      this.elementCount++;
+      value = value || 1;
+      this.elementCount += value;
       return this;
     },
 
     decrementCount: function (value) {
-      this.elementCount--;
+      value = value || 1;
+      this.elementCount -= value;
       return this;
     },
 
