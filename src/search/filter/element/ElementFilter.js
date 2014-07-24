@@ -50,6 +50,16 @@ var ElementFilter = (function () {
       return this;
     },
 
+    incrementCount: function (value) {
+      this.elementCount++;
+      return this;
+    },
+
+    decrementCount: function (value) {
+      this.elementCount--;
+      return this;
+    },
+
     name: function (value) {
       if (!arguments.length) {
         return this.filterName;
