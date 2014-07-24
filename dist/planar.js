@@ -439,6 +439,9 @@
                     };
                 }
             },
+            getOtherVertex: function(vertex) {
+                return this.inVertex === vertex ? this.outVertex : vertex;
+            },
             remove: function() {
                 this.graph.removeEdge(this);
             },
