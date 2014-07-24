@@ -3144,12 +3144,14 @@
                 this.elementCount = value;
                 return this;
             },
-            incrementCount: function() {
-                this.elementCount++;
+            incrementCount: function(value) {
+                value = value || 1;
+                this.elementCount += value;
                 return this;
             },
-            decrementCount: function() {
-                this.elementCount--;
+            decrementCount: function(value) {
+                value = value || 1;
+                this.elementCount -= value;
                 return this;
             },
             name: function(value) {
