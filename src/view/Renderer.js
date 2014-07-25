@@ -50,7 +50,12 @@ var Renderer = (function () {
     });
 
     graph.on('vertexClicked', function (event, vertex) {
-      this.selectedVertex = vertex;
+      this.renderer.selectedVertex = vertex;
+    });
+
+    graph.on('vertexDragStart', function (event, vertex) {
+      vertex.uiElement.remove();
+      this.renderer.selectedVertex = vertex;
     });
   }
 
