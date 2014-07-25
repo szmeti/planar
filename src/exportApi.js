@@ -54,3 +54,4 @@ exports.GridLayout = GridLayout;
 exports.NodeLinkTreeLayout = NodeLinkTreeLayout;
 exports.LayoutUtils = LayoutUtils;
 exports.Easing = Easing;
+exports.Compare = Compare;
