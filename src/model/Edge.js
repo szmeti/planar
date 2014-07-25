@@ -41,6 +41,10 @@ var Edge = (function () {
       }
     },
 
+    getOtherVertex: function (vertex) {
+      return this.inVertex.getId() === vertex.getId() ? this.outVertex : vertex;
+    },
+
     remove: function () {
       this.graph.removeEdge(this);
     },

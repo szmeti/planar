@@ -439,6 +439,9 @@
                     };
                 }
             },
+            getOtherVertex: function(vertex) {
+                return this.inVertex.getId() === vertex.getId() ? this.outVertex : vertex;
+            },
             remove: function() {
                 this.graph.removeEdge(this);
             },
@@ -3143,6 +3146,16 @@
                     return this.elementCount;
                 }
                 this.elementCount = value;
+                return this;
+            },
+            incrementCount: function(value) {
+                value = value || 1;
+                this.elementCount += value;
+                return this;
+            },
+            decrementCount: function(value) {
+                value = value || 1;
+                this.elementCount -= value;
                 return this;
             },
             name: function(value) {
