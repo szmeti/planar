@@ -3045,7 +3045,7 @@
             var outVertex = context.normalGraph.getVertex(edge.getOutVertex().id);
             var existingVertices = inVertex !== null && outVertex !== null;
             if (existingVertices && !filtered) {
-                addEdgeToGraph(context.normalGraph, edge);
+                addEdgeToGraph(context.normalGraph, edge, inVertex, outVertex);
                 addAggregatedEdgeToGraph(context, edge);
             } else {
                 addAggregatedEdgeToFilteredList(context, edge);
@@ -3075,8 +3075,8 @@
             }
             return false;
         }
-        function addEdgeToGraph(graph, edge) {
-            var newEdge = graph.addEdge(edge.id, edge.getOutVertex(), edge.getInVertex(), edge.label);
+        function addEdgeToGraph(graph, edge, inVertex, outVertex) {
+            var newEdge = graph.addEdge(edge.id, outVertex, inVertex, edge.label);
             edge.copyPropertiesTo(newEdge);
         }
         function addAggregatedEdgeToFilteredList(context, edge) {
