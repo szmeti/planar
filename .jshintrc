@@ -100,6 +100,7 @@
     "WheelLayout": false,
     "GridLayout": false,
     "NodeLinkTreeLayout": false,
+    "FruchtermanReingoldLayout": false,
     "LayoutUtils": false,
     "Easing": false,
 

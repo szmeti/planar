@@ -14,7 +14,8 @@ var settings = {
     'circle': CircleLayout,
     'wheel': WheelLayout,
     'grid': GridLayout,
-    'tree': NodeLinkTreeLayout
+    'tree': NodeLinkTreeLayout,
+    'fruchtermanReingold': FruchtermanReingoldLayout
   },
 
   raphael: {
