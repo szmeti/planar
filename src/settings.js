@@ -100,7 +100,7 @@ var settings = {
   },
 
   edge : {
-    lineWeightPropertyKey : 'lineWeight',
+    lineWeightPropertyKey : 'strength',
     defaultLineWeight : 2,
     useArrows: true
   }
