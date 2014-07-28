@@ -3058,12 +3058,22 @@
             var settings = context.graph.getSettings();
             var strength = edge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
             var inVertexEdges = inVertex.getEdges(BOTH);
-            if (inVertexEdges.length < 1) {
+            if (!hasEdgeBetweenVertices(inVertex, outVertex)) {
                 var newEdge = context.aggregatedGraph.addEdge(null, outVertex, inVertex);
                 newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
             } else {
                 findConnectedEdgesAndAggregate(inVertexEdges, inVertex, outVertex, strength);
             }
+        }
+        function hasEdgeBetweenVertices(vertex1, vertex2) {
+            var edges = vertex1.getEdges(BOTH);
+            for (var i = 0; i < edges.length; i++) {
+                var edge = edges[i];
+                if (edge.connects(vertex1, vertex2)) {
+                    return true;
+                }
+            }
+            return false;
         }
         function addEdgeToGraph(graph, edge) {
             var newEdge = graph.addEdge(edge.id, edge.getOutVertex(), edge.getInVertex(), edge.label);
