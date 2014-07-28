@@ -173,7 +173,7 @@ var ElementFilterManager = (function () {
     var existingVertices = inVertex !== null && outVertex !== null;
 
     if (existingVertices && !filtered) {
-      addEdgeToGraph(context.normalGraph, edge);
+      addEdgeToGraph(context.normalGraph, edge, inVertex, outVertex);
       addAggregatedEdgeToGraph(context, edge);
     } else {
       addAggregatedEdgeToFilteredList(context, edge);
@@ -190,7 +190,7 @@ var ElementFilterManager = (function () {
 
     var inVertexEdges = inVertex.getEdges(BOTH);
 
-    if (inVertexEdges.length < 1) {
+    if (!hasEdgeBetweenVertices(inVertex, outVertex)) {
       var newEdge = context.aggregatedGraph.addEdge(null, outVertex, inVertex);
       newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
     } else {
@@ -198,8 +198,19 @@ var ElementFilterManager = (function () {
     }
   }
 
-  function addEdgeToGraph(graph, edge) {
-    var newEdge = graph.addEdge(edge.id, edge.getOutVertex(), edge.getInVertex(), edge.label);
+  function hasEdgeBetweenVertices(vertex1, vertex2) {
+    var edges = vertex1.getEdges(BOTH);
+    for(var i = 0; i < edges.length; i++) {
+      var edge = edges[i];
+      if(edge.connects(vertex1, vertex2)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function addEdgeToGraph(graph, edge, inVertex, outVertex) {
+    var newEdge = graph.addEdge(edge.id, outVertex, inVertex, edge.label);
     edge.copyPropertiesTo(newEdge);
   }
 
