@@ -943,32 +943,38 @@
             EQUAL: {
                 evaluate: function(first, second) {
                     return first === second;
-                }
+                },
+                displayName: "Equal to"
             },
             NOT_EQUAL: {
                 evaluate: function(first, second) {
                     return first !== second;
-                }
+                },
+                displayName: "Not equal to"
             },
             GREATER_THAN: {
                 evaluate: function(first, second) {
                     return first !== null && second !== null && first > second;
-                }
+                },
+                displayName: "Greater than"
             },
             LESS_THAN: {
                 evaluate: function(first, second) {
                     return first !== null && second !== null && first < second;
-                }
+                },
+                displayName: "Less than"
             },
             GREATER_THAN_EQUAL: {
                 evaluate: function(first, second) {
                     return first !== null && second !== null && first >= second;
-                }
+                },
+                displayName: "Greater than or equal to"
             },
             LESS_THAN_EQUAL: {
                 evaluate: function(first, second) {
                     return first !== null && second !== null && first <= second;
-                }
+                },
+                displayName: "Less than or equal to"
             }
         };
     }();
@@ -2728,7 +2734,11 @@
                 delete renderer.edgesById[uiEdge.id];
             });
             graph.on("vertexClicked", function(event, vertex) {
-                this.selectedVertex = vertex;
+                this.renderer.selectedVertex = vertex;
+            });
+            graph.on("vertexDragStart", function(event, vertex) {
+                vertex.uiElement.remove();
+                this.renderer.selectedVertex = vertex;
             });
         }
         utils.mixin(Renderer.prototype, {
@@ -3231,6 +3241,7 @@
     exports.NodeLinkTreeLayout = NodeLinkTreeLayout;
     exports.LayoutUtils = LayoutUtils;
     exports.Easing = Easing;
+    exports.Compare = Compare;
 })({}, function() {
     return this;
 }());
