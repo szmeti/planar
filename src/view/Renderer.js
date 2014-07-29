@@ -14,7 +14,8 @@ var Renderer = (function () {
     this.verticesById = {};
     this.edges = [];
     this.edgesById = {};
-    this.layout = this.settings.layout;
+    var Layout = this.settings.layouts[this.settings.defaultLayout];
+    this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
   }
 
   function setUpEventHandlers(graph, renderer) {
@@ -113,7 +114,11 @@ var Renderer = (function () {
         uiVertex.endY = undefined;
       }
       var Layout = this.settings.layouts[layout];
-      this.layout = new Layout(1000, Easing.expoInOut);
+      this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
+    },
+
+    stop: function () {
+      this.timer.stop();
     }
 
   });
