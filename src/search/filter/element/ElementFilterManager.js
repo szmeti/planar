@@ -193,6 +193,8 @@ var ElementFilterManager = (function () {
 
     if (!hasEdgeBetweenVertices(inVertex, outVertex)) {
       var newEdge = context.aggregatedGraph.addEdge(null, outVertex, inVertex);
+      //TODO: In this case allways the first edge properties win. Replace it with more general solution.
+      edge.copyPropertiesTo(newEdge);
       newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
     } else {
       findConnectedEdgesAndAggregate(inVertexEdges, inVertex, outVertex, strength);
@@ -226,23 +228,26 @@ var ElementFilterManager = (function () {
       if (connectsSameVertices) {
         wasConnection = true;
         strength += filteredEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+        //TODO: Replace it with more general solution.
+        edge.copyPropertiesTo(filteredEdge);
         filteredEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
         break;
       }
     }
 
     if (context.filteredAggregatedEdges.length < 1 || !wasConnection) {
-      var newEdge = createSingleAggregatedEdge(edge.getOutVertex(), edge.getInVertex(), strength, context);
+      var newEdge = createSingleAggregatedEdge(edge.getOutVertex(), edge.getInVertex(), strength, edge, context);
       context.filteredAggregatedEdges.push(newEdge);
     }
   }
 
-  function createSingleAggregatedEdge(outVertex, inVertex, strength, context) {
+  function createSingleAggregatedEdge(outVertex, inVertex, strength, originalEdge, context) {
     var id = utils.generateId();
     while (context.aggregatedGraph.getEdge(id) !== null) {
       id = utils.generateId();
     }
     var newEdge = new Edge(id, outVertex, inVertex, null, context.aggregatedGraph);
+    originalEdge.copyPropertiesTo(newEdge);
     newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
     return newEdge;
   }
