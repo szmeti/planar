@@ -127,6 +127,7 @@
         <button id="wheelLayout">Wheel</button>
         <button id="gridLayout">Grid</button>
         <button id="treeLayout">Tree</button>
+        <button id="fruchtermanReingoldLayout">Fruchterman-Reingold</button>
     </div>
     <div id="graphCanvas"></div>
     <div id="navigatorContainer"></div>
@@ -330,6 +331,10 @@
 
         $('#treeLayout').on('click', function () {
             graph.renderer.changeLayout('tree');
+        });
+
+        $('#fruchtermanReingoldLayout').on('click', function () {
+            graph.renderer.changeLayout('fruchtermanReingold');
         });
     });
 </script>

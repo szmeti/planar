@@ -190,6 +190,10 @@ var utils = {
 
   randomInteger: function (lower, upper) {
     return Math.floor(Math.random() * upper) + lower;
+  },
+
+  randomDouble: function (lower, upper) {
+    return (Math.random() * upper) + lower;
   }
 
 };
