@@ -3231,7 +3231,7 @@
                 newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
                 newEdge.setProperty(settings.edge.aggregatedByPropertyKey, [ edge.getId() ]);
             } else {
-                findConnectedEdgesAndAggregate(inVertexEdges, inVertex, outVertex, strength);
+                findConnectedEdgesAndAggregate(inVertexEdges, inVertex, outVertex, strength, edge);
             }
         }
         function hasEdgeBetweenVertices(vertex1, vertex2) {
@@ -3243,6 +3243,19 @@
                 }
             }
             return false;
+        }
+        function findConnectedEdgesAndAggregate(sourceVertexEdges, sourceVertex, destinationVertex, currentStrength, originalEdge) {
+            for (var i = 0; i < sourceVertexEdges.length; i++) {
+                var currentEdge = sourceVertexEdges[i];
+                var connectedWithDestinationVertex = currentEdge.connects(sourceVertex, destinationVertex);
+                if (connectedWithDestinationVertex) {
+                    currentStrength += currentEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+                    currentEdge.setProperty(settings.edge.lineWeightPropertyKey, currentStrength);
+                    var aggregatedBy = currentEdge.getProperty(settings.edge.aggregatedByPropertyKey) || [];
+                    aggregatedBy.push(originalEdge.getId());
+                    currentEdge.setProperty(settings.edge.aggregatedByPropertyKey, aggregatedBy);
+                }
+            }
         }
         function addEdgeToGraph(graph, edge, inVertex, outVertex) {
             var newEdge = graph.addEdge(edge.id, outVertex, inVertex, edge.label);
@@ -3280,19 +3293,6 @@
             originalEdge.copyPropertiesTo(newEdge);
             newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
             return newEdge;
-        }
-        function findConnectedEdgesAndAggregate(sourceVertexEdges, sourceVertex, destinationVertex, currentStrength) {
-            for (var i = 0; i < sourceVertexEdges.length; i++) {
-                var currentEdge = sourceVertexEdges[i];
-                var connectedWithDestinationVertex = currentEdge.connects(sourceVertex, destinationVertex);
-                if (connectedWithDestinationVertex) {
-                    currentStrength += currentEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
-                    currentEdge.setProperty(settings.edge.lineWeightPropertyKey, currentStrength);
-                    var aggregatedBy = currentEdge.getProperty(settings.edge.aggregatedByPropertyKey) || [];
-                    aggregatedBy.push(currentEdge.getId());
-                    currentEdge.setProperty(settings.edge.aggregatedByPropertyKey, aggregatedBy);
-                }
-            }
         }
         function resetFilterCounters(filters) {
             for (var i = 0; i < filters.length; i++) {
