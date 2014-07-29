@@ -120,30 +120,31 @@ var ElementFilterManager = (function () {
   function checkFiltered(element, filters, operator) {
     var nonMatchedFilters = 0;
     var filterCount = filters.length;
-
+    var notApplied = 0;
     for (var j = 0; j < filterCount; j++) {
       var filterMatched = true;
       var currentFilter = filters[j];
-
       if (!filterCanBeApplied(element, currentFilter)) {
+        notApplied++;
         continue;
       }
-
       var hasConditions = currentFilter.hasConditions;
       for (var k = 0; k < hasConditions.length; k++) {
         if (!hasConditions[k].matches(element)) {
           filterMatched = false;
         }
       }
-
       if (filterMatched) {
-        currentFilter.count(currentFilter.count() + 1);
+        if (!currentFilter.active()) {
+          nonMatchedFilters++;
+        } else {
+          currentFilter.count(currentFilter.count() + 1);
+        }
       } else if (currentFilter.active()) {
         nonMatchedFilters++;
       }
     }
-
-    return operator === AND ? nonMatchedFilters > 0 : nonMatchedFilters === filterCount;
+    return operator === AND ? nonMatchedFilters > 0 : nonMatchedFilters === filterCount-notApplied;
   }
 
   function filterCanBeApplied(element, filter) {
