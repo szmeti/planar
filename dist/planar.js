@@ -3004,10 +3004,12 @@
         function checkFiltered(element, filters, operator) {
             var nonMatchedFilters = 0;
             var filterCount = filters.length;
+            var notApplied = 0;
             for (var j = 0; j < filterCount; j++) {
                 var filterMatched = true;
                 var currentFilter = filters[j];
                 if (!filterCanBeApplied(element, currentFilter)) {
+                    notApplied++;
                     continue;
                 }
                 var hasConditions = currentFilter.hasConditions;
@@ -3017,12 +3019,16 @@
                     }
                 }
                 if (filterMatched) {
-                    currentFilter.count(currentFilter.count() + 1);
+                    if (!currentFilter.active()) {
+                        nonMatchedFilters++;
+                    } else {
+                        currentFilter.count(currentFilter.count() + 1);
+                    }
                 } else if (currentFilter.active()) {
                     nonMatchedFilters++;
                 }
             }
-            return operator === AND ? nonMatchedFilters > 0 : nonMatchedFilters === filterCount;
+            return operator === AND ? nonMatchedFilters > 0 : nonMatchedFilters === filterCount - notApplied;
         }
         function filterCanBeApplied(element, filter) {
             return utils.isOfType(element, Vertex) && filter.type() === VERTEX_FILTER || utils.isOfType(element, Edge) && filter.type() === EDGE_FILTER || filter.type() === BOTH_FILTER;
