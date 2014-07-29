@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 sample</title>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF8">
+
+    <style type="text/css">
+        body{
+            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+            font-size: 14px;
+            color: #666666;
+            text-shadow: 0 1px 0 #ffffff;
+        }
+
+        #container {
+            /*background-color: #eceaf3;*/
+            clear:both;
+        }
+
+        .canvas .wrapper.outer > .background {
+            fill: #000000;
+        }
+        .canvas .wrapper.inner > .background {
+            cursor: move;
+        }
+        .canvas .background {
+            fill: #F6F6F6;
+            stroke: #333333;
+            cursor: move;
+        }
+        .canvas .panCanvas {
+            cursor: move;
+        }
+
+        .canvas .navigator .frame .background {
+            fill-opacity: 0.4;
+            fill: #7c7c7c;
+            cursor: move;
+        }
+
+        .edge {
+            stroke: #999;
+            stroke-width: 2;
+            cursor: pointer;
+            fill:none;
+        }
+
+        .edge:hover {
+            stroke-width: 15;
+        }
+
+        .edge-label {
+            stroke-width: -0.5;
+            stroke: #666666;
+            fill: #666666;
+        }
+
+        .vertex {
+            cursor: pointer;
+        }
+
+        svg {
+            /*border: 1px solid #808080*/;
+        }
+
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+
+        .divider {
+            stroke: #b3b3b3;
+        }
+
+        .query-vertex-box {
+            fill:url(#queryVertexDefaultFillScheme);
+            fill-opacity:1;
+            stroke: #b3b3b3;
+            stroke-width:1;
+        }
+
+        .alias-label {
+            font-weight: bold;
+        }
+
+        .wrapperCircle {
+            vector-effect: non-scaling-stroke;
+            fill-opacity: 1;
+            fill: rgb(85, 85, 85);
+            fill-opacity: 0.3;
+        }
+
+        .compass {
+            fill: rgb(206, 206, 206);
+            stroke: rgba(19, 19, 24, 0.92);
+            stroke-miterlimit: 6;
+            stroke-linecap: round;
+        }
+
+        .plus-minus {
+            fill: #e4e4e4;
+            pointer-events: none;
+        }
+
+        .zoomPanButton:hover{
+           stroke-width: 2;
+        }
+
+        #graphCanvas {
+            float: left;
+        }
+
+        #navigatorContainer {
+            margin-left: 20px;
+            float: left;
+        }
+
+
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <div>
+        <button id="delete">Delete</button>
+    </div>
+    <div id="graphCanvas"></div>
+    <div id="navigatorContainer"></div>
+</div>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script type="text/javascript" src="../bower_components/d3/d3.js"></script>
+<script type="text/javascript" src="../dist/planar.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var graph = new planar.Graph({container: '#graphCanvas', navigatorContainer: '#navigatorContainer'});
+
+        var v1 = graph.addVertex();
+        v1.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v1.setProperty("imageUrl", "resources/person-icon.png");
+        v1.setProperty("additionalLabel", "1");
+
+        var v2 = graph.addVertex();
+        v2.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v2.setProperty("imageUrl", "resources/person-icon.png");
+        v2.setProperty("additionalLabel", "2");
+
+        var v3 = graph.addVertex();
+        v3.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+        v3.setProperty("imageUrl", "resources/person-icon.png");
+        v3.setProperty("additionalLabel", "3");
+
+        graph.addEdge(null, v1, v2, "knows");
+        graph.addEdge(null, v1, v3, "knows");
+
+        graph.render();
+
+        $('#delete').on('click', function () {
+            graph.destroy();
+
+            graph = new planar.Graph({container: '#graphCanvas', navigatorContainer: '#navigatorContainer'});
+
+            var v4 = graph.addVertex();
+            v4.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+            v4.setProperty("imageUrl", "resources/person-icon.png");
+            v4.setProperty("additionalLabel", "4");
+
+            var v5 = graph.addVertex();
+            v5.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+            v5.setProperty("imageUrl", "resources/person-icon.png");
+            v5.setProperty("additionalLabel", "5");
+
+            var v6 = graph.addVertex();
+            v6.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+            v6.setProperty("imageUrl", "resources/person-icon.png");
+            v6.setProperty("additionalLabel", "6");
+
+            graph.addEdge(null, v4, v5, "knows");
+            graph.addEdge(null, v5, v6, "knows");
+
+            graph.render();
+        });
+
+    });
+</script>
+
+</body>
+</html>

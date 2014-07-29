@@ -8,7 +8,7 @@ var settings = {
 
   engine: new D3Engine(),
 
-  layout: new CircleLayout(1000, Easing.expoInOut),
+  defaultLayout: 'circle',
 
   layouts: {
     'circle': CircleLayout,
@@ -17,6 +17,10 @@ var settings = {
     'tree': NodeLinkTreeLayout,
     'fruchtermanReingold': FruchtermanReingoldLayout
   },
+
+  animationDuration: 1000,
+
+  easing: Easing.expoInOut,
 
   raphael: {
     defaultVertexRenderer: RaphaelRectangleVertexRenderer,

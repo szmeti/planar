@@ -682,6 +682,11 @@
             },
             filteredView: function() {
                 return new ElementFilterManager(this);
+            },
+            destroy: function() {
+                this.renderer.stop();
+                d3.select(this.settings.container).selectAll("*").remove();
+                d3.select(this.settings.navigatorContainer).selectAll("*").remove();
             }
         });
         return Graph;
@@ -2848,7 +2853,8 @@
             this.verticesById = {};
             this.edges = [];
             this.edgesById = {};
-            this.layout = this.settings.layout;
+            var Layout = this.settings.layouts[this.settings.defaultLayout];
+            this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
         }
         function setUpEventHandlers(graph, renderer) {
             graph.on("vertexAdded", function(event, vertex) {
@@ -2933,7 +2939,10 @@
                     uiVertex.endY = undefined;
                 }
                 var Layout = this.settings.layouts[layout];
-                this.layout = new Layout(1e3, Easing.expoInOut);
+                this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
+            },
+            stop: function() {
+                this.timer.stop();
             }
         });
         return Renderer;
@@ -2976,7 +2985,7 @@
         container: null,
         navigatorContainer: null,
         engine: new D3Engine(),
-        layout: new CircleLayout(1e3, Easing.expoInOut),
+        defaultLayout: "circle",
         layouts: {
             circle: CircleLayout,
             wheel: WheelLayout,
@@ -2984,6 +2993,8 @@
             tree: NodeLinkTreeLayout,
             fruchtermanReingold: FruchtermanReingoldLayout
         },
+        animationDuration: 1e3,
+        easing: Easing.expoInOut,
         raphael: {
             defaultVertexRenderer: RaphaelRectangleVertexRenderer,
             vertexRenderers: {}

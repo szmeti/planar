@@ -245,6 +245,12 @@ var Graph = (function () {
 
     filteredView: function() {
       return new ElementFilterManager(this);
+    },
+
+    destroy: function () {
+      this.renderer.stop();
+      d3.select(this.settings.container).selectAll('*').remove();
+      d3.select(this.settings.navigatorContainer).selectAll('*').remove();
     }
 
   });
