@@ -56,3 +56,4 @@ exports.FruchtermanReingoldLayout = FruchtermanReingoldLayout;
 exports.LayoutUtils = LayoutUtils;
 exports.Easing = Easing;
 exports.Compare = Compare;
+exports.Contains = Contains;
