@@ -107,7 +107,8 @@ var settings = {
   edge : {
     lineWeightPropertyKey : 'strength',
     defaultLineWeight : 2,
-    useArrows: true
+    useArrows: true,
+    aggregatedByPropertyKey: 'aggregatedBy'
   }
 
 };

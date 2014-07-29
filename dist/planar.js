@@ -3067,7 +3067,8 @@
         edge: {
             lineWeightPropertyKey: "strength",
             defaultLineWeight: 2,
-            useArrows: true
+            useArrows: true,
+            aggregatedByPropertyKey: "aggregatedBy"
         }
     };
     var ElementFilterManager = function() {
@@ -3228,6 +3229,7 @@
                 var newEdge = context.aggregatedGraph.addEdge(null, outVertex, inVertex);
                 edge.copyPropertiesTo(newEdge);
                 newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
+                newEdge.setProperty(settings.edge.aggregatedByPropertyKey, [ edge.getId() ]);
             } else {
                 findConnectedEdgesAndAggregate(inVertexEdges, inVertex, outVertex, strength);
             }
@@ -3257,11 +3259,15 @@
                     strength += filteredEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
                     edge.copyPropertiesTo(filteredEdge);
                     filteredEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
+                    var aggregatedBy = filteredEdge.getProperty(settings.edge.aggregatedByPropertyKey) || [];
+                    aggregatedBy.push(edge.getId());
+                    filteredEdge.setProperty(settings.edge.aggregatedByPropertyKey, aggregatedBy);
                     break;
                 }
             }
             if (context.filteredAggregatedEdges.length < 1 || !wasConnection) {
                 var newEdge = createSingleAggregatedEdge(edge.getOutVertex(), edge.getInVertex(), strength, edge, context);
+                newEdge.setProperty(settings.edge.aggregatedByPropertyKey, [ edge.getId() ]);
                 context.filteredAggregatedEdges.push(newEdge);
             }
         }
@@ -3282,6 +3288,9 @@
                 if (connectedWithDestinationVertex) {
                     currentStrength += currentEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
                     currentEdge.setProperty(settings.edge.lineWeightPropertyKey, currentStrength);
+                    var aggregatedBy = currentEdge.getProperty(settings.edge.aggregatedByPropertyKey) || [];
+                    aggregatedBy.push(currentEdge.getId());
+                    currentEdge.setProperty(settings.edge.aggregatedByPropertyKey, aggregatedBy);
                 }
             }
         }

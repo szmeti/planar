@@ -203,7 +203,14 @@ describe('FilterManager', function () {
     expect(tim.length).toBe(1);
     haveSameProperties(tim[0], c);
 
-    expect(aggregated.query().has(settings.edge.lineWeightPropertyKey, 6).edges().length).toBe(1);
+    var edges = aggregated.query().has(settings.edge.lineWeightPropertyKey, 6).edges();
+    expect(edges.length).toBe(1);
+    var aggregatedEdge = edges[0];
+    var aggregatedBy = aggregatedEdge.getProperty(settings.edge.aggregatedByPropertyKey);
+    expect(aggregatedBy.length).toBe(3);
+    expect(aggregatedBy[0]).toBe(aFriendC.getId());
+    expect(aggregatedBy[1]).toBe(aHateC.getId());
+    expect(aggregatedBy[2]).toBe(cHateA.getId());
   });
 
   it('verifies filtering with filtered vertices result', function () {
@@ -262,9 +269,17 @@ describe('FilterManager', function () {
 
     var filteredAggregatedEdge = filteredAggregatedEdges[0];
     expect(filteredAggregatedEdge.getProperty(settings.edge.lineWeightPropertyKey)).toBe(7);
+    var aggregatedBy = filteredAggregatedEdge.getProperty(settings.edge.aggregatedByPropertyKey);
+    expect(aggregatedBy.length).toBe(2);
+    expect(aggregatedBy[0]).toBe(aFriendB.getId());
+    expect(aggregatedBy[1]).toBe(bFriendA.getId());
 
     var filteredAggregatedEdge2 = filteredAggregatedEdges[1];
     expect(filteredAggregatedEdge2.getProperty(settings.edge.lineWeightPropertyKey)).toBe(9);
+    aggregatedBy = filteredAggregatedEdge2.getProperty(settings.edge.aggregatedByPropertyKey);
+    expect(aggregatedBy.length).toBe(2);
+    expect(aggregatedBy[0]).toBe(cHateB.getId());
+    expect(aggregatedBy[1]).toBe(cb2.getId());
   });
 
   it('verifies filtering with labels', function () {

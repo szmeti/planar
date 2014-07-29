@@ -196,8 +196,9 @@ var ElementFilterManager = (function () {
       //TODO: In this case allways the first edge properties win. Replace it with more general solution.
       edge.copyPropertiesTo(newEdge);
       newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
+      newEdge.setProperty(settings.edge.aggregatedByPropertyKey, [edge.getId()]);
     } else {
-      findConnectedEdgesAndAggregate(inVertexEdges, inVertex, outVertex, strength);
+      findConnectedEdgesAndAggregate(inVertexEdges, inVertex, outVertex, strength, edge);
     }
   }
 
@@ -210,6 +211,23 @@ var ElementFilterManager = (function () {
       }
     }
     return false;
+  }
+
+  function findConnectedEdgesAndAggregate(sourceVertexEdges, sourceVertex, destinationVertex, currentStrength, originalEdge) {
+    for (var i = 0; i < sourceVertexEdges.length; i++) {
+      var currentEdge = sourceVertexEdges[i];
+      var connectedWithDestinationVertex = currentEdge.connects(sourceVertex, destinationVertex);
+
+      if (connectedWithDestinationVertex) {
+        //already has connection
+        currentStrength += currentEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
+        currentEdge.setProperty(settings.edge.lineWeightPropertyKey, currentStrength);
+
+        var aggregatedBy = currentEdge.getProperty(settings.edge.aggregatedByPropertyKey) || [];
+        aggregatedBy.push(originalEdge.getId());
+        currentEdge.setProperty(settings.edge.aggregatedByPropertyKey, aggregatedBy);
+      }
+    }
   }
 
   function addEdgeToGraph(graph, edge, inVertex, outVertex) {
@@ -231,12 +249,17 @@ var ElementFilterManager = (function () {
         //TODO: Replace it with more general solution.
         edge.copyPropertiesTo(filteredEdge);
         filteredEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
+
+        var aggregatedBy = filteredEdge.getProperty(settings.edge.aggregatedByPropertyKey) || [];
+        aggregatedBy.push(edge.getId());
+        filteredEdge.setProperty(settings.edge.aggregatedByPropertyKey, aggregatedBy);
         break;
       }
     }
 
     if (context.filteredAggregatedEdges.length < 1 || !wasConnection) {
       var newEdge = createSingleAggregatedEdge(edge.getOutVertex(), edge.getInVertex(), strength, edge, context);
+      newEdge.setProperty(settings.edge.aggregatedByPropertyKey, [edge.getId()]);
       context.filteredAggregatedEdges.push(newEdge);
     }
   }
@@ -250,19 +273,6 @@ var ElementFilterManager = (function () {
     originalEdge.copyPropertiesTo(newEdge);
     newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
     return newEdge;
-  }
-
-  function findConnectedEdgesAndAggregate(sourceVertexEdges, sourceVertex, destinationVertex, currentStrength) {
-    for (var i = 0; i < sourceVertexEdges.length; i++) {
-      var currentEdge = sourceVertexEdges[i];
-      var connectedWithDestinationVertex = currentEdge.connects(sourceVertex, destinationVertex);
-
-      if (connectedWithDestinationVertex) {
-        //already has connection
-        currentStrength += currentEdge.getProperty(settings.edge.lineWeightPropertyKey) || settings.edge.defaultLineWeight;
-        currentEdge.setProperty(settings.edge.lineWeightPropertyKey, currentStrength);
-      }
-    }
   }
 
   function resetFilterCounters(filters) {
