@@ -32,7 +32,7 @@ var settings = {
 
   d3: {
     defaultVertexRenderer: new D3SymbolVertexRenderer('circle'),
-    defaultEdgeRenderer: new D3EdgeLabelDecorator(D3DirectedLineEdgeRenderer),
+    defaultEdgeRenderer: D3LineEdgeRenderer,
 
     vertexRenderers: {
       'circle': new D3SymbolVertexRenderer('circle'),
