@@ -6,6 +6,7 @@ var FruchtermanReingoldLayout = (function () {
     this.started = false;
     this.maxIteration = 700;
     this.tween = new Tween(duration, easing);
+    this.name = 'fruchtermanReingold';
   }
 
   var EPSILON = 0.000001;

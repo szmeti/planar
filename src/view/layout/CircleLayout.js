@@ -5,6 +5,7 @@ var CircleLayout = (function () {
     this.running = true;
     this.tween = new Tween(duration, easing);
     this.ignoreVertex = ignoreVertex;
+    this.name = 'circle';
   }
 
   CircleLayout.MIN_RADIUS = 100;

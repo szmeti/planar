@@ -4,6 +4,7 @@ var GridLayout = (function () {
   function GridLayout(duration, easing) {
     this.running = true;
     this.tween = new Tween(duration, easing);
+    this.name = 'grid';
   }
 
   var calculateScale = function (width, height, rows, cols) {
