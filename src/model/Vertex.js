@@ -32,6 +32,10 @@ var Vertex = (function () {
 
     query: function() {
       return new VertexQuery(this);
+    },
+
+    select: function() {
+      this.graph.renderer.selectedVertex = this.graph.renderer.verticesById[this.id];
     }
 
   });
