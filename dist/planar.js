@@ -1303,9 +1303,24 @@
     }();
     var ElementRendererDecorator = function() {
         return {
+            decorateRenderer: function(renderer) {
+                this.elementRenderer = renderer;
+                if (this.elementRenderer.asynch === true) {
+                    this.asynch = true;
+                }
+            },
             init: function(element, container) {
                 if (this.elementRenderer.asynch === true) {
-                    this.elementRenderer.drawReadyCallback = this.doInit;
+                    var that = this;
+                    this.elementRenderer.drawReadyCallback = function() {
+                        var self = that;
+                        return function(uiElement, element) {
+                            self.doInit(uiElement, element);
+                            if (self.drawReadyCallback) {
+                                self.drawReadyCallback(uiElement, element);
+                            }
+                        };
+                    }();
                     this.elementRenderer.init(element, container);
                 } else {
                     this.elementRenderer.init(element, container);
@@ -1327,7 +1342,7 @@
     }();
     var D3EdgeLabelDecorator = function() {
         function D3EdgeLabelDecorator(rendererToBeDecorated) {
-            this.elementRenderer = rendererToBeDecorated;
+            this.decorateRenderer(rendererToBeDecorated);
         }
         utils.mixin(D3EdgeLabelDecorator.prototype, ElementRendererDecorator);
         utils.mixin(D3EdgeLabelDecorator.prototype, {
@@ -1340,7 +1355,7 @@
     }();
     var D3VertexBorderDecorator = function() {
         function D3VertexBorderDecorator(rendererToBeDecorated) {
-            this.elementRenderer = rendererToBeDecorated;
+            this.decorateRenderer(rendererToBeDecorated);
             this.doInit = function(uiElement, container) {
                 var vertex = uiElement.vertex;
                 var instanceSettings = vertex.getGraph().getSettings();
@@ -1357,7 +1372,7 @@
     }();
     var D3VertexLabelDecorator = function() {
         function D3VertexLabelDecorator(rendererToBeDecorated, settings) {
-            this.elementRenderer = rendererToBeDecorated;
+            this.decorateRenderer(rendererToBeDecorated);
             this.doInit = function(element, container) {
                 var containerBox = container.node().getBBox();
                 var edge = containerBox.height / 2;
