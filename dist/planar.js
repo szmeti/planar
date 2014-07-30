@@ -1518,7 +1518,7 @@
                 this.zoom = d3.behavior.zoom().x(this.xScale).y(this.yScale).scaleExtent([ this.settings.zoom.minScale, this.settings.zoom.maxScale ]).on("zoom.canvas", this.zoomHandler);
                 initCommonDefs(this);
                 this.navigator = initNavigator(this.zoom, this.settings, this.graph);
-                initZoomPanControl(this.svg, this.zoom, this.settings);
+                initZoomPanControl(this.svg, this.zoom, this.settings, this.graph);
             },
             zoom: function(value) {
                 if (!arguments.length) {
@@ -1563,8 +1563,8 @@
             var navigatorSvg = d3.select(settings.navigatorContainer).append("svg").attr("width", settings.width * settings.navigator.scale).attr("height", settings.height * settings.navigator.scale).attr("class", "svg canvas");
             return new D3Navigator(navigatorSvg, zoom, d3.select("#panCanvas"), settings, graph);
         }
-        function initZoomPanControl(container, zoom, settings) {
-            var zoomPanControl = new D3ZoomPanControl(container, zoom, d3.select("#panCanvas"), settings);
+        function initZoomPanControl(container, zoom, settings, graph) {
+            var zoomPanControl = new D3ZoomPanControl(container, zoom, d3.select("#panCanvas"), settings, graph);
             zoomPanControl.render();
         }
         function initCommonDefs(context) {
@@ -1696,7 +1696,7 @@
         return D3Navigator;
     }();
     var D3ZoomPanControl = function() {
-        function D3ZoomPanControl(container, zoom, target, settings) {
+        function D3ZoomPanControl(container, zoom, target, settings, graph) {
             this.base = container;
             this.width = settings.width;
             this.height = settings.height;
@@ -1706,6 +1706,11 @@
             this.panScale = settings.zoomPanControl.panStep;
             this.x = settings.zoomPanControl.paddingLeft;
             this.y = settings.zoomPanControl.paddingTop;
+            this.graph = graph;
+            var control = this;
+            this.graph.on("graphZoomOut", function() {
+                doZoom(control, -7);
+            });
         }
         utils.mixin(D3ZoomPanControl.prototype, {
             render: function() {
@@ -3005,6 +3010,7 @@
                 }
                 var Layout = this.settings.layouts[layout];
                 this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
+                this.graph.trigger("graphZoomOut");
             },
             stop: function() {
                 this.timer.stop();

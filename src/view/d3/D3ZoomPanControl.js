@@ -1,7 +1,7 @@
 /* global D3ZoomPanControl: true */
 var D3ZoomPanControl = (function() {
 
-  function D3ZoomPanControl(container, zoom, target, settings) {
+  function D3ZoomPanControl(container, zoom, target, settings, graph) {
     this.base = container;
     this.width = settings.width;
     this.height = settings.height;
@@ -11,6 +11,14 @@ var D3ZoomPanControl = (function() {
     this.panScale = settings.zoomPanControl.panStep;
     this.x = settings.zoomPanControl.paddingLeft;
     this.y = settings.zoomPanControl.paddingTop;
+    this.graph = graph;
+
+    // TODO: find another solution for zoom out when layout changed
+    var control = this;
+
+    this.graph.on('graphZoomOut', function () {
+      doZoom(control, -7);
+    });
   }
 
   utils.mixin(D3ZoomPanControl.prototype, {
