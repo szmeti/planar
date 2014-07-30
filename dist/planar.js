@@ -2751,6 +2751,7 @@
         }
         var EPSILON = 1e-6;
         var ALPHA = 1;
+        var padding = 10;
         var init = function(vertices, width, height, self) {
             var vertexCount = vertices.length;
             self.temp = width / 10;
@@ -2812,7 +2813,11 @@
                 y = height - borderWidth - Math.random() * borderWidth * 2;
             }
             uiVertex.endX = x;
+            uiVertex.endX = Math.max(uiVertex.endX, NODE_WIDTH / 2 + padding);
+            uiVertex.endX = Math.min(uiVertex.endX, width - NODE_WIDTH / 2 - padding);
             uiVertex.endY = y;
+            uiVertex.endY = Math.max(uiVertex.endY, NODE_WIDTH / 2 + padding);
+            uiVertex.endY = Math.min(uiVertex.endY, height - NODE_WIDTH / 2 - padding);
         };
         var cool = function(self, currentIteration) {
             self.temp *= 1 - currentIteration / self.maxIteration;
@@ -2829,7 +2834,7 @@
         utils.mixin(FruchtermanReingoldLayout.prototype, {
             step: function(vertices, edges, width, height) {
                 var finishedVertices = vertices.length;
-                var w = vertices.length * 2 * NODE_WIDTH;
+                var w = vertices.length * (NODE_WIDTH / 1.5);
                 var h = w * (height / width);
                 var scale = calculateScale(width, height, w, h);
                 if (this.running) {

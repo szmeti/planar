@@ -11,6 +11,7 @@ var FruchtermanReingoldLayout = (function () {
 
   var EPSILON = 0.000001;
   var ALPHA = 1;
+  var padding = 10;
 
   var init = function (vertices, width, height, self) {
     var vertexCount = vertices.length;
@@ -96,7 +97,11 @@ var FruchtermanReingoldLayout = (function () {
     }
 
     uiVertex.endX = x;
+    uiVertex.endX = Math.max(uiVertex.endX, NODE_WIDTH / 2 + padding);
+    uiVertex.endX = Math.min(uiVertex.endX, width - NODE_WIDTH / 2 - padding);
     uiVertex.endY = y;
+    uiVertex.endY = Math.max(uiVertex.endY, NODE_WIDTH / 2 + padding);
+    uiVertex.endY = Math.min(uiVertex.endY, height - NODE_WIDTH / 2 - padding);
   };
 
   var cool = function (self, currentIteration) {
@@ -118,7 +123,7 @@ var FruchtermanReingoldLayout = (function () {
 
     step: function (vertices, edges, width, height) {
       var finishedVertices = vertices.length;
-      var w = vertices.length * 2 * NODE_WIDTH;
+      var w = vertices.length * (NODE_WIDTH / 1.5);
       var h = w * (height / width);
       var scale = calculateScale(width, height, w, h);
 
