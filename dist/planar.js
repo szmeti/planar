@@ -443,7 +443,7 @@
                 }
             },
             getOtherVertex: function(vertex) {
-                return this.inVertex.getId() === vertex.getId() ? this.outVertex : vertex;
+                return this.inVertex.getId() === vertex.getId() ? this.outVertex : this.inVertex;
             },
             remove: function() {
                 this.graph.removeEdge(this);
@@ -3182,9 +3182,8 @@
                 if (filterMatched) {
                     if (!currentFilter.active()) {
                         nonMatchedFilters++;
-                    } else {
-                        currentFilter.count(currentFilter.count() + 1);
                     }
+                    currentFilter.count(currentFilter.count() + 1);
                 } else if (currentFilter.active()) {
                     nonMatchedFilters++;
                 }

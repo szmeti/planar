@@ -42,7 +42,7 @@ var Edge = (function () {
     },
 
     getOtherVertex: function (vertex) {
-      return this.inVertex.getId() === vertex.getId() ? this.outVertex : vertex;
+      return this.inVertex.getId() === vertex.getId() ? this.outVertex : this.inVertex;
     },
 
     remove: function () {
