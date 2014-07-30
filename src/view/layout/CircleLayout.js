@@ -1,9 +1,10 @@
 /* global CircleLayout: true */
 var CircleLayout = (function () {
 
-  function CircleLayout(duration, easing) {
+  function CircleLayout(duration, easing, ignoreVertex) {
     this.running = true;
     this.tween = new Tween(duration, easing);
+    this.ignoreVertex = ignoreVertex;
   }
 
   CircleLayout.MIN_RADIUS = 100;
@@ -26,6 +27,10 @@ var CircleLayout = (function () {
 
       if (this.running) {
         finishedVertices = 0;
+
+        if (utils.isUndefined(this.ignoreVertex) || !this.ignoreVertex) {
+          ignoredVertex = undefined;
+        }
 
         var numberOfVertices = utils.isUndefined(ignoredVertex) ? vertices.length : vertices.length - 1;
         var radius = calculateRadius(numberOfVertices);
