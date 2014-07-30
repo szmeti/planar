@@ -27,7 +27,7 @@ var D3Engine = (function () {
       this.zoomPanManager = new D3ZoomPanManager(svg, defs, settings, graph);
       this.zoomPanManager.init();
 
-      var d3Renderers = ElementRendererProvider.getAll('d3');
+      var d3Renderers = ElementRendererProvider.getAll('d3', settings);
 
       for (var i = 0; i < d3Renderers.length; i++){
         if (typeof d3Renderers[i].initDefs === 'function') {

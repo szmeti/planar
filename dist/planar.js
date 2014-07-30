@@ -1236,22 +1236,60 @@
         return BoundingBoxCalculator;
     }();
     var RandomLayout = function() {
-        function RandomLayout() {
+        var padding = 10;
+        function RandomLayout(duration, easing) {
             this.running = true;
+            this.tween = new Tween(duration, easing);
         }
+        var calculateScale = function(width, height, numberOfVertices) {
+            var areaRatio = width * height / (NODE_WIDTH * NODE_WIDTH * numberOfVertices);
+            return areaRatio > 1 ? 1 : areaRatio;
+        };
         utils.mixin(RandomLayout.prototype, {
             step: function(vertices, edges, width, height) {
+                var finishedVertices = vertices.length;
                 if (this.running) {
+                    finishedVertices = 0;
+                    var scale = calculateScale(width, height, vertices.length);
+                    var cx = width * (.5 / scale);
+                    var cy = height * (.5 / scale);
                     for (var i = 0; i < vertices.length; i++) {
                         var vertex = vertices[i];
-                        vertex.x = utils.randomInteger(0, width + 1);
-                        vertex.y = utils.randomInteger(0, height + 1);
+                        if (vertex.started) {
+                            this.tween.runFrame(vertex, scale);
+                            if (vertex.finished) {
+                                finishedVertices++;
+                            }
+                        } else {
+                            RandomLayout.setBeginPoint(vertex, cx, cy);
+                            vertex.endX = utils.randomInteger(0, width + 1);
+                            vertex.endX = Math.max(vertex.endX, NODE_WIDTH / 2 + padding);
+                            vertex.endX = Math.min(vertex.endX, width - NODE_WIDTH / 2 - padding);
+                            vertex.endY = utils.randomInteger(0, height + 1);
+                            vertex.endY = Math.max(vertex.endY, NODE_WIDTH / 2 + padding);
+                            vertex.endY = Math.min(vertex.endY, height - NODE_WIDTH / 2 - padding);
+                            this.tween.start(vertex, scale);
+                        }
                     }
                 }
-                this.running = false;
+                if (this.running && finishedVertices === vertices.length && vertices.length > 0) {
+                    vertices[0].vertex.getGraph().trigger("graphUpdated");
+                }
+                this.running = finishedVertices < vertices.length;
                 return this.running;
             }
         });
+        RandomLayout.setBeginPoint = function(uiVertex, cx, cy) {
+            if (utils.isUndefined(uiVertex.x) || utils.isUndefined(uiVertex.y)) {
+                uiVertex.beginX = cx;
+                uiVertex.beginY = cy;
+                uiVertex.x = cx;
+                uiVertex.y = cy;
+            } else {
+                uiVertex.beginX = uiVertex.x;
+                uiVertex.beginY = uiVertex.y;
+            }
+        };
         return RandomLayout;
     }();
     var ForceDirectedLayout = function() {
@@ -1746,7 +1784,7 @@
                 var defs = svg.append("defs");
                 this.zoomPanManager = new D3ZoomPanManager(svg, defs, settings, graph);
                 this.zoomPanManager.init();
-                var d3Renderers = ElementRendererProvider.getAll("d3");
+                var d3Renderers = ElementRendererProvider.getAll("d3", settings);
                 for (var i = 0; i < d3Renderers.length; i++) {
                     if (typeof d3Renderers[i].initDefs === "function") {
                         d3Renderers[i].initDefs(defs);
@@ -2144,6 +2182,7 @@
             init: function(vertex, element) {
                 var path = element.append("path");
                 path.attr("d", d3.svg.symbol().type(this.type).size(200));
+                vertex.uiElement = path;
             },
             initDefs: function(defs) {}
         });
@@ -2198,6 +2237,7 @@
         return {
             getRenderer: function(element, engine, type) {
                 var renderer;
+                var settings = element.getGraph().getSettings();
                 var elementType = element.getPropertyUnfiltered(PROP_TYPE);
                 if (elementType !== null) {
                     renderer = utils.get(settings, engine, type === "vertex" ? "vertexRenderers" : "edgeRenderers", elementType);
@@ -2207,7 +2247,7 @@
                 }
                 return renderer;
             },
-            getAll: function(engine) {
+            getAll: function(engine, settings) {
                 var engineSetting = utils.get(settings, engine);
                 var renderers = utils.values(engineSetting.vertexRenderers);
                 renderers = renderers.concat(utils.values(engineSetting.edgeRenderers));
@@ -2987,6 +3027,7 @@
         engine: new D3Engine(),
         defaultLayout: "circle",
         layouts: {
+            random: RandomLayout,
             circle: CircleLayout,
             wheel: WheelLayout,
             grid: GridLayout,
@@ -3001,7 +3042,7 @@
         },
         d3: {
             defaultVertexRenderer: new D3SymbolVertexRenderer("circle"),
-            defaultEdgeRenderer: new D3EdgeLabelDecorator(D3DirectedLineEdgeRenderer),
+            defaultEdgeRenderer: D3LineEdgeRenderer,
             vertexRenderers: {
                 circle: new D3SymbolVertexRenderer("circle"),
                 cross: new D3SymbolVertexRenderer("cross"),

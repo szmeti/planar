@@ -6,6 +6,7 @@ var ElementRendererProvider = (function () {
     getRenderer: function (element, engine, type) {
       var renderer;
 
+      var settings = element.getGraph().getSettings();
       var elementType = element.getPropertyUnfiltered(PROP_TYPE);
       if (elementType !== null) {
         renderer = utils.get(settings, engine, type === 'vertex' ? 'vertexRenderers' : 'edgeRenderers', elementType);
@@ -18,7 +19,7 @@ var ElementRendererProvider = (function () {
       return renderer;
     },
 
-    getAll: function(engine) {
+    getAll: function(engine, settings) {
       var engineSetting = utils.get(settings, engine);
       var renderers = utils.values(engineSetting.vertexRenderers);
       renderers = renderers.concat(utils.values(engineSetting.edgeRenderers));
