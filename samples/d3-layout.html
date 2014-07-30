@@ -128,6 +128,7 @@
         <button id="gridLayout">Grid</button>
         <button id="treeLayout">Tree</button>
         <button id="fruchtermanReingoldLayout">Fruchterman-Reingold</button>
+        <button id="random">Random</button>
     </div>
     <div id="graphCanvas"></div>
     <div id="navigatorContainer"></div>
@@ -335,6 +336,10 @@
 
         $('#fruchtermanReingoldLayout').on('click', function () {
             graph.renderer.changeLayout('fruchtermanReingold');
+        });
+
+        $('#random').on('click', function () {
+            graph.renderer.changeLayout('random');
         });
     });
 </script>

@@ -11,6 +11,7 @@ var settings = {
   defaultLayout: 'circle',
 
   layouts: {
+    'random': RandomLayout,
     'circle': CircleLayout,
     'wheel': WheelLayout,
     'grid': GridLayout,
