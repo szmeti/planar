@@ -123,7 +123,7 @@ describe('FilterManager', function () {
 
     expect(filter1.count()).toBe(2);
     //TODO: change it to 1 if a general checkFiltered introduced
-    expect(filter2.count()).toBe(0);
+    expect(filter2.count()).toBe(1);
   });
 
   it('verifies vertex and edge operators', function () {
