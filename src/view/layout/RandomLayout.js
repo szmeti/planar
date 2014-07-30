@@ -6,7 +6,7 @@ var RandomLayout = (function () {
   function RandomLayout(duration, easing) {
     this.running = true;
     this.tween = new Tween(duration, easing);
-    this.name = 'random'
+    this.name = 'random';
   }
 
   var calculateScale = function (width, height, numberOfVertices) {

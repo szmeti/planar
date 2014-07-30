@@ -1243,6 +1243,7 @@
         function RandomLayout(duration, easing) {
             this.running = true;
             this.tween = new Tween(duration, easing);
+            this.name = "random";
         }
         var calculateScale = function(width, height, numberOfVertices) {
             var areaRatio = width * height / (NODE_WIDTH * NODE_WIDTH * numberOfVertices);
@@ -2325,6 +2326,7 @@
             this.running = true;
             this.tween = new Tween(duration, easing);
             this.ignoreVertex = ignoreVertex;
+            this.name = "circle";
         }
         CircleLayout.MIN_RADIUS = 100;
         var calculateRadius = function(vertexCount) {
@@ -2395,6 +2397,7 @@
         function WheelLayout(duration, easing) {
             this.running = true;
             this.circleLayout = new CircleLayout(duration, easing, true);
+            this.name = "wheel";
         }
         utils.mixin(WheelLayout.prototype, {
             step: function(vertices, edges, width, height, selectedVertex) {
@@ -2414,6 +2417,7 @@
         function GridLayout(duration, easing) {
             this.running = true;
             this.tween = new Tween(duration, easing);
+            this.name = "grid";
         }
         var calculateScale = function(width, height, rows, cols) {
             var widthScale = cols === 1 ? 1 : width / ((cols - 1) * (width / (cols - 1) + NODE_WIDTH));
@@ -2476,6 +2480,7 @@
             this.maxX = 0;
             this.maxY = 0;
             this.maxDepth = 0;
+            this.name = "tree";
         }
         NodeLinkTreeLayout.SIBLING_NODE_DISTANCE = 5;
         NodeLinkTreeLayout.SUBTREE_DISTANCE = 25;
@@ -2739,6 +2744,7 @@
             this.started = false;
             this.maxIteration = 700;
             this.tween = new Tween(duration, easing);
+            this.name = "fruchtermanReingold";
         }
         var EPSILON = 1e-6;
         var ALPHA = 1;
