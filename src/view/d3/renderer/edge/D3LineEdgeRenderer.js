@@ -1,7 +1,10 @@
 /* global D3LineEdgeRenderer: true */
 var D3LineEdgeRenderer = (function () {
 
-  return {
+  function D3LineEdgeRenderer() {
+  }
+
+  utils.mixin(D3LineEdgeRenderer.prototype, {
 
     init: function (uiEdge, element) {
       var edge = uiEdge.edge;
@@ -11,9 +14,10 @@ var D3LineEdgeRenderer = (function () {
       uiEdge.uiElement = element.append('line').attr('style', 'stroke-width: ' + lineWeight + 'px;');
     },
 
-    initDefs: function (defs) {},
+    initDefs: function (defs) {
+    },
 
-    updatePosition: function(edge) {
+    updatePosition: function (edge) {
       var line = edge.uiElement;
 
       line.attr('x1', function (uiEdge) {
@@ -33,6 +37,8 @@ var D3LineEdgeRenderer = (function () {
       });
     }
 
-  };
+  });
+
+  return D3LineEdgeRenderer;
 
 }());

@@ -133,7 +133,7 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
-        planar.settings.d3.vertexRenderers['labeled-bordered-image-vertex'] = new planar.D3VertexLabelDecorator(new planar.D3VertexBorderDecorator(planar.D3ImageVertexRenderer), {
+        planar.settings.d3.vertexRenderers['labeled-bordered-image-vertex'] = new planar.D3VertexLabelDecorator(new planar.D3VertexBorderDecorator(new planar.D3ImageVertexRenderer()), {
             labelInside: false,
             labelTop: false,
             padding: 12,
@@ -195,26 +195,26 @@
         v5.setProperty('additionalLabel', 'abc');
         v5.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/orange.png");
         v5.setProperty(planar.PROP_TYPE, "labeled-bordered-image-vertex");
-//
-//        var e1 = graph.addEdge(null, v1, v2, "a");
-//        e1.setProperty('lineWeight', 5);
-//        e1.setProperty(planar.PROP_TYPE, "labeled-curved-line");
-//
-//        var e2 = graph.addEdge(null, v2, v3, "b");
-//        e2.setProperty(planar.PROP_TYPE, "curved-line");
-//
-//        var e3 = graph.addEdge(null, v3, v1, "c");
-//        graph.addEdge(null, v3, v4, "d");
-//        graph.addEdge(null, v4, v2, "e");
 
-//        var vnFilters = [
-//            {
-//                propertyKey: 'age',
-//                value: 22,
-//                predicate: 'LESS_THAN'
-//            }
-//        ];
-//
+        var e1 = graph.addEdge(null, v1, v2, "a");
+        e1.setProperty('lineWeight', 5);
+        e1.setProperty(planar.PROP_TYPE, "labeled-curved-line");
+
+        var e2 = graph.addEdge(null, v2, v3, "b");
+        e2.setProperty(planar.PROP_TYPE, "curved-line");
+
+        var e3 = graph.addEdge(null, v3, v1, "c");
+        graph.addEdge(null, v3, v4, "d");
+        graph.addEdge(null, v4, v2, "e");
+
+        var vnFilters = [
+            {
+                propertyKey: 'age',
+                value: 22,
+                predicate: 'LESS_THAN'
+            }
+        ];
+
 //        for (var i = 0; i < 100; i++) {
 //            var vn = graph.addVertex();
 //            vn.setProperty(planar.PROP_TYPE, "labeled-image-vertex");

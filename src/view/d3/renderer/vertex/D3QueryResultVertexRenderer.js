@@ -1,7 +1,10 @@
 /* global D3QueryResultVertexRenderer: true */
 var D3QueryResultVertexRenderer = (function () {
 
-  return {
+  function D3QueryResultVertexRenderer() {
+  }
+
+  utils.mixin(D3QueryResultVertexRenderer.prototype, {
 
     init: function (uiVertex, element) {
       var vertex = uiVertex.vertex;
@@ -125,6 +128,8 @@ var D3QueryResultVertexRenderer = (function () {
         '10c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4zM7 3h-2v2h-2v2h2v2h2v-2h2v-2h-2z');
     }
 
-  };
+  });
+
+  return D3QueryResultVertexRenderer;
 
 }());

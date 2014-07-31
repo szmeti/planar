@@ -1875,7 +1875,8 @@
         return D3Engine;
     }();
     var D3DirectedLineEdgeRenderer = function() {
-        return {
+        function D3DirectedLineEdgeRenderer() {}
+        utils.mixin(D3DirectedLineEdgeRenderer.prototype, {
             init: function(uiEdge, element) {
                 var edge = uiEdge.edge;
                 var instanceSettings = edge.getGraph().getSettings();
@@ -1898,7 +1899,8 @@
                 line.attr("id", "edgeLabel" + edge.id);
                 line.attr("d", "M" + edgeProprties.startPoint.x + "," + edgeProprties.startPoint.y + "A " + edgeProprties.radiusX + " " + edgeProprties.radiusY + " " + edgeProprties.xAxisRotation + " 0 " + edgeProprties.sweepFlag + " " + edgeProprties.endPoint.x + " " + edgeProprties.endPoint.y);
             }
-        };
+        });
+        return D3DirectedLineEdgeRenderer;
     }();
     var DirectedLineEdgeCalculator = function() {
         function DirectedLineEdgeCalculator(edge) {
@@ -1989,7 +1991,8 @@
         return DirectedLineEdgeCalculator;
     }();
     var D3LineEdgeRenderer = function() {
-        return {
+        function D3LineEdgeRenderer() {}
+        utils.mixin(D3LineEdgeRenderer.prototype, {
             init: function(uiEdge, element) {
                 var edge = uiEdge.edge;
                 var instanceSettings = edge.getGraph().getSettings();
@@ -2012,10 +2015,14 @@
                     return uiEdge.outVertex.y;
                 });
             }
-        };
+        });
+        return D3LineEdgeRenderer;
     }();
     var D3ImageVertexRenderer = function() {
-        return {
+        function D3ImageVertexRenderer() {
+            this.asynch = true;
+        }
+        utils.mixin(D3ImageVertexRenderer.prototype, {
             init: function(uiVertex, element) {
                 var vertex = uiVertex.vertex;
                 uiVertex.uiElement = element;
@@ -2033,12 +2040,13 @@
                     self.drawReadyCallback(uiVertex, element);
                 };
             },
-            asynch: true,
             initDefs: function(defs) {}
-        };
+        });
+        return D3ImageVertexRenderer;
     }();
     var D3QueryResultVertexRenderer = function() {
-        return {
+        function D3QueryResultVertexRenderer() {}
+        utils.mixin(D3QueryResultVertexRenderer.prototype, {
             init: function(uiVertex, element) {
                 var vertex = uiVertex.vertex;
                 var queryVertexReference = vertex.getPropertyUnfiltered("_queryVertexReference");
@@ -2093,10 +2101,12 @@
                 var zoomInIcon = defs.append("g").attr("id", "icon-zoomin");
                 zoomInIcon.append("path").attr("d", "M15.504 13.616l-3.79-3.223c-0.392-0.353-0.811-0.514-1.149-0.499 " + "0.895-1.048 1.435-2.407 1.435-3.893 0-3.314-2.686-6-6-6-3.314 0-6 2.686-6 " + "6 0 3.314 2.686 6 6 6 1.486 0 2.845-0.54 3.893-1.435-0.016 0.338 0.146 0.757 " + "0.499 1.149l3.223 3.79c0.552 0.613 1.453 0.665 2.003 0.115s0.498-1.452-0.115-2.003zM6 " + "10c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4zM7 3h-2v2h-2v2h2v2h2v-2h2v-2h-2z");
             }
-        };
+        });
+        return D3QueryResultVertexRenderer;
     }();
     var D3QueryVertexRenderer = function() {
-        return {
+        function D3QueryVertexRenderer() {}
+        utils.mixin(D3QueryVertexRenderer.prototype, {
             init: function(uiVertex, element) {
                 var vertex = uiVertex.vertex;
                 var filters = vertex.getPropertyUnfiltered("filters") || [];
@@ -2115,9 +2125,9 @@
                 for (var i = 0; i < filters.length; i++) {
                     var filter = filters[i];
                     currentHeight += lineHeight;
-                    var propertyKey = D3QueryVertexRenderer.formatText(filter, alias, filter.propertyKey);
-                    var value = D3QueryVertexRenderer.formatText(filter, alias, filter.value);
-                    var text = D3QueryVertexRenderer.translateTextWithPredicate(filter.predicate, propertyKey, value);
+                    var propertyKey = this.formatText(filter, alias, filter.propertyKey);
+                    var value = this.formatText(filter, alias, filter.value);
+                    var text = this.translateTextWithPredicate(filter.predicate, propertyKey, value);
                     var filterText = element.append("text").attr("text-anchor", "middle").attr("x", 0).attr("y", currentHeight).text(text);
                     boundingBoxCalculator.addElement(filterText[0][0]);
                 }
@@ -2198,7 +2208,8 @@
                     return propertyKey + decodeURI(" ∉ ") + value;
                 }
             }
-        };
+        });
+        return D3QueryVertexRenderer;
     }();
     var D3SymbolVertexRenderer = function() {
         function D3SymbolVertexRenderer(type) {
@@ -2937,36 +2948,48 @@
             var Layout = this.settings.layouts[this.settings.defaultLayout];
             this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
         }
+        function addVertex(vertex, renderer) {
+            var uiVertex = {
+                id: vertex.getId(),
+                vertex: vertex
+            };
+            renderer.vertices.push(uiVertex);
+            renderer.verticesById[uiVertex.id] = uiVertex;
+        }
+        function addEdge(edge, renderer) {
+            var inId = edge.getInVertex().getId();
+            var outId = edge.getOutVertex().getId();
+            var uiEdge = {
+                id: edge.getId(),
+                edge: edge,
+                inVertex: renderer.verticesById[inId],
+                outVertex: renderer.verticesById[outId]
+            };
+            renderer.edges.push(uiEdge);
+            renderer.edgesById[uiEdge.id] = uiEdge;
+        }
+        function removeVertex(vertex, renderer) {
+            var uiVertex = renderer.verticesById[vertex.getId()];
+            utils.remove(uiVertex, renderer.vertices);
+            delete renderer.verticesById[uiVertex.id];
+        }
+        function removeEdge(edge, renderer) {
+            var uiEdge = renderer.edgesById[edge.getId()];
+            utils.remove(uiEdge, renderer.edges);
+            delete renderer.edgesById[uiEdge.id];
+        }
         function setUpEventHandlers(graph, renderer) {
             graph.on("vertexAdded", function(event, vertex) {
-                var uiVertex = {
-                    id: vertex.getId(),
-                    vertex: vertex
-                };
-                renderer.vertices.push(uiVertex);
-                renderer.verticesById[uiVertex.id] = uiVertex;
+                addVertex(vertex, renderer);
             });
             graph.on("edgeAdded", function(event, edge) {
-                var inId = edge.getInVertex().getId();
-                var outId = edge.getOutVertex().getId();
-                var uiEdge = {
-                    id: edge.getId(),
-                    edge: edge,
-                    inVertex: renderer.verticesById[inId],
-                    outVertex: renderer.verticesById[outId]
-                };
-                renderer.edges.push(uiEdge);
-                renderer.edgesById[uiEdge.id] = uiEdge;
+                addEdge(edge, renderer);
             });
             graph.on("vertexRemoved", function(event, vertex) {
-                var uiVertex = renderer.verticesById[vertex.getId()];
-                utils.remove(uiVertex, renderer.vertices);
-                delete renderer.verticesById[uiVertex.id];
+                removeVertex(vertex, renderer);
             });
             graph.on("edgeRemoved", function(event, edge) {
-                var uiEdge = renderer.edgesById[edge.getId()];
-                utils.remove(uiEdge, renderer.edges);
-                delete renderer.edgesById[uiEdge.id];
+                removeEdge(edge, renderer);
             });
             graph.on("vertexClicked", function(event, vertex) {
                 this.renderer.selectedVertex = vertex;
@@ -3004,7 +3027,15 @@
                 this.engine.init(this.settings, this.graph);
                 var self = this;
                 this.graph.forEachVertex(function(vertex) {'use strict';
+                    if (!self.verticesById[vertex.getId()]) {
+                        addVertex(vertex, self);
+                    }
                     self.engine.initVertex(vertex);
+                });
+                this.graph.forEachEdge(function(edge) {'use strict';
+                    if (!self.edgesById[edge.getId()]) {
+                        addEdge(edge, self);
+                    }
                 });
                 this.initialized = true;
             },
@@ -3084,7 +3115,7 @@
         },
         d3: {
             defaultVertexRenderer: new D3SymbolVertexRenderer("circle"),
-            defaultEdgeRenderer: D3LineEdgeRenderer,
+            defaultEdgeRenderer: new D3LineEdgeRenderer(),
             vertexRenderers: {
                 circle: new D3SymbolVertexRenderer("circle"),
                 cross: new D3SymbolVertexRenderer("cross"),
@@ -3092,27 +3123,27 @@
                 square: new D3SymbolVertexRenderer("square"),
                 "triangle-down": new D3SymbolVertexRenderer("triangle-down"),
                 "triangle-up": new D3SymbolVertexRenderer("triangle-up"),
-                "query-vertex": D3QueryVertexRenderer,
-                "image-vertex": D3ImageVertexRenderer,
-                "query-result-vertex": D3QueryResultVertexRenderer,
-                "labeled-query-vertex": new D3VertexLabelDecorator(D3QueryVertexRenderer, {
+                "query-vertex": new D3QueryVertexRenderer(),
+                "image-vertex": new D3ImageVertexRenderer(),
+                "query-result-vertex": new D3QueryResultVertexRenderer(),
+                "labeled-query-vertex": new D3VertexLabelDecorator(new D3QueryVertexRenderer(), {
                     labelInside: true,
                     labelTop: true,
                     padding: 10,
                     labelPropertyKey: "additionalLabel"
                 }),
-                "labeled-image-vertex": new D3VertexLabelDecorator(D3ImageVertexRenderer, {
+                "labeled-image-vertex": new D3VertexLabelDecorator(new D3ImageVertexRenderer(), {
                     labelInside: true,
                     labelTop: false,
                     padding: 10,
                     labelPropertyKey: "additionalLabel"
                 }),
-                "bordered-query-vertex": new D3VertexBorderDecorator(D3QueryVertexRenderer),
-                "bordered-image-vertex": new D3VertexBorderDecorator(D3ImageVertexRenderer)
+                "bordered-query-vertex": new D3VertexBorderDecorator(new D3QueryVertexRenderer()),
+                "bordered-image-vertex": new D3VertexBorderDecorator(new D3ImageVertexRenderer())
             },
             edgeRenderers: {
-                "curved-line": D3DirectedLineEdgeRenderer,
-                "labeled-curved-line": new D3EdgeLabelDecorator(D3DirectedLineEdgeRenderer)
+                "curved-line": new D3DirectedLineEdgeRenderer(),
+                "labeled-curved-line": new D3EdgeLabelDecorator(new D3DirectedLineEdgeRenderer())
             }
         },
         width: 900,

@@ -1,7 +1,10 @@
 /* global D3QueryVertexRenderer: true */
 var D3QueryVertexRenderer = (function () {
 
-  return {
+  function D3QueryVertexRenderer() {
+  }
+
+  utils.mixin(D3QueryVertexRenderer.prototype, {
 
     init: function (uiVertex, element) {
       var vertex = uiVertex.vertex;
@@ -37,9 +40,9 @@ var D3QueryVertexRenderer = (function () {
         var filter = filters[i];
         currentHeight += lineHeight;
 
-        var propertyKey = D3QueryVertexRenderer.formatText(filter, alias, filter.propertyKey);
-        var value = D3QueryVertexRenderer.formatText(filter, alias, filter.value);
-        var text = D3QueryVertexRenderer.translateTextWithPredicate(filter.predicate, propertyKey, value);
+        var propertyKey = this.formatText(filter, alias, filter.propertyKey);
+        var value = this.formatText(filter, alias, filter.value);
+        var text = this.translateTextWithPredicate(filter.predicate, propertyKey, value);
 
         var filterText = element.
           append('text').
@@ -152,6 +155,8 @@ var D3QueryVertexRenderer = (function () {
       }
     }
 
-  };
+  });
+
+  return D3QueryVertexRenderer;
 
 }());
