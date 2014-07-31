@@ -1852,6 +1852,7 @@
             element.each(function(uiElement) {'use strict';
                 var elementRenderer = ElementRendererProvider.getRenderer(uiElement[type], "d3", type);
                 uiElement.g = d3.select(this);
+                uiElement.g.selectAll("*").remove();
                 elementRenderer.init(uiElement, uiElement.g);
             });
             element.on("click", function(uiElement) {
