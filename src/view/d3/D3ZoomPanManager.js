@@ -27,7 +27,7 @@ var D3ZoomPanManager = (function () {
       initCommonDefs(this);
 
       this.navigator = initNavigator(this.zoom, this.settings, this.graph);
-      initZoomPanControl(this.svg, this.zoom, this.settings);
+      initZoomPanControl(this.svg, this.zoom, this.settings, this.graph);
     },
 
     zoom : function(value) {
@@ -97,8 +97,8 @@ var D3ZoomPanManager = (function () {
     return new D3Navigator(navigatorSvg, zoom, d3.select('#panCanvas'), settings, graph);
   }
 
-  function initZoomPanControl(container, zoom, settings) {
-    var zoomPanControl = new D3ZoomPanControl(container, zoom, d3.select('#panCanvas'), settings);
+  function initZoomPanControl(container, zoom, settings, graph) {
+    var zoomPanControl = new D3ZoomPanControl(container, zoom, d3.select('#panCanvas'), settings, graph);
     zoomPanControl.render();
   }
 

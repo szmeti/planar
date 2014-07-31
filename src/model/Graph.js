@@ -7,14 +7,7 @@ var Graph = (function () {
     this.indexManager = new IndexManager(this);
     this.vertexPropertyFilters = {};
     this.edgePropertyFilters = {};
-    instanceSettings = instanceSettings || {};
-    this.settings = utils.mixin({}, settings);
-    this.settings = utils.mixin(this.settings, instanceSettings);
-
-    if (utils.exists(this.settings.container) && utils.exists(this.settings.engine)) {
-      this.renderer = new Renderer(this, this.settings);
-      this.renderer.init();
-    }
+    this.updateSettings(instanceSettings);
   }
 
   utils.mixin(Graph.prototype, EventEmitter);
@@ -251,6 +244,17 @@ var Graph = (function () {
       this.renderer.stop();
       d3.select(this.settings.container).selectAll('*').remove();
       d3.select(this.settings.navigatorContainer).selectAll('*').remove();
+    },
+
+    updateSettings: function(instanceSettings) {
+      instanceSettings = instanceSettings || {};
+      this.settings = utils.mixin({}, settings);
+      this.settings = utils.mixin(this.settings, instanceSettings);
+
+      if (utils.exists(this.settings.container) && utils.exists(this.settings.engine)) {
+        this.renderer = new Renderer(this, this.settings);
+        this.renderer.init();
+      }
     }
 
   });

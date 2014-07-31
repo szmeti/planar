@@ -2,7 +2,7 @@
 var D3EdgeLabelDecorator = (function () {
 
   function D3EdgeLabelDecorator(rendererToBeDecorated) {
-    this.elementRenderer = rendererToBeDecorated;
+    this.decorateRenderer(rendererToBeDecorated);
   }
 
   utils.mixin(D3EdgeLabelDecorator.prototype, ElementRendererDecorator);

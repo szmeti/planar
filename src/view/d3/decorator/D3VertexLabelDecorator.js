@@ -2,8 +2,7 @@
 var D3VertexLabelDecorator = (function () {
 
   function D3VertexLabelDecorator(rendererToBeDecorated, settings) {
-    this.elementRenderer = rendererToBeDecorated;
-
+    this.decorateRenderer(rendererToBeDecorated);
     //if doInit() is called from asynch callback the context will change, so that the settings won't be recognized.
     // Don't move this function from this closure.
     this.doInit = function (element, container) {

@@ -7,6 +7,7 @@ var NodeLinkTreeLayout = (function () {
     this.maxX = 0;
     this.maxY = 0;
     this.maxDepth = 0;
+    this.name = 'tree';
   }
 
   NodeLinkTreeLayout.SIBLING_NODE_DISTANCE = 5;

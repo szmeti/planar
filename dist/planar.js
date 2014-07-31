@@ -480,6 +480,9 @@
             },
             query: function() {
                 return new VertexQuery(this);
+            },
+            select: function() {
+                this.graph.renderer.selectedVertex = this.graph.renderer.verticesById[this.id];
             }
         });
         return Vertex;
@@ -491,13 +494,7 @@
             this.indexManager = new IndexManager(this);
             this.vertexPropertyFilters = {};
             this.edgePropertyFilters = {};
-            instanceSettings = instanceSettings || {};
-            this.settings = utils.mixin({}, settings);
-            this.settings = utils.mixin(this.settings, instanceSettings);
-            if (utils.exists(this.settings.container) && utils.exists(this.settings.engine)) {
-                this.renderer = new Renderer(this, this.settings);
-                this.renderer.init();
-            }
+            this.updateSettings(instanceSettings);
         }
         utils.mixin(Graph.prototype, EventEmitter);
         utils.mixin(Graph.prototype, {
@@ -687,6 +684,15 @@
                 this.renderer.stop();
                 d3.select(this.settings.container).selectAll("*").remove();
                 d3.select(this.settings.navigatorContainer).selectAll("*").remove();
+            },
+            updateSettings: function(instanceSettings) {
+                instanceSettings = instanceSettings || {};
+                this.settings = utils.mixin({}, settings);
+                this.settings = utils.mixin(this.settings, instanceSettings);
+                if (utils.exists(this.settings.container) && utils.exists(this.settings.engine)) {
+                    this.renderer = new Renderer(this, this.settings);
+                    this.renderer.init();
+                }
             }
         });
         return Graph;
@@ -1240,6 +1246,7 @@
         function RandomLayout(duration, easing) {
             this.running = true;
             this.tween = new Tween(duration, easing);
+            this.name = "random";
         }
         var calculateScale = function(width, height, numberOfVertices) {
             var areaRatio = width * height / (NODE_WIDTH * NODE_WIDTH * numberOfVertices);
@@ -1303,9 +1310,24 @@
     }();
     var ElementRendererDecorator = function() {
         return {
+            decorateRenderer: function(renderer) {
+                this.elementRenderer = renderer;
+                if (this.elementRenderer.asynch === true) {
+                    this.asynch = true;
+                }
+            },
             init: function(element, container) {
                 if (this.elementRenderer.asynch === true) {
-                    this.elementRenderer.drawReadyCallback = this.doInit;
+                    var that = this;
+                    this.elementRenderer.drawReadyCallback = function() {
+                        var self = that;
+                        return function(uiElement, element) {
+                            self.doInit(uiElement, element);
+                            if (self.drawReadyCallback) {
+                                self.drawReadyCallback(uiElement, element);
+                            }
+                        };
+                    }();
                     this.elementRenderer.init(element, container);
                 } else {
                     this.elementRenderer.init(element, container);
@@ -1327,7 +1349,7 @@
     }();
     var D3EdgeLabelDecorator = function() {
         function D3EdgeLabelDecorator(rendererToBeDecorated) {
-            this.elementRenderer = rendererToBeDecorated;
+            this.decorateRenderer(rendererToBeDecorated);
         }
         utils.mixin(D3EdgeLabelDecorator.prototype, ElementRendererDecorator);
         utils.mixin(D3EdgeLabelDecorator.prototype, {
@@ -1340,7 +1362,7 @@
     }();
     var D3VertexBorderDecorator = function() {
         function D3VertexBorderDecorator(rendererToBeDecorated) {
-            this.elementRenderer = rendererToBeDecorated;
+            this.decorateRenderer(rendererToBeDecorated);
             this.doInit = function(uiElement, container) {
                 var vertex = uiElement.vertex;
                 var instanceSettings = vertex.getGraph().getSettings();
@@ -1357,7 +1379,7 @@
     }();
     var D3VertexLabelDecorator = function() {
         function D3VertexLabelDecorator(rendererToBeDecorated, settings) {
-            this.elementRenderer = rendererToBeDecorated;
+            this.decorateRenderer(rendererToBeDecorated);
             this.doInit = function(element, container) {
                 var containerBox = container.node().getBBox();
                 var edge = containerBox.height / 2;
@@ -1497,7 +1519,7 @@
                 this.zoom = d3.behavior.zoom().x(this.xScale).y(this.yScale).scaleExtent([ this.settings.zoom.minScale, this.settings.zoom.maxScale ]).on("zoom.canvas", this.zoomHandler);
                 initCommonDefs(this);
                 this.navigator = initNavigator(this.zoom, this.settings, this.graph);
-                initZoomPanControl(this.svg, this.zoom, this.settings);
+                initZoomPanControl(this.svg, this.zoom, this.settings, this.graph);
             },
             zoom: function(value) {
                 if (!arguments.length) {
@@ -1542,8 +1564,8 @@
             var navigatorSvg = d3.select(settings.navigatorContainer).append("svg").attr("width", settings.width * settings.navigator.scale).attr("height", settings.height * settings.navigator.scale).attr("class", "svg canvas");
             return new D3Navigator(navigatorSvg, zoom, d3.select("#panCanvas"), settings, graph);
         }
-        function initZoomPanControl(container, zoom, settings) {
-            var zoomPanControl = new D3ZoomPanControl(container, zoom, d3.select("#panCanvas"), settings);
+        function initZoomPanControl(container, zoom, settings, graph) {
+            var zoomPanControl = new D3ZoomPanControl(container, zoom, d3.select("#panCanvas"), settings, graph);
             zoomPanControl.render();
         }
         function initCommonDefs(context) {
@@ -1675,7 +1697,7 @@
         return D3Navigator;
     }();
     var D3ZoomPanControl = function() {
-        function D3ZoomPanControl(container, zoom, target, settings) {
+        function D3ZoomPanControl(container, zoom, target, settings, graph) {
             this.base = container;
             this.width = settings.width;
             this.height = settings.height;
@@ -1685,6 +1707,11 @@
             this.panScale = settings.zoomPanControl.panStep;
             this.x = settings.zoomPanControl.paddingLeft;
             this.y = settings.zoomPanControl.paddingTop;
+            this.graph = graph;
+            var control = this;
+            this.graph.on("graphZoomOut", function() {
+                doZoom(control, -7);
+            });
         }
         utils.mixin(D3ZoomPanControl.prototype, {
             render: function() {
@@ -2298,9 +2325,11 @@
         return Tween;
     }();
     var CircleLayout = function() {
-        function CircleLayout(duration, easing) {
+        function CircleLayout(duration, easing, ignoreVertex) {
             this.running = true;
             this.tween = new Tween(duration, easing);
+            this.ignoreVertex = ignoreVertex;
+            this.name = "circle";
         }
         CircleLayout.MIN_RADIUS = 100;
         var calculateRadius = function(vertexCount) {
@@ -2317,6 +2346,9 @@
                 var finishedVertices = vertices.length;
                 if (this.running) {
                     finishedVertices = 0;
+                    if (utils.isUndefined(this.ignoreVertex) || !this.ignoreVertex) {
+                        ignoredVertex = undefined;
+                    }
                     var numberOfVertices = utils.isUndefined(ignoredVertex) ? vertices.length : vertices.length - 1;
                     var radius = calculateRadius(numberOfVertices);
                     var scale = calculateScale(radius, width, height);
@@ -2367,7 +2399,8 @@
     var WheelLayout = function() {
         function WheelLayout(duration, easing) {
             this.running = true;
-            this.circleLayout = new CircleLayout(duration, easing);
+            this.circleLayout = new CircleLayout(duration, easing, true);
+            this.name = "wheel";
         }
         utils.mixin(WheelLayout.prototype, {
             step: function(vertices, edges, width, height, selectedVertex) {
@@ -2387,6 +2420,7 @@
         function GridLayout(duration, easing) {
             this.running = true;
             this.tween = new Tween(duration, easing);
+            this.name = "grid";
         }
         var calculateScale = function(width, height, rows, cols) {
             var widthScale = cols === 1 ? 1 : width / ((cols - 1) * (width / (cols - 1) + NODE_WIDTH));
@@ -2449,6 +2483,7 @@
             this.maxX = 0;
             this.maxY = 0;
             this.maxDepth = 0;
+            this.name = "tree";
         }
         NodeLinkTreeLayout.SIBLING_NODE_DISTANCE = 5;
         NodeLinkTreeLayout.SUBTREE_DISTANCE = 25;
@@ -2712,9 +2747,11 @@
             this.started = false;
             this.maxIteration = 700;
             this.tween = new Tween(duration, easing);
+            this.name = "fruchtermanReingold";
         }
         var EPSILON = 1e-6;
         var ALPHA = 1;
+        var padding = 10;
         var init = function(vertices, width, height, self) {
             var vertexCount = vertices.length;
             self.temp = width / 10;
@@ -2776,7 +2813,11 @@
                 y = height - borderWidth - Math.random() * borderWidth * 2;
             }
             uiVertex.endX = x;
+            uiVertex.endX = Math.max(uiVertex.endX, NODE_WIDTH / 2 + padding);
+            uiVertex.endX = Math.min(uiVertex.endX, width - NODE_WIDTH / 2 - padding);
             uiVertex.endY = y;
+            uiVertex.endY = Math.max(uiVertex.endY, NODE_WIDTH / 2 + padding);
+            uiVertex.endY = Math.min(uiVertex.endY, height - NODE_WIDTH / 2 - padding);
         };
         var cool = function(self, currentIteration) {
             self.temp *= 1 - currentIteration / self.maxIteration;
@@ -2793,7 +2834,7 @@
         utils.mixin(FruchtermanReingoldLayout.prototype, {
             step: function(vertices, edges, width, height) {
                 var finishedVertices = vertices.length;
-                var w = vertices.length * 2 * NODE_WIDTH;
+                var w = vertices.length * (NODE_WIDTH / 1.5);
                 var h = w * (height / width);
                 var scale = calculateScale(width, height, w, h);
                 if (this.running) {
@@ -2980,6 +3021,7 @@
                 }
                 var Layout = this.settings.layouts[layout];
                 this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
+                this.graph.trigger("graphZoomOut");
             },
             stop: function() {
                 this.timer.stop();

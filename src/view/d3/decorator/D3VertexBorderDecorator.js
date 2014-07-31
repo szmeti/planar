@@ -2,7 +2,7 @@
 var D3VertexBorderDecorator = (function () {
 
   function D3VertexBorderDecorator(rendererToBeDecorated) {
-    this.elementRenderer = rendererToBeDecorated;
+    this.decorateRenderer(rendererToBeDecorated);
 
     //if doInit() is called from asynch callback the context will change, so that the settings won't be recognized.
     // Don't move this function from this closure.

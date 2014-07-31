@@ -115,6 +115,8 @@ var Renderer = (function () {
       }
       var Layout = this.settings.layouts[layout];
       this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
+      // TODO: find another solution for zoom out when layout changed
+      this.graph.trigger('graphZoomOut');
     },
 
     stop: function () {

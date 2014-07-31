@@ -3,7 +3,8 @@ var WheelLayout = (function () {
 
   function WheelLayout(duration, easing) {
     this.running = true;
-    this.circleLayout = new CircleLayout(duration, easing);
+    this.circleLayout = new CircleLayout(duration, easing, true);
+    this.name = 'wheel';
   }
 
   utils.mixin(WheelLayout.prototype, {
