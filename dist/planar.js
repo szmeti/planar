@@ -3280,6 +3280,7 @@
             var nonMatchedFilters = 0;
             var filterCount = filters.length;
             var notApplied = 0;
+            var atLeastOneMatchedAndActive = false;
             for (var j = 0; j < filterCount; j++) {
                 var filterMatched = true;
                 var currentFilter = filters[j];
@@ -3296,13 +3297,15 @@
                 if (filterMatched) {
                     if (!currentFilter.active() && currentFilter.enabled()) {
                         nonMatchedFilters++;
+                    } else if (currentFilter.active()) {
+                        atLeastOneMatchedAndActive = true;
                     }
                     currentFilter.count(currentFilter.count() + 1);
                 } else if (currentFilter.active()) {
                     nonMatchedFilters++;
                 }
             }
-            return operator === AND ? nonMatchedFilters > 0 : nonMatchedFilters === filterCount - notApplied;
+            return operator === AND ? nonMatchedFilters > 0 : nonMatchedFilters === filterCount - notApplied || !atLeastOneMatchedAndActive;
         }
         function filterCanBeApplied(element, filter) {
             return utils.isOfType(element, Vertex) && filter.type() === VERTEX_FILTER || utils.isOfType(element, Edge) && filter.type() === EDGE_FILTER || filter.type() === BOTH_FILTER;
