@@ -33,7 +33,7 @@ var settings = {
 
   d3: {
     defaultVertexRenderer: new D3SymbolVertexRenderer('circle'),
-    defaultEdgeRenderer: D3LineEdgeRenderer,
+    defaultEdgeRenderer: new D3LineEdgeRenderer(),
 
     vertexRenderers: {
       'circle': new D3SymbolVertexRenderer('circle'),
@@ -42,28 +42,28 @@ var settings = {
       'square': new D3SymbolVertexRenderer('square'),
       'triangle-down': new D3SymbolVertexRenderer('triangle-down'),
       'triangle-up': new D3SymbolVertexRenderer('triangle-up'),
-      'query-vertex': D3QueryVertexRenderer,
-      'image-vertex': D3ImageVertexRenderer,
-      'query-result-vertex': D3QueryResultVertexRenderer,
-      'labeled-query-vertex' : new D3VertexLabelDecorator(D3QueryVertexRenderer, {
+      'query-vertex': new D3QueryVertexRenderer(),
+      'image-vertex': new D3ImageVertexRenderer(),
+      'query-result-vertex': new D3QueryResultVertexRenderer(),
+      'labeled-query-vertex' : new D3VertexLabelDecorator(new D3QueryVertexRenderer(), {
         labelInside: true,
         labelTop: true,
         padding: 10,
         labelPropertyKey: 'additionalLabel'
       }),
-      'labeled-image-vertex' : new D3VertexLabelDecorator(D3ImageVertexRenderer,{
+      'labeled-image-vertex' : new D3VertexLabelDecorator(new D3ImageVertexRenderer(),{
         labelInside: true,
         labelTop: false,
         padding: 10,
         labelPropertyKey: 'additionalLabel'
       }),
-      'bordered-query-vertex' : new D3VertexBorderDecorator(D3QueryVertexRenderer),
-      'bordered-image-vertex' : new D3VertexBorderDecorator(D3ImageVertexRenderer)
+      'bordered-query-vertex' : new D3VertexBorderDecorator(new D3QueryVertexRenderer()),
+      'bordered-image-vertex' : new D3VertexBorderDecorator(new D3ImageVertexRenderer())
     },
 
     edgeRenderers: {
-      'curved-line': D3DirectedLineEdgeRenderer,
-      'labeled-curved-line': new D3EdgeLabelDecorator(D3DirectedLineEdgeRenderer)
+      'curved-line': new D3DirectedLineEdgeRenderer(),
+      'labeled-curved-line': new D3EdgeLabelDecorator(new D3DirectedLineEdgeRenderer())
     }
   },
 

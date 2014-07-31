@@ -80,7 +80,7 @@
     $(document).ready(function () {
         var queryGraph = new planar.Graph();
 
-        var graph = new planar.Graph('#container', new planar.D3Engine());
+        var graph = new planar.Graph({container: '#graphCanvas', navigator: {enabled: false}});
 
 
         var v1 = graph.addVertex();

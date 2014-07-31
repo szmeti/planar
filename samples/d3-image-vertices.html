@@ -133,7 +133,7 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
-        planar.settings.d3.vertexRenderers['labeled-bordered-image-vertex'] = new planar.D3VertexLabelDecorator(new planar.D3VertexBorderDecorator(planar.D3ImageVertexRenderer), {
+        planar.settings.d3.vertexRenderers['labeled-bordered-image-vertex'] = new planar.D3VertexLabelDecorator(new planar.D3VertexBorderDecorator(new planar.D3ImageVertexRenderer()), {
             labelInside: false,
             labelTop: false,
             padding: 12,
