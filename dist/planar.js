@@ -2937,36 +2937,48 @@
             var Layout = this.settings.layouts[this.settings.defaultLayout];
             this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
         }
+        function addVertex(vertex, renderer) {
+            var uiVertex = {
+                id: vertex.getId(),
+                vertex: vertex
+            };
+            renderer.vertices.push(uiVertex);
+            renderer.verticesById[uiVertex.id] = uiVertex;
+        }
+        function addEdge(edge, renderer) {
+            var inId = edge.getInVertex().getId();
+            var outId = edge.getOutVertex().getId();
+            var uiEdge = {
+                id: edge.getId(),
+                edge: edge,
+                inVertex: renderer.verticesById[inId],
+                outVertex: renderer.verticesById[outId]
+            };
+            renderer.edges.push(uiEdge);
+            renderer.edgesById[uiEdge.id] = uiEdge;
+        }
+        function removeVertex(vertex, renderer) {
+            var uiVertex = renderer.verticesById[vertex.getId()];
+            utils.remove(uiVertex, renderer.vertices);
+            delete renderer.verticesById[uiVertex.id];
+        }
+        function removeEdge(edge, renderer) {
+            var uiEdge = renderer.edgesById[edge.getId()];
+            utils.remove(uiEdge, renderer.edges);
+            delete renderer.edgesById[uiEdge.id];
+        }
         function setUpEventHandlers(graph, renderer) {
             graph.on("vertexAdded", function(event, vertex) {
-                var uiVertex = {
-                    id: vertex.getId(),
-                    vertex: vertex
-                };
-                renderer.vertices.push(uiVertex);
-                renderer.verticesById[uiVertex.id] = uiVertex;
+                addVertex(vertex, renderer);
             });
             graph.on("edgeAdded", function(event, edge) {
-                var inId = edge.getInVertex().getId();
-                var outId = edge.getOutVertex().getId();
-                var uiEdge = {
-                    id: edge.getId(),
-                    edge: edge,
-                    inVertex: renderer.verticesById[inId],
-                    outVertex: renderer.verticesById[outId]
-                };
-                renderer.edges.push(uiEdge);
-                renderer.edgesById[uiEdge.id] = uiEdge;
+                addEdge(edge, renderer);
             });
             graph.on("vertexRemoved", function(event, vertex) {
-                var uiVertex = renderer.verticesById[vertex.getId()];
-                utils.remove(uiVertex, renderer.vertices);
-                delete renderer.verticesById[uiVertex.id];
+                removeVertex(vertex, renderer);
             });
             graph.on("edgeRemoved", function(event, edge) {
-                var uiEdge = renderer.edgesById[edge.getId()];
-                utils.remove(uiEdge, renderer.edges);
-                delete renderer.edgesById[uiEdge.id];
+                removeEdge(edge, renderer);
             });
             graph.on("vertexClicked", function(event, vertex) {
                 this.renderer.selectedVertex = vertex;
@@ -3004,7 +3016,15 @@
                 this.engine.init(this.settings, this.graph);
                 var self = this;
                 this.graph.forEachVertex(function(vertex) {'use strict';
+                    if (!self.verticesById[vertex.getId()]) {
+                        addVertex(vertex, self);
+                    }
                     self.engine.initVertex(vertex);
+                });
+                this.graph.forEachEdge(function(edge) {'use strict';
+                    if (!self.edgesById[edge.getId()]) {
+                        addEdge(edge, self);
+                    }
                 });
                 this.initialized = true;
             },
