@@ -3221,7 +3221,7 @@
                     }
                 }
                 if (filterMatched) {
-                    if (!currentFilter.active()) {
+                    if (!currentFilter.active() && currentFilter.enabled()) {
                         nonMatchedFilters++;
                     }
                     currentFilter.count(currentFilter.count() + 1);
@@ -3347,6 +3347,7 @@
             this.filterId = null;
             this.elementCount = 0;
             this.activeFlag = true;
+            this.enable = true;
             this.elementType = BOTH_FILTER;
             this.labelFilterActivated = false;
             this.initHasConditions();
@@ -3365,6 +3366,13 @@
                     return this.activeFlag;
                 }
                 this.activeFlag = value;
+                return this;
+            },
+            enabled: function(value) {
+                if (!arguments.length) {
+                    return this.enable;
+                }
+                this.enable = value;
                 return this;
             },
             type: function(value) {

@@ -135,7 +135,7 @@ var ElementFilterManager = (function () {
         }
       }
       if (filterMatched) {
-        if (!currentFilter.active()) {
+        if (!currentFilter.active() && currentFilter.enabled()) {
           nonMatchedFilters++;
         }
         currentFilter.count(currentFilter.count() + 1);

@@ -6,6 +6,7 @@ var ElementFilter = (function () {
     this.filterId = null;
     this.elementCount = 0;
     this.activeFlag = true;
+    this.enable = true;
     this.elementType = BOTH_FILTER;
     this.labelFilterActivated = false;
     this.initHasConditions();
@@ -28,6 +29,14 @@ var ElementFilter = (function () {
         return this.activeFlag;
       }
       this.activeFlag = value;
+      return this;
+    },
+
+    enabled: function (value) {
+      if (!arguments.length) {
+        return this.enable;
+      }
+      this.enable = value;
       return this;
     },
 
