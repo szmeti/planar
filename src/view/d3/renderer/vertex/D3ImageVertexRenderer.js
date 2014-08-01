@@ -36,7 +36,7 @@ var D3ImageVertexRenderer = (function () {
 
     },
 
-    initDefs: function (defs) {
+    initDefs: function () {
     }
 
   });

@@ -8,14 +8,21 @@ var Renderer = (function () {
     this.container = instanceSettings.container;
     this.navigatorContainer = instanceSettings.navigatorContainer;
     this.engine = instanceSettings.engine;
-    this.initialized = false;
     this.settings = instanceSettings;
-    this.vertices = [];
-    this.verticesById = {};
-    this.edges = [];
-    this.edgesById = {};
-    var Layout = this.settings.layouts[this.settings.defaultLayout];
-    this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
+    this.layoutId = this.settings.defaultLayout;
+    reset(this);
+    setUpEventHandlers(graph, this);
+  }
+
+  function reset(renderer) {
+    renderer.initialized = false;
+    renderer.vertices = [];
+    renderer.verticesById = {};
+    renderer.edges = [];
+    renderer.edgesById = {};
+
+    var Layout = renderer.settings.layouts[renderer.layoutId];
+    renderer.layout = new Layout(renderer.settings.animationDuration, renderer.settings.easing);
   }
 
   function addVertex(vertex, renderer) {
@@ -74,6 +81,47 @@ var Renderer = (function () {
       vertex.uiElement.remove();
       this.renderer.selectedVertex = vertex;
     });
+
+    if (!renderer.settings.width) {
+      var timeOfLastResizeEvent;
+      var timeout = false;
+      var delta = 200;
+
+      window.addEventListener('resize', function () {
+        timeOfLastResizeEvent = new Date();
+        if (timeout === false) {
+          timeout = true;
+          setTimeout(checkIfResizeEnded, delta);
+        }
+      });
+
+      var checkIfResizeEnded = function () {
+        if (new Date() - timeOfLastResizeEvent < delta) {
+          setTimeout(checkIfResizeEnded, delta);
+        } else {
+          timeout = false;
+          resize(renderer);
+        }
+      };
+    }
+  }
+
+  function resize(renderer) {
+    renderer.settings.width = null;
+    renderer.stop();
+    reset(renderer);
+    renderer.render();
+  }
+
+  function determineContainerWidth(containerId) {
+    var container = document.getElementById(containerId.substring(1));
+    if (!container) {
+      throw {
+        message: 'Cannot find graph container'
+      };
+    }
+
+    return container.offsetWidth;
   }
 
   utils.mixin(Renderer.prototype, {
@@ -108,8 +156,11 @@ var Renderer = (function () {
     },
 
     init: function () {
-      setUpEventHandlers(this.graph, this);
-      this.engine.init(this.settings, this.graph);
+      if (!this.settings.width) {
+        this.settings.width = determineContainerWidth(this.settings.container);
+      }
+
+      this.engine.init(this.settings, this.graph, this);
 
       var self = this;
 
@@ -141,6 +192,7 @@ var Renderer = (function () {
         uiVertex.endX = undefined;
         uiVertex.endY = undefined;
       }
+      this.layoutId = layout;
       var Layout = this.settings.layouts[layout];
       this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
       // TODO: find another solution for zoom out when layout changed
@@ -149,6 +201,8 @@ var Renderer = (function () {
 
     stop: function () {
       this.timer.stop();
+      this.timer = null;
+      this.engine.stop();
     }
 
   });

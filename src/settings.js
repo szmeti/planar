@@ -67,7 +67,6 @@ var settings = {
     }
   },
 
-  width: 900,
   height: 680,
 
   zoom: {

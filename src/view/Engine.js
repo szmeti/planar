@@ -19,6 +19,9 @@ var Engine = (function () {
     },
 
     renderVertex: function () {
+    },
+
+    stop: function() {
     }
 
   };

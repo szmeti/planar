@@ -35,7 +35,7 @@ var D3Navigator = (function() {
       navigator.scale = d3.event.scale;
     });
 
-    D3Navigator.node = navigatorClipPath.node();
+    this.node = navigatorClipPath.node();
 
     this.frame = navigatorClipPath.append('g')
       .attr('class', 'frame');
@@ -56,11 +56,11 @@ var D3Navigator = (function() {
     this.frame.call(navigatorDrag);
 
     graph.on('graphUpdated', function() {
-      reDraw(navigator);
+      navigator.renderNavigator = true;
     });
 
     graph.on('vertexDrag', function() {
-      reDraw(navigator);
+      navigator.renderNavigator = true;
     });
 
   }
@@ -85,17 +85,12 @@ var D3Navigator = (function() {
       node.removeAttribute('id');
       d3.selectAll('.navigator .panCanvas').remove();
       this.base.selectAll('.navigator .canvas').remove();
-      D3Navigator.node.appendChild(node);
+      this.node.appendChild(node);
       this.frame.node().parentNode.appendChild(this.frame.node());
       d3.select(node).attr('transform', 'translate(1,1)');
       this.renderNavigator = false;
     }
   });
-
-  function reDraw(navigator) {
-    navigator.renderNavigator = true;
-    navigator.render();
-  }
 
   function shouldShowNavigator() {
     return settings.zoom.enabled && settings.navigator.enabled;

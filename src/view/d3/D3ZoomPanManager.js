@@ -2,8 +2,8 @@
 var D3ZoomPanManager = (function () {
 
   function D3ZoomPanManager(container, defs, settings, graph) {
-    this.scale           = 1;
-    this.translation     = [0,0];
+    this.scale = 1;
+    this.translation = [0, 0];
     this.xScale = getXScale(settings);
     this.yScale = getYScale(settings);
     this.svg = container;
@@ -16,13 +16,44 @@ var D3ZoomPanManager = (function () {
   }
 
   utils.mixin(D3ZoomPanManager.prototype, {
-    init : function() {
+    init: function () {
       var context = this;
+
+      var zoomCallback = (function () {
+        var settings = context.settings;
+
+        return function (newScale) {
+          if (!settings.zoom.enabled) {
+            return;
+          }
+          if (d3.event) {
+            this.scale = d3.event.scale;
+          } else {
+            this.scale = newScale;
+          }
+          if (settings.drag.enabled) {
+            var topBound = -settings.height * this.scale + settings.height,
+              bottomBound = 0,
+              leftBound = -settings.width * this.scale + settings.width,
+              rightBound = 0;
+            // limit translation to thresholds
+            this.translation = d3.event ? d3.event.translate : [0, 0];
+            this.translation = [
+              Math.max(Math.min(this.translation[0], rightBound), leftBound),
+              Math.max(Math.min(this.translation[1], bottomBound), topBound)
+            ];
+          }
+
+          d3.select('.panCanvas, .panCanvas .bg')
+            .attr('transform', 'translate(' + this.translation + ')' + ' scale(' + this.scale + ')');
+        };
+      })();
+
       this.zoom = d3.behavior.zoom()
         .x(this.xScale)
         .y(this.yScale)
         .scaleExtent([this.settings.zoom.minScale, this.settings.zoom.maxScale])
-        .on('zoom.canvas', this.zoomHandler);
+        .on('zoom.canvas', zoomCallback);
 
       initCommonDefs(this);
 
@@ -30,7 +61,7 @@ var D3ZoomPanManager = (function () {
       initZoomPanControl(this.svg, this.zoom, this.settings, this.graph);
     },
 
-    zoom : function(value) {
+    zoom: function (value) {
       if (!arguments.length) {
         return this.zoom;
       }
@@ -38,35 +69,11 @@ var D3ZoomPanManager = (function () {
       return this;
     },
 
-    zoomHandler : function(newScale) {
-      if (!settings.zoom.enabled) { return; }
-      if (d3.event) {
-        this.scale = d3.event.scale;
-      } else {
-        this.scale = newScale;
-      }
-      if (settings.drag.enabled) {
-        var topBound = -settings.height * this.scale + settings.height,
-          bottomBound = 0,
-          leftBound = -settings.width * this.scale + settings.width,
-          rightBound = 0;
-        // limit translation to thresholds
-        this.translation = d3.event ? d3.event.translate : [0, 0];
-        this.translation = [
-          Math.max(Math.min(this.translation[0], rightBound), leftBound),
-          Math.max(Math.min(this.translation[1], bottomBound), topBound)
-        ];
-      }
-
-      d3.select('.panCanvas, .panCanvas .bg')
-        .attr('transform', 'translate(' + this.translation + ')' + ' scale(' + this.scale + ')');
-    },
-
-    getNavigator : function() {
+    getNavigator: function () {
       return this.navigator;
     },
 
-    getGraphContainer : function () {
+    getGraphContainer: function () {
       return this.graphContainer;
     }
   });
@@ -112,7 +119,7 @@ var D3ZoomPanManager = (function () {
       .attr('height', context.settings.height);
 
     var outerWrapper = context.svg.append('g')
-      .attr('id','outerWrapper')
+      .attr('id', 'outerWrapper')
       .attr('class', 'wrapper outer');
 
     outerWrapper.append('rect')
@@ -143,7 +150,7 @@ var D3ZoomPanManager = (function () {
       .attr('height', context.settings.height);
 
     context.graphContainer = panCanvas.append('g')
-      .attr('id','graphElements')
+      .attr('id', 'graphElements')
       .attr('transform', 'scale(0.5)');
   }
 

@@ -682,8 +682,6 @@
             },
             destroy: function() {
                 this.renderer.stop();
-                d3.select(this.settings.container).selectAll("*").remove();
-                d3.select(this.settings.navigatorContainer).selectAll("*").remove();
             },
             updateSettings: function(instanceSettings) {
                 instanceSettings = instanceSettings || {};
@@ -1408,7 +1406,8 @@
             },
             beforeRender: function() {},
             initVertex: function() {},
-            renderVertex: function() {}
+            renderVertex: function() {},
+            stop: function() {}
         };
     }();
     var D3SvgImageDownloader = function() {
@@ -1516,7 +1515,26 @@
         utils.mixin(D3ZoomPanManager.prototype, {
             init: function() {
                 var context = this;
-                this.zoom = d3.behavior.zoom().x(this.xScale).y(this.yScale).scaleExtent([ this.settings.zoom.minScale, this.settings.zoom.maxScale ]).on("zoom.canvas", this.zoomHandler);
+                var zoomCallback = function() {
+                    var settings = context.settings;
+                    return function(newScale) {
+                        if (!settings.zoom.enabled) {
+                            return;
+                        }
+                        if (d3.event) {
+                            this.scale = d3.event.scale;
+                        } else {
+                            this.scale = newScale;
+                        }
+                        if (settings.drag.enabled) {
+                            var topBound = -settings.height * this.scale + settings.height, bottomBound = 0, leftBound = -settings.width * this.scale + settings.width, rightBound = 0;
+                            this.translation = d3.event ? d3.event.translate : [ 0, 0 ];
+                            this.translation = [ Math.max(Math.min(this.translation[0], rightBound), leftBound), Math.max(Math.min(this.translation[1], bottomBound), topBound) ];
+                        }
+                        d3.select(".panCanvas, .panCanvas .bg").attr("transform", "translate(" + this.translation + ")" + " scale(" + this.scale + ")");
+                    };
+                }();
+                this.zoom = d3.behavior.zoom().x(this.xScale).y(this.yScale).scaleExtent([ this.settings.zoom.minScale, this.settings.zoom.maxScale ]).on("zoom.canvas", zoomCallback);
                 initCommonDefs(this);
                 this.navigator = initNavigator(this.zoom, this.settings, this.graph);
                 initZoomPanControl(this.svg, this.zoom, this.settings, this.graph);
@@ -1527,22 +1545,6 @@
                 }
                 this.zoom = value;
                 return this;
-            },
-            zoomHandler: function(newScale) {
-                if (!settings.zoom.enabled) {
-                    return;
-                }
-                if (d3.event) {
-                    this.scale = d3.event.scale;
-                } else {
-                    this.scale = newScale;
-                }
-                if (settings.drag.enabled) {
-                    var topBound = -settings.height * this.scale + settings.height, bottomBound = 0, leftBound = -settings.width * this.scale + settings.width, rightBound = 0;
-                    this.translation = d3.event ? d3.event.translate : [ 0, 0 ];
-                    this.translation = [ Math.max(Math.min(this.translation[0], rightBound), leftBound), Math.max(Math.min(this.translation[1], bottomBound), topBound) ];
-                }
-                d3.select(".panCanvas, .panCanvas .bg").attr("transform", "translate(" + this.translation + ")" + " scale(" + this.scale + ")");
             },
             getNavigator: function() {
                 return this.navigator;
@@ -1631,7 +1633,7 @@
             this.zoom.on("zoom.navigator", function() {
                 navigator.scale = d3.event.scale;
             });
-            D3Navigator.node = navigatorClipPath.node();
+            this.node = navigatorClipPath.node();
             this.frame = navigatorClipPath.append("g").attr("class", "frame");
             this.frame.append("rect").attr("class", "background").attr("width", this.width).attr("height", this.height);
             var navigatorDrag = d3.behavior.drag().on("dragstart.navigator", function() {
@@ -1641,10 +1643,10 @@
             });
             this.frame.call(navigatorDrag);
             graph.on("graphUpdated", function() {
-                reDraw(navigator);
+                navigator.renderNavigator = true;
             });
             graph.on("vertexDrag", function() {
-                reDraw(navigator);
+                navigator.renderNavigator = true;
             });
         }
         utils.mixin(D3Navigator.prototype, {
@@ -1660,16 +1662,12 @@
                 node.removeAttribute("id");
                 d3.selectAll(".navigator .panCanvas").remove();
                 this.base.selectAll(".navigator .canvas").remove();
-                D3Navigator.node.appendChild(node);
+                this.node.appendChild(node);
                 this.frame.node().parentNode.appendChild(this.frame.node());
                 d3.select(node).attr("transform", "translate(1,1)");
                 this.renderNavigator = false;
             }
         });
-        function reDraw(navigator) {
-            navigator.renderNavigator = true;
-            navigator.render();
-        }
         function shouldShowNavigator() {
             return settings.zoom.enabled && settings.navigator.enabled;
         }
@@ -1806,6 +1804,7 @@
         utils.mixin(D3Engine.prototype, {
             initEngine: function(settings, graph) {
                 this.graph = graph;
+                this.settings = settings;
                 var svg = this.svg = d3.select(settings.container).append("svg").attr("id", "graph-canvas").attr("class", "svg canvas").attr("width", settings.width).attr("height", settings.height);
                 svg.append("rect").attr("class", "overlay").attr("width", settings.width).attr("height", settings.height);
                 var defs = svg.append("defs");
@@ -1827,11 +1826,18 @@
                 var vertexManager = new D3VertexManager(vertexEnter);
                 vertexManager.addDragToVertices();
                 updateEdgePositions(edgeSet);
-                this.zoomPanManager.getNavigator().render();
+                var navigator = this.zoomPanManager.getNavigator();
+                if (navigator !== null) {
+                    navigator.render();
+                }
             },
             saveAsImage: function() {
                 var imageDownloader = new D3SvgImageDownloader(d3.select("#graph-canvas"), this.graph, true);
                 imageDownloader.download();
+            },
+            stop: function() {
+                d3.select(this.settings.container).selectAll("*").remove();
+                d3.select(this.settings.navigatorContainer).selectAll("*").remove();
             }
         });
         function bindData(svg, type, elements) {
@@ -2040,7 +2046,7 @@
                     self.drawReadyCallback(uiVertex, element);
                 };
             },
-            initDefs: function(defs) {}
+            initDefs: function() {}
         });
         return D3ImageVertexRenderer;
     }();
@@ -2939,14 +2945,19 @@
             this.container = instanceSettings.container;
             this.navigatorContainer = instanceSettings.navigatorContainer;
             this.engine = instanceSettings.engine;
-            this.initialized = false;
             this.settings = instanceSettings;
-            this.vertices = [];
-            this.verticesById = {};
-            this.edges = [];
-            this.edgesById = {};
-            var Layout = this.settings.layouts[this.settings.defaultLayout];
-            this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
+            this.layoutId = this.settings.defaultLayout;
+            reset(this);
+            setUpEventHandlers(graph, this);
+        }
+        function reset(renderer) {
+            renderer.initialized = false;
+            renderer.vertices = [];
+            renderer.verticesById = {};
+            renderer.edges = [];
+            renderer.edgesById = {};
+            var Layout = renderer.settings.layouts[renderer.layoutId];
+            renderer.layout = new Layout(renderer.settings.animationDuration, renderer.settings.easing);
         }
         function addVertex(vertex, renderer) {
             var uiVertex = {
@@ -2998,6 +3009,41 @@
                 vertex.uiElement.remove();
                 this.renderer.selectedVertex = vertex;
             });
+            if (!renderer.settings.width) {
+                var timeOfLastResizeEvent;
+                var timeout = false;
+                var delta = 200;
+                window.addEventListener("resize", function() {
+                    timeOfLastResizeEvent = new Date();
+                    if (timeout === false) {
+                        timeout = true;
+                        setTimeout(checkIfResizeEnded, delta);
+                    }
+                });
+                var checkIfResizeEnded = function() {
+                    if (new Date() - timeOfLastResizeEvent < delta) {
+                        setTimeout(checkIfResizeEnded, delta);
+                    } else {
+                        timeout = false;
+                        resize(renderer);
+                    }
+                };
+            }
+        }
+        function resize(renderer) {
+            renderer.settings.width = null;
+            renderer.stop();
+            reset(renderer);
+            renderer.render();
+        }
+        function determineContainerWidth(containerId) {
+            var container = document.getElementById(containerId.substring(1));
+            if (!container) {
+                throw {
+                    message: "Cannot find graph container"
+                };
+            }
+            return container.offsetWidth;
         }
         utils.mixin(Renderer.prototype, {
             render: function(steps) {
@@ -3023,8 +3069,10 @@
                 });
             },
             init: function() {
-                setUpEventHandlers(this.graph, this);
-                this.engine.init(this.settings, this.graph);
+                if (!this.settings.width) {
+                    this.settings.width = determineContainerWidth(this.settings.container);
+                }
+                this.engine.init(this.settings, this.graph, this);
                 var self = this;
                 this.graph.forEachVertex(function(vertex) {'use strict';
                     if (!self.verticesById[vertex.getId()]) {
@@ -3050,12 +3098,15 @@
                     uiVertex.endX = undefined;
                     uiVertex.endY = undefined;
                 }
+                this.layoutId = layout;
                 var Layout = this.settings.layouts[layout];
                 this.layout = new Layout(this.settings.animationDuration, this.settings.easing);
                 this.graph.trigger("graphZoomOut");
             },
             stop: function() {
                 this.timer.stop();
+                this.timer = null;
+                this.engine.stop();
             }
         });
         return Renderer;
@@ -3146,7 +3197,6 @@
                 "labeled-curved-line": new D3EdgeLabelDecorator(new D3DirectedLineEdgeRenderer())
             }
         },
-        width: 900,
         height: 680,
         zoom: {
             enabled: true,

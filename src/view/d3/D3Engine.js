@@ -10,11 +10,12 @@ var D3Engine = (function () {
 
     initEngine: function (settings, graph) {
       this.graph = graph;
+      this.settings = settings;
       var svg = this.svg = d3.select(settings.container)
         .append('svg')
-        .attr('id','graph-canvas')
+        .attr('id', 'graph-canvas')
         .attr('class', 'svg canvas')
-        .attr('width',  settings.width)
+        .attr('width', settings.width)
         .attr('height', settings.height);
 
       svg.append('rect')
@@ -29,7 +30,7 @@ var D3Engine = (function () {
 
       var d3Renderers = ElementRendererProvider.getAll('d3', settings);
 
-      for (var i = 0; i < d3Renderers.length; i++){
+      for (var i = 0; i < d3Renderers.length; i++) {
         if (typeof d3Renderers[i].initDefs === 'function') {
           d3Renderers[i].initDefs(defs);
         }
@@ -46,12 +47,21 @@ var D3Engine = (function () {
       var vertexManager = new D3VertexManager(vertexEnter);
       vertexManager.addDragToVertices();
       updateEdgePositions(edgeSet);
-      this.zoomPanManager.getNavigator().render();
+
+      var navigator = this.zoomPanManager.getNavigator();
+      if (navigator !== null) {
+        navigator.render();
+      }
     },
 
-    saveAsImage: function() {
+    saveAsImage: function () {
       var imageDownloader = new D3SvgImageDownloader(d3.select('#graph-canvas'), this.graph, true);
       imageDownloader.download();
+    },
+
+    stop: function () {
+      d3.select(this.settings.container).selectAll('*').remove();
+      d3.select(this.settings.navigatorContainer).selectAll('*').remove();
     }
 
   });
@@ -79,7 +89,7 @@ var D3Engine = (function () {
     element.each(function (uiElement) {
       var elementRenderer = ElementRendererProvider.getRenderer(uiElement[type], 'd3', type);
       uiElement.g = d3.select(this);
-      elementRenderer.init(uiElement,  uiElement.g);
+      elementRenderer.init(uiElement, uiElement.g);
     });
 
     element.on('click', function (uiElement) {
