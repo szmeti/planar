@@ -101,7 +101,9 @@ var settings = {
     borderColor : '#000000',
     borderWeight : 2,
     borderRadius : 0,
-    borderPadding : 5
+    borderPadding : 5,
+    vertexIconsPropertyKey : 'icons',
+    iconDefaultColor: '#000000'
   },
 
   edge : {

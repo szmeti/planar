@@ -6,8 +6,8 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF8">
 
     <style type="text/css">
-        body{
-            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             font-size: 14px;
             color: #666666;
             text-shadow: 0 1px 0 #ffffff;
@@ -15,20 +15,23 @@
 
         #container {
             /*background-color: #eceaf3;*/
-            clear:both;
+            clear: both;
         }
 
         .canvas .wrapper.outer > .background {
             fill: #000000;
         }
+
         .canvas .wrapper.inner > .background {
             cursor: move;
         }
+
         .canvas .background {
             fill: #F6F6F6;
             stroke: #333333;
             cursor: move;
         }
+
         .canvas .panCanvas {
             cursor: move;
         }
@@ -43,7 +46,7 @@
             stroke: #999;
             stroke-width: 2;
             cursor: pointer;
-            fill:none;
+            fill: none;
         }
 
         .edge:hover {
@@ -74,10 +77,10 @@
         }
 
         .query-vertex-box {
-            fill:url(#queryVertexDefaultFillScheme);
-            fill-opacity:1;
+            fill: url(#queryVertexDefaultFillScheme);
+            fill-opacity: 1;
             stroke: #b3b3b3;
-            stroke-width:1;
+            stroke-width: 1;
         }
 
         .alias-label {
@@ -103,8 +106,8 @@
             pointer-events: none;
         }
 
-        .zoomPanButton:hover{
-           stroke-width: 2;
+        .zoomPanButton:hover {
+            stroke-width: 2;
         }
 
         #graphCanvas {
@@ -139,6 +142,8 @@
             padding: 12,
             labelPropertyKey: 'additionalLabel'
         });
+
+        planar.settings.d3.vertexRenderers['image-vertex-with-icons'] = new planar.D3VertexIconDecorator(new planar.D3ImageVertexRenderer());
 
         var graph = new planar.Graph({container: '#graphCanvas', navigatorContainer: '#navigatorContainer'});
 
@@ -196,6 +201,19 @@
         v5.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/orange.png");
         v5.setProperty(planar.PROP_TYPE, "labeled-bordered-image-vertex");
 
+        var v6 = graph.addVertex();
+        v6.setProperty(planar.PROP_TYPE, "image-vertex-with-icons");
+        v6.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/orange.png");
+        v6.setProperty("icons", [
+            {
+                id: 'icon-spam',
+                color: '#ff0000'
+            },
+            {
+                id: 'icon-airplane'
+            }
+        ]);
+
         var e1 = graph.addEdge(null, v1, v2, "a");
         e1.setProperty('lineWeight', 5);
         e1.setProperty(planar.PROP_TYPE, "labeled-curved-line");
@@ -225,8 +243,8 @@
 
         graph.render();
 
-        $('#saveAsImage').click(function() {
-           graph.saveAsImage();
+        $('#saveAsImage').click(function () {
+            graph.saveAsImage();
         });
 
     });

@@ -18,6 +18,7 @@ exports.D3ZoomPanControl = D3ZoomPanControl;
 exports.ElementRendererDecorator = ElementRendererDecorator;
 exports.D3VertexLabelDecorator = D3VertexLabelDecorator;
 exports.D3VertexBorderDecorator = D3VertexBorderDecorator;
+exports.D3VertexIconDecorator = D3VertexIconDecorator;
 exports.D3EdgeLabelDecorator = D3EdgeLabelDecorator;
 exports.D3Engine = D3Engine;
 exports.D3ImageVertexRenderer = D3ImageVertexRenderer;

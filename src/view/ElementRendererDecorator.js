@@ -46,7 +46,7 @@ var ElementRendererDecorator = (function () {
     doInit: function (element, container) {
     },
 
-    doInitDefs: function (defs) {
+    doInitDefs: function () {
     },
 
     doUpdatePosition: function (uiEdge) {
