@@ -19,7 +19,7 @@ var D3VertexIconDecorator = (function () {
       if (utils.isArray(icons)) {
         var containerBox = container.node().getBBox();
 
-        var startX = -containerBox.width / 2;
+        var startX = -containerBox.width / 2 + PADDING;
         for (var i = 0; i < icons.length; i++) {
           var icon = icons[i];
           var fillColor = icon.color || instanceSettings.vertex.iconDefaultColor;
@@ -27,7 +27,7 @@ var D3VertexIconDecorator = (function () {
           container.append('use').
             attr('xlink:href', '#' + icon.id).
             attr('x', startX + i * (ICON_SIZE + PADDING)).
-            attr('y', containerBox.height / 2 - ICON_SIZE).
+            attr('y', containerBox.height / 2 - ICON_SIZE - PADDING).
             attr('fill', fillColor);
         }
       }

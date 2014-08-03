@@ -1389,11 +1389,11 @@
                 var icons = vertex.getProperty(instanceSettings.vertex.vertexIconsPropertyKey);
                 if (utils.isArray(icons)) {
                     var containerBox = container.node().getBBox();
-                    var startX = -containerBox.width / 2;
+                    var startX = -containerBox.width / 2 + PADDING;
                     for (var i = 0; i < icons.length; i++) {
                         var icon = icons[i];
                         var fillColor = icon.color || instanceSettings.vertex.iconDefaultColor;
-                        container.append("use").attr("xlink:href", "#" + icon.id).attr("x", startX + i * (ICON_SIZE + PADDING)).attr("y", containerBox.height / 2 - ICON_SIZE).attr("fill", fillColor);
+                        container.append("use").attr("xlink:href", "#" + icon.id).attr("x", startX + i * (ICON_SIZE + PADDING)).attr("y", containerBox.height / 2 - ICON_SIZE - PADDING).attr("fill", fillColor);
                     }
                 }
             },
