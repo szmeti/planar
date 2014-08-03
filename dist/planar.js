@@ -3135,8 +3135,10 @@
                 this.graph.trigger("graphZoomOut");
             },
             stop: function() {
-                this.timer.stop();
-                this.timer = null;
+                if (this.timer) {
+                    this.timer.stop();
+                    this.timer = null;
+                }
                 this.engine.stop();
             }
         });
