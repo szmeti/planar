@@ -24,7 +24,7 @@ var D3SvgImageDownloader = (function () {
   function modifySvgElements(element, ctx) {
     changeImageSrcToBase64Uri(element, ctx);
     collectOriginalStyles(element, ctx);
-    DomUtils.explicitlySetStyle(element);
+    DomUtils.explicitlySetStyle(element, ['defs'], true);
   }
 
   function changeImageSrcToBase64Uri(element, ctx) {

@@ -27,8 +27,11 @@ var DomUtils = {
     img.src = url;
   },
 
-  explicitlySetStyle: function (element) {
-    if (element.nodeType !== window.Node.ELEMENT_NODE) {
+  explicitlySetStyle: function (element, skippedElements, skipChildren) {
+    skipChildren = skipChildren || false;
+    if (element.nodeType !== window.Node.ELEMENT_NODE ||
+        skippedElements.indexOf(element.nodeName) > -1 ||
+       (skipChildren && skippedElements.indexOf(element.parentNode.nodeName) > -1)) {
       return;
     }
     var computedStyle = getComputedStyle(element);

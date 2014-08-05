@@ -101,11 +101,13 @@ var D3QueryVertexRenderer = (function () {
 
       whiteGradient.append('stop')
         .attr('offset', '0%')
-        .attr('style', 'stop-color:#f9f9f9;stop-opacity:1');
+        .attr('stop-color', '#f9f9f9')
+        .attr('stop-opacity', '1');
 
       whiteGradient.append('stop')
         .attr('offset', '100%')
-        .attr('style', 'stop-color:#edebf4;stop-opacity:1');
+        .attr('stop-color', '#edebf4')
+        .attr('stop-opacity', '1');
 
       var closeIcon = defs.append('symbol')
         .attr('id', 'icon-close')

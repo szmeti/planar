@@ -259,8 +259,9 @@
             };
             img.src = url;
         },
-        explicitlySetStyle: function(element) {
-            if (element.nodeType !== window.Node.ELEMENT_NODE) {
+        explicitlySetStyle: function(element, skippedElements, skipChildren) {
+            skipChildren = skipChildren || false;
+            if (element.nodeType !== window.Node.ELEMENT_NODE || skippedElements.indexOf(element.nodeName) > -1 || skipChildren && skippedElements.indexOf(element.parentNode.nodeName) > -1) {
                 return;
             }
             var computedStyle = getComputedStyle(element);
@@ -1393,16 +1394,13 @@
                     for (var i = 0; i < icons.length; i++) {
                         var icon = icons[i];
                         var fillColor = icon.color || instanceSettings.vertex.iconDefaultColor;
-                        container.append("use").attr("xlink:href", "#" + icon.id).attr("x", startX + i * (ICON_SIZE + PADDING)).attr("y", containerBox.height / 2 - ICON_SIZE - PADDING);
-                        d3.select("#" + icon.id).attr("fill", fillColor);
+                        container.append("use").attr("xlink:href", "#" + icon.id).attr("x", startX + i * (ICON_SIZE + PADDING)).attr("y", containerBox.height / 2 - ICON_SIZE - PADDING).attr("fill", fillColor);
                     }
                 }
             },
             doInitDefs: function(defs) {
-                var spamIcon = defs.append("g").attr("id", "icon-spam");
-                spamIcon.append("path").attr("d", "M16 11.5l-4.5-11.5h-7l-4.5 4.5v7l4.5 " + "4.5h7l4.5-4.5v-7l-4.5-4.5zM9 13h-2v-2h2v2zM9 9h-2v-6h2v6z");
-                var airplaneIcon = defs.append("g").attr("id", "icon-airplane");
-                airplaneIcon.append("path").attr("d", "M12 9.999l-2.857-2.857 6.857-5.143-2-2-8.571 " + "3.429-2.698-2.699c-0.778-0.778-1.864-0.964-2.414-0.414s-0.364 1.636 0.414 " + "2.414l2.698 2.698-3.429 8.572 2 2 5.144-6.857 2.857 2.857v4h2l1-3 3-1v-2l-4 0z");
+                defs.append("path").attr("id", "icon-spam").attr("d", "M16 11.5l-4.5-11.5h-7l-4.5 4.5v7l4.5 " + "4.5h7l4.5-4.5v-7l-4.5-4.5zM9 13h-2v-2h2v2zM9 9h-2v-6h2v6z");
+                defs.append("path").attr("id", "icon-airplane").attr("d", "M12 9.999l-2.857-2.857 6.857-5.143-2-2-8.571 " + "3.429-2.698-2.699c-0.778-0.778-1.864-0.964-2.414-0.414s-0.364 1.636 0.414 " + "2.414l2.698 2.698-3.429 8.572 2 2 5.144-6.857 2.857 2.857v4h2l1-3 3-1v-2l-4 0z");
             }
         });
         return D3VertexIconDecorator;
@@ -1462,7 +1460,7 @@
         function modifySvgElements(element, ctx) {
             changeImageSrcToBase64Uri(element, ctx);
             collectOriginalStyles(element, ctx);
-            DomUtils.explicitlySetStyle(element);
+            DomUtils.explicitlySetStyle(element, [ "defs" ], true);
         }
         function changeImageSrcToBase64Uri(element, ctx) {
             if (element.nodeName.toLowerCase() !== "image") {
@@ -2135,8 +2133,8 @@
             },
             initDefs: function(defs) {
                 var whiteGradient = defs.append("linearGradient").attr("id", "queryResultVertexDefaultFillScheme").attr("x1", "0%").attr("y1", "0%").attr("x2", "0%").attr("y2", "100%");
-                whiteGradient.append("stop").attr("offset", "0%").attr("style", "stop-color:#f9f9f9;stop-opacity:1");
-                whiteGradient.append("stop").attr("offset", "100%").attr("style", "stop-color:#edebf4;stop-opacity:1");
+                whiteGradient.append("stop").attr("offset", "0%").attr("stop-color", "#f9f9f9").attr("stop-opacity", "1");
+                whiteGradient.append("stop").attr("offset", "100%").attr("stop-color", "#edebf4").attr("stop-opacity", "1");
                 var zoomInIcon = defs.append("g").attr("id", "icon-zoomin");
                 zoomInIcon.append("path").attr("d", "M15.504 13.616l-3.79-3.223c-0.392-0.353-0.811-0.514-1.149-0.499 " + "0.895-1.048 1.435-2.407 1.435-3.893 0-3.314-2.686-6-6-6-3.314 0-6 2.686-6 " + "6 0 3.314 2.686 6 6 6 1.486 0 2.845-0.54 3.893-1.435-0.016 0.338 0.146 0.757 " + "0.499 1.149l3.223 3.79c0.552 0.613 1.453 0.665 2.003 0.115s0.498-1.452-0.115-2.003zM6 " + "10c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4zM7 3h-2v2h-2v2h2v2h2v-2h2v-2h-2z");
             }
@@ -2192,8 +2190,8 @@
             },
             initDefs: function(defs) {
                 var whiteGradient = defs.append("linearGradient").attr("id", "queryVertexDefaultFillScheme").attr("x1", "0%").attr("y1", "0%").attr("x2", "0%").attr("y2", "100%");
-                whiteGradient.append("stop").attr("offset", "0%").attr("style", "stop-color:#f9f9f9;stop-opacity:1");
-                whiteGradient.append("stop").attr("offset", "100%").attr("style", "stop-color:#edebf4;stop-opacity:1");
+                whiteGradient.append("stop").attr("offset", "0%").attr("stop-color", "#f9f9f9").attr("stop-opacity", "1");
+                whiteGradient.append("stop").attr("offset", "100%").attr("stop-color", "#edebf4").attr("stop-opacity", "1");
                 var closeIcon = defs.append("symbol").attr("id", "icon-close").attr("viewBox", "0 0 16 16");
                 closeIcon.append("title").text("close");
                 closeIcon.append("path").attr("d", "M2.343 13.657c-3.124-3.124-3.124-8.19 0-11.314 3.125-3.124 8.19-3.124 11.315 0 3.124 3.124 3.124 8.19 0 11.314-3.125 3.125-8.19 3.125-11.315 0zM12.243 3.757c-2.344-2.343-6.143-2.343-8.485 0-2.344 2.343-2.344 6.142 0 8.485 2.343 2.343 6.142 2.343 8.485 0 2.343-2.343 2.343-6.142 0-8.485zM5.879 11.536l-1.414-1.415 2.121-2.121-2.121-2.121 1.414-1.415 2.121 2.122 2.121-2.122 1.414 1.415-2.121 2.121 2.121 2.121-1.414 1.415-2.121-2.122-2.121 2.122z");
