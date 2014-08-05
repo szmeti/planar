@@ -4,7 +4,9 @@ var D3SvgImageDownloader = (function () {
   function D3SvgImageDownloader(element, graph, disablePanControl) {
     this.svg = element;
     this.graph = graph;
-    this.svg.attr('version', 1.1).attr('xmlns', 'http://www.w3.org/2000/svg');
+    this.svg.attr('version', 1.1)
+      .attr('xmlns', 'http://www.w3.org/2000/svg');
+    this.svg.node().setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
     this.imageVertices = this.svg.selectAll('image').size();
     this.disablePanControl = disablePanControl || false;
     this.existingElementStyles = [];
@@ -29,7 +31,6 @@ var D3SvgImageDownloader = (function () {
     if (element.nodeName.toLowerCase() !== 'image') {
       return;
     }
-
     var imageUrl = d3.select(element).attr('xlink:href');
     element.onload = function () {
       vertexImageLoaded(ctx);
@@ -46,7 +47,6 @@ var D3SvgImageDownloader = (function () {
       var serializer = new XMLSerializer();
       var svgStr = serializer.serializeToString(ctx.svg.node());
       var image = new Image();
-      image.src = 'data:image/svg+xml;base64,' + window.btoa(svgStr);
 
       image.onload = function () {
         var canvas = document.createElement('canvas');
@@ -65,6 +65,8 @@ var D3SvgImageDownloader = (function () {
         restoreSvg(ctx);
         ctx.graph.trigger('downloadFinished');
       };
+
+      image.src = 'data:image/svg+xml;base64,' + window.btoa(svgStr);
     }
   }
 

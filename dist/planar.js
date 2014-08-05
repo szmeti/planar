@@ -1393,7 +1393,8 @@
                     for (var i = 0; i < icons.length; i++) {
                         var icon = icons[i];
                         var fillColor = icon.color || instanceSettings.vertex.iconDefaultColor;
-                        container.append("use").attr("xlink:href", "#" + icon.id).attr("x", startX + i * (ICON_SIZE + PADDING)).attr("y", containerBox.height / 2 - ICON_SIZE - PADDING).attr("fill", fillColor);
+                        container.append("use").attr("xlink:href", "#" + icon.id).attr("x", startX + i * (ICON_SIZE + PADDING)).attr("y", containerBox.height / 2 - ICON_SIZE - PADDING);
+                        d3.select("#" + icon.id).attr("fill", fillColor);
                     }
                 }
             },
@@ -1446,6 +1447,7 @@
             this.svg = element;
             this.graph = graph;
             this.svg.attr("version", 1.1).attr("xmlns", "http://www.w3.org/2000/svg");
+            this.svg.node().setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
             this.imageVertices = this.svg.selectAll("image").size();
             this.disablePanControl = disablePanControl || false;
             this.existingElementStyles = [];
@@ -1480,7 +1482,6 @@
                 var serializer = new XMLSerializer();
                 var svgStr = serializer.serializeToString(ctx.svg.node());
                 var image = new Image();
-                image.src = "data:image/svg+xml;base64," + window.btoa(svgStr);
                 image.onload = function() {
                     var canvas = document.createElement("canvas");
                     canvas.width = ctx.svg.attr("width");
@@ -1495,6 +1496,7 @@
                     restoreSvg(ctx);
                     ctx.graph.trigger("downloadFinished");
                 };
+                image.src = "data:image/svg+xml;base64," + window.btoa(svgStr);
             }
         }
         function collectOriginalStyles(element, ctx) {
@@ -3062,10 +3064,13 @@
             }
         }
         function resize(renderer) {
-            renderer.settings.width = null;
-            renderer.stop();
-            reset(renderer);
-            renderer.render();
+            var newWidth = determineContainerWidth(renderer.settings.container);
+            if (renderer.settings.width !== newWidth) {
+                renderer.settings.width = null;
+                renderer.stop();
+                reset(renderer);
+                renderer.render();
+            }
         }
         function determineContainerWidth(containerId) {
             var container = document.getElementById(containerId.substring(1));

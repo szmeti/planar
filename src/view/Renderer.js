@@ -107,10 +107,13 @@ var Renderer = (function () {
   }
 
   function resize(renderer) {
-    renderer.settings.width = null;
-    renderer.stop();
-    reset(renderer);
-    renderer.render();
+    var newWidth = determineContainerWidth(renderer.settings.container);
+    if (renderer.settings.width !== newWidth) {
+      renderer.settings.width = null;
+      renderer.stop();
+      reset(renderer);
+      renderer.render();
+    }
   }
 
   function determineContainerWidth(containerId) {

@@ -27,8 +27,9 @@ var D3VertexIconDecorator = (function () {
           container.append('use').
             attr('xlink:href', '#' + icon.id).
             attr('x', startX + i * (ICON_SIZE + PADDING)).
-            attr('y', containerBox.height / 2 - ICON_SIZE - PADDING).
-            attr('fill', fillColor);
+            attr('y', containerBox.height / 2 - ICON_SIZE - PADDING);
+
+          d3.select('#'+icon.id).attr('fill', fillColor);
         }
       }
     },
