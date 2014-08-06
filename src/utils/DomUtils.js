@@ -38,6 +38,10 @@ var DomUtils = {
     var computedStyleStr = '';
     for (var i = 0; i < computedStyle.length; i++) {
       var key = computedStyle[i];
+      if (key === 'quotes') {
+        continue;
+      }
+
       var value = computedStyle.getPropertyValue(key);
       computedStyleStr += key + ':' + value + ';';
     }

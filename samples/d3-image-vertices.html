@@ -4,7 +4,7 @@
     <title>D3 sample</title>
 
     <meta http-equiv="content-type" content="text/html; charset=UTF8">
-
+    <meta charset="utf-8">
     <style type="text/css">
         body {
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -121,6 +121,9 @@
 
 
     </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script type="text/javascript" src="../bower_components/d3/d3.js"></script>
+    <script type="text/javascript" src="../dist/planar.js"></script>
 </head>
 <body>
 
@@ -129,10 +132,6 @@
     <div id="navigatorContainer"></div>
     <button id="saveAsImage">Save as Image</button>
 </div>
-
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-<script type="text/javascript" src="../bower_components/d3/d3.js"></script>
-<script type="text/javascript" src="../dist/planar.js"></script>
 
 <script type="text/javascript">
     $(document).ready(function () {
@@ -146,23 +145,22 @@
         planar.settings.d3.vertexRenderers['image-vertex-with-icons'] = new planar.D3VertexIconDecorator(new planar.D3ImageVertexRenderer());
 
         var graph = new planar.Graph({container: '#graphCanvas', navigatorContainer: '#navigatorContainer'});
-
         var v1 = graph.addVertex();
         v1.setProperty(planar.PROP_TYPE, "bordered-image-vertex");
-        v1.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/apple.png");
+        v1.setProperty("imageUrl", "resources/apple.png");
         v1.setProperty("borderColor", "red");
         v1.setProperty("borderWeight", "5");
-
+//
         var v2 = graph.addVertex();
         v2.setProperty(planar.PROP_TYPE, "bordered-image-vertex");
-        v2.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/bananas.png");
+        v2.setProperty("imageUrl", "resources/bananas.png");
         v2.setProperty("borderColor", "blue");
         v2.setProperty("borderWeight", "8");
         v2.setProperty("borderRadius", "8");
 
         var v3 = graph.addVertex();
         v3.setProperty(planar.PROP_TYPE, "bordered-image-vertex");
-        v3.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/orange.png");
+        v3.setProperty("imageUrl", "resources/orange.png");
         v3.setProperty("borderColor", "green");
 
         var v4Filters = [
@@ -198,12 +196,12 @@
 
         var v5 = graph.addVertex();
         v5.setProperty('additionalLabel', 'abc');
-        v5.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/orange.png");
+        v5.setProperty("imageUrl", "resources/orange.png");
         v5.setProperty(planar.PROP_TYPE, "labeled-bordered-image-vertex");
 
         var v6 = graph.addVertex();
         v6.setProperty(planar.PROP_TYPE, "image-vertex-with-icons");
-        v6.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/orange.png");
+        v6.setProperty("imageUrl", "resources/orange.png");
         v6.setProperty("icons", [
             {
                 id: 'icon-spam',

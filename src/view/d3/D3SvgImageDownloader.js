@@ -5,8 +5,7 @@ var D3SvgImageDownloader = (function () {
     this.svg = element;
     this.graph = graph;
     this.svg.attr('version', 1.1)
-      .attr('xmlns', 'http://www.w3.org/2000/svg');
-    this.svg.node().setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+      .attr('xmlns', 'http://www.w3.org/2000/svg').attr('xmlns:xmlns:xlink', 'http://www.w3.org/1999/xlink');
     this.imageVertices = this.svg.selectAll('image').size();
     this.disablePanControl = disablePanControl || false;
     this.existingElementStyles = [];
@@ -17,9 +16,50 @@ var D3SvgImageDownloader = (function () {
       this.graph.trigger('downloadStarted');
       hidePanControl(this);
       DomUtils.traverse(this.svg.node(), modifySvgElements, this);
+      waitForImagesAndSave(this);
     }
 
   });
+
+  function waitForImagesAndSave(ctx) {
+    ctx.imageLoadedInterval = setInterval(saveAsImage, 100, ctx);
+  }
+
+  function saveAsImage(ctx) {
+    if (ctx.imageVertices !== 0) {
+      return;
+    }
+
+    var serializer = new XMLSerializer();
+    var svgStr = serializer.serializeToString(ctx.svg.node());
+    var image = new Image();
+
+    image.onload = function () {
+      var canvas = document.createElement('canvas');
+      canvas.width = ctx.svg.attr('width');
+      canvas.height = ctx.svg.attr('height');
+
+      var context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0);
+
+      var a = document.createElement('a');
+      a.download = 'image.png';
+      a.href = canvas.toDataURL('image/png');
+      document.body.appendChild(a);
+      a.click();
+
+      restoreSvg(ctx);
+      ctx.graph.trigger('downloadFinished');
+    };
+
+    image.onerror = function() {
+      console.log('Failed to save image.');
+    };
+
+    var blob = new Blob([svgStr], {type: 'image/svg+xml;charset=utf-8'});
+    image.src = window.URL.createObjectURL(blob);
+    clearInterval(ctx.imageLoadedInterval);
+  }
 
   function modifySvgElements(element, ctx) {
     changeImageSrcToBase64Uri(element, ctx);
@@ -32,42 +72,15 @@ var D3SvgImageDownloader = (function () {
       return;
     }
     var imageUrl = d3.select(element).attr('xlink:href');
-    element.onload = function () {
-      vertexImageLoaded(ctx);
-    };
+
     DomUtils.convertImgToBase64(imageUrl, function (img, dataUrl) {
       d3.select(element).attr('xlink:href', dataUrl);
+      vertexImageLoaded(ctx);
     }, 'image/png');
   }
 
   function vertexImageLoaded(ctx) {
     ctx.imageVertices--;
-
-    if (ctx.imageVertices === 0) {
-      var serializer = new XMLSerializer();
-      var svgStr = serializer.serializeToString(ctx.svg.node());
-      var image = new Image();
-
-      image.onload = function () {
-        var canvas = document.createElement('canvas');
-        canvas.width = ctx.svg.attr('width');
-        canvas.height = ctx.svg.attr('height');
-
-        var context = canvas.getContext('2d');
-        context.drawImage(image, 0, 0);
-
-        var a = document.createElement('a');
-        a.download = 'image.png';
-        a.href = canvas.toDataURL('image/png');
-        document.body.appendChild(a);
-        a.click();
-
-        restoreSvg(ctx);
-        ctx.graph.trigger('downloadFinished');
-      };
-
-      image.src = 'data:image/svg+xml;base64,' + window.btoa(svgStr);
-    }
   }
 
   function collectOriginalStyles(element, ctx) {
@@ -78,7 +91,9 @@ var D3SvgImageDownloader = (function () {
     var id = Math.floor((Math.random() * 100000) + 1);
     var newClass = 'has-style-' + element.tagName + '-' +id;
 
-    element.classList.add(newClass);
+    var newClasses = element.getAttribute('class') + ' ' + newClass;
+    element.setAttribute('class', newClasses);
+    element.setAttribute('className', newClasses);
     ctx.existingElementStyles.push({
       id: newClass,
       style: element.getAttribute('style')
@@ -103,7 +118,12 @@ var D3SvgImageDownloader = (function () {
       var element = d3.select(ctx.svg.node().parentNode).select(newClass);
 
       element.attr('style', currentStyle.style);
-      element.node().classList.remove(currentStyle.id);
+      var classes = element.node().className.baseVal.split(' ');
+      var indexOfId = classes.indexOf(currentStyle.id);
+      classes.splice(indexOfId, 1);
+      var newClasses = classes.join(' ');
+      element.node().setAttribute('class', newClasses);
+      element.node().setAttribute('className', newClasses); //of course it's IE
     }
     d3.select('#zoomPanControl').attr('style', 'display:block;');
   }
