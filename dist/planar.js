@@ -2820,7 +2820,7 @@
         }
         var EPSILON = 1e-6;
         var ALPHA = 1;
-        var padding = 10;
+        var padding = 15;
         var init = function(vertices, width, height, self) {
             var vertexCount = vertices.length;
             self.temp = width / 10;
@@ -2904,6 +2904,7 @@
             step: function(vertices, edges, width, height) {
                 var finishedVertices = vertices.length;
                 var w = vertices.length * (NODE_WIDTH / 1.5);
+                w = Math.max(w, width);
                 var h = w * (height / width);
                 var scale = calculateScale(width, height, w, h);
                 if (this.running) {
