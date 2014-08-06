@@ -1487,10 +1487,7 @@
             image.onerror = function() {
                 console.log("Failed to save image.");
             };
-            var blob = new Blob([ svgStr ], {
-                type: "image/svg+xml;charset=utf-8"
-            });
-            image.src = window.URL.createObjectURL(blob);
+            image.src = "data:image/svg+xml;base64," + window.btoa(svgStr);
             clearInterval(ctx.imageLoadedInterval);
         }
         function modifySvgElements(element, ctx) {
@@ -1612,7 +1609,7 @@
             return d3.scale.linear().domain([ -settings.height / 2, settings.height / 2 ]).range([ settings.height, 0 ]);
         }
         function initNavigator(zoom, settings, graph) {
-            if (!utils.exists(settings.navigatorContainer)) {
+            if (!utils.exists(settings.navigatorContainer) || !settings.navigator.enabled) {
                 return null;
             }
             var navigatorSvg = d3.select(settings.navigatorContainer).append("svg").attr("width", settings.width * settings.navigator.scale).attr("height", settings.height * settings.navigator.scale).attr("class", "svg canvas");

@@ -56,8 +56,7 @@ var D3SvgImageDownloader = (function () {
       console.log('Failed to save image.');
     };
 
-    var blob = new Blob([svgStr], {type: 'image/svg+xml;charset=utf-8'});
-    image.src = window.URL.createObjectURL(blob);
+    image.src = 'data:image/svg+xml;base64,' + window.btoa(svgStr);
     clearInterval(ctx.imageLoadedInterval);
   }
 

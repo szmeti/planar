@@ -91,7 +91,7 @@ var D3ZoomPanManager = (function () {
   }
 
   function initNavigator(zoom, settings, graph) {
-    if (!utils.exists(settings.navigatorContainer)) {
+    if (!utils.exists(settings.navigatorContainer) || !settings.navigator.enabled) {
       return null;
     }
 
