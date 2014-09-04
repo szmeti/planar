@@ -1,6 +1,6 @@
 (function(exports, global) {'use strict';
     global["planar"] = exports;
-    var VERSION = "0.0.1";
+    var VERSION = "0.9.0";
     var utils = {
         mixin: function(target, source) {
             for (var key in source) {

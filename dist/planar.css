@@ -1,0 +1,76 @@
+.canvas .wrapper.outer > .background {
+    fill: #000000;
+}
+
+.canvas .wrapper.inner > .background {
+    cursor: move;
+}
+
+.canvas .background {
+    fill: #F6F6F6;
+    stroke: #333333;
+    cursor: move;
+}
+
+.canvas .panCanvas {
+    cursor: move;
+}
+
+.canvas .navigator .frame .background {
+    fill-opacity: 0.4;
+    fill: #7c7c7c;
+    cursor: move;
+}
+
+.edge {
+    stroke: #999;
+    stroke-width: 2;
+    cursor: pointer;
+    fill: none;
+}
+
+.edge:hover {
+    stroke-width: 3;
+}
+
+.edge-label {
+    stroke-width: -0.5;
+    stroke: #666666;
+    fill: #666666;
+}
+
+.vertex {
+    cursor: pointer;
+}
+
+.overlay {
+    fill: none;
+    pointer-events: all;
+}
+
+.divider {
+    stroke: #b3b3b3;
+}
+
+.wrapperCircle {
+    vector-effect: non-scaling-stroke;
+    fill-opacity: 1;
+    fill: rgb(85, 85, 85);
+    fill-opacity: 0.3;
+}
+
+.compass {
+    fill: rgb(206, 206, 206);
+    stroke: rgba(19, 19, 24, 0.92);
+    stroke-miterlimit: 6;
+    stroke-linecap: round;
+}
+
+.plus-minus {
+    fill: #e4e4e4;
+    pointer-events: none;
+}
+
+.zoomPanButton:hover {
+    stroke-width: 2;
+}

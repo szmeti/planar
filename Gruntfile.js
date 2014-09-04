@@ -63,7 +63,7 @@ module.exports = function (grunt) {
             dot: true,
             src: [
               '.tmp',
-              '<%= planar.dist %>/*'
+              '<%= planar.dist %>/*.js'
             ]
           }
         ]
