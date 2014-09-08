@@ -1934,6 +1934,8 @@
         }
         function translateVertices(vertexSet) {
             vertexSet.attr("transform", function(uiVertex) {
+                uiVertex.x = uiVertex.x || 0;
+                uiVertex.y = uiVertex.y || 0;
                 return "translate(" + uiVertex.x + "," + uiVertex.y + ")";
             });
         }
