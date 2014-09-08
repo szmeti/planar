@@ -14,7 +14,7 @@ var D3SymbolVertexRenderer = (function () {
       vertex.uiElement = path;
     },
 
-    initDefs: function (defs) {}
+    initDefs: function () {}
 
   });
 

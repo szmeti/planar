@@ -14,7 +14,7 @@ var D3LineEdgeRenderer = (function () {
       uiEdge.uiElement = element.append('line').attr('style', 'stroke-width: ' + lineWeight + 'px;');
     },
 
-    initDefs: function (defs) {
+    initDefs: function () {
     },
 
     updatePosition: function (edge) {

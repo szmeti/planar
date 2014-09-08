@@ -43,13 +43,13 @@ var ElementRendererDecorator = (function () {
       this.doUpdatePosition(uiEdge);
     },
 
-    doInit: function (element, container) {
+    doInit: function () {
     },
 
     doInitDefs: function () {
     },
 
-    doUpdatePosition: function (uiEdge) {
+    doUpdatePosition: function () {
     }
 
   };

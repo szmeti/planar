@@ -129,7 +129,7 @@ var Renderer = (function () {
 
   utils.mixin(Renderer.prototype, {
 
-    render: function (steps) {
+    render: function () {
       if (!this.initialized) {
         this.init();
       }

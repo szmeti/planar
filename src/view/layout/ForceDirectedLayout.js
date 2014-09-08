@@ -6,7 +6,7 @@ var ForceDirectedLayout = (function () {
 
   utils.mixin(ForceDirectedLayout.prototype, {
 
-    step: function (vertices, edges, width, height) {
+    step: function () {
 
       return true;
     }

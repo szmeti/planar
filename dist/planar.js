@@ -1307,7 +1307,7 @@
     var ForceDirectedLayout = function() {
         function ForceDirectedLayout() {}
         utils.mixin(ForceDirectedLayout.prototype, {
-            step: function(vertices, edges, width, height) {
+            step: function() {
                 return true;
             }
         });
@@ -1347,9 +1347,9 @@
                 this.elementRenderer.updatePosition(uiEdge);
                 this.doUpdatePosition(uiEdge);
             },
-            doInit: function(element, container) {},
+            doInit: function() {},
             doInitDefs: function() {},
-            doUpdatePosition: function(uiEdge) {}
+            doUpdatePosition: function() {}
         };
     }();
     var D3EdgeLabelDecorator = function() {
@@ -2057,7 +2057,7 @@
                 var lineWeight = edge.getProperty(instanceSettings.edge.lineWeightPropertyKey) || instanceSettings.edge.defaultLineWeight;
                 uiEdge.uiElement = element.append("line").attr("style", "stroke-width: " + lineWeight + "px;");
             },
-            initDefs: function(defs) {},
+            initDefs: function() {},
             updatePosition: function(edge) {
                 var line = edge.uiElement;
                 line.attr("x1", function(uiEdge) {
@@ -2173,7 +2173,7 @@
                 path.attr("d", d3.svg.symbol().type(this.type).size(200));
                 vertex.uiElement = path;
             },
-            initDefs: function(defs) {}
+            initDefs: function() {}
         });
         return D3SymbolVertexRenderer;
     }();
@@ -2995,7 +2995,7 @@
             return container.offsetWidth;
         }
         utils.mixin(Renderer.prototype, {
-            render: function(steps) {
+            render: function() {
                 if (!this.initialized) {
                     this.init();
                 }
@@ -3521,7 +3521,6 @@
     exports.D3Engine = D3Engine;
     exports.D3ImageVertexRenderer = D3ImageVertexRenderer;
     exports.D3SymbolVertexRenderer = D3SymbolVertexRenderer;
-    exports.D3QueryVertexRenderer = D3QueryVertexRenderer;
     exports.D3QueryResultVertexRenderer = D3QueryResultVertexRenderer;
     exports.D3LineEdgeRenderer = D3LineEdgeRenderer;
     exports.D3DirectedLineEdgeRenderer = D3DirectedLineEdgeRenderer;
