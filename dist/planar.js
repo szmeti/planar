@@ -10,6 +10,19 @@
             }
             return target;
         },
+        deepMixin: function(target, source) {
+            for (var key in source) {
+                if (source.hasOwnProperty(key)) {
+                    if (source[key] && source[key].constructor && source[key].constructor === Object) {
+                        target[key] = target[key] || {};
+                        this.deepMixin(target[key], source[key]);
+                    } else {
+                        target[key] = source[key];
+                    }
+                }
+            }
+            return target;
+        },
         indexOf: function(needle, haystack) {
             if (needle) {
                 for (var i = 0; i < haystack.length; i++) {
@@ -690,7 +703,7 @@
             updateSettings: function(instanceSettings) {
                 instanceSettings = instanceSettings || {};
                 this.settings = utils.mixin({}, settings);
-                this.settings = utils.mixin(this.settings, instanceSettings);
+                this.settings = utils.deepMixin(this.settings, instanceSettings);
                 if (utils.exists(this.settings.container) && utils.exists(this.settings.engine)) {
                     this.renderer = new Renderer(this, this.settings);
                     this.renderer.init();

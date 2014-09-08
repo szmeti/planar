@@ -247,7 +247,7 @@ var Graph = (function () {
     updateSettings: function(instanceSettings) {
       instanceSettings = instanceSettings || {};
       this.settings = utils.mixin({}, settings);
-      this.settings = utils.mixin(this.settings, instanceSettings);
+      this.settings = utils.deepMixin(this.settings, instanceSettings);
 
       if (utils.exists(this.settings.container) && utils.exists(this.settings.engine)) {
         this.renderer = new Renderer(this, this.settings);

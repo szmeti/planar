@@ -11,6 +11,20 @@ var utils = {
     return target;
   },
 
+  deepMixin: function (target, source) {
+    for (var key in source) {
+      if (source.hasOwnProperty(key)) {
+        if (source[key] && source[key].constructor && source[key].constructor === Object) {
+          target[key] = target[key] || {};
+          this.deepMixin(target[key], source[key]);
+        } else {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  },
+
   indexOf: function (needle, haystack) {
     if (needle) {
       for (var i = 0; i < haystack.length; i++) {
@@ -161,7 +175,7 @@ var utils = {
     }
   },
 
-  checkArgument: function(predicate, message) {
+  checkArgument: function (predicate, message) {
     if (!predicate) {
       throw {
         message: message
