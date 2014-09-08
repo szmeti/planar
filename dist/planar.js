@@ -1630,7 +1630,7 @@
             innerWrapper.append("rect").attr("class", "background").attr("width", context.settings.width).attr("height", context.settings.height);
             var panCanvas = innerWrapper.append("g").attr("id", "panCanvas").attr("class", "panCanvas").attr("width", context.settings.width).attr("height", context.settings.height).attr("transform", "translate(0,0)");
             panCanvas.append("rect").attr("class", "background").attr("width", context.settings.width).attr("height", context.settings.height);
-            context.graphContainer = panCanvas.append("g").attr("id", "graphElements").attr("transform", "scale(0.5)");
+            context.graphContainer = panCanvas.append("g").attr("id", "graphElements").attr("transform", "scale(" + context.settings.zoom.defaultScale + ")");
         }
         return D3ZoomPanManager;
     }();
@@ -3147,7 +3147,8 @@
         zoom: {
             enabled: true,
             minScale: 1,
-            maxScale: 8
+            maxScale: 8,
+            defaultScale: .5
         },
         drag: {
             enabled: true

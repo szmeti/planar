@@ -63,7 +63,8 @@ var settings = {
   zoom: {
     enabled: true,
     minScale: 1,
-    maxScale: 8
+    maxScale: 8,
+    defaultScale: 0.5
   },
 
   drag: {

@@ -151,7 +151,7 @@ var D3ZoomPanManager = (function () {
 
     context.graphContainer = panCanvas.append('g')
       .attr('id', 'graphElements')
-      .attr('transform', 'scale(0.5)');
+      .attr('transform', 'scale(' + context.settings.zoom.defaultScale + ')');
   }
 
   return D3ZoomPanManager;
