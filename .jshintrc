@@ -56,7 +56,6 @@
     "D3SymbolVertexRenderer": false,
     "D3ImageVertexRenderer": false,
     "D3VertexIconDecorator": false,
-    "D3QueryVertexRenderer": false,
     "D3QueryResultVertexRenderer": false,
     "RaphaelEngine": false,
     "RaphaelRectangleVertexRenderer": false,

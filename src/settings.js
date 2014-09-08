@@ -1,5 +1,4 @@
 /* global settings: true */
-
 var settings = {
 
   container: null,
@@ -42,22 +41,14 @@ var settings = {
       'square': new D3SymbolVertexRenderer('square'),
       'triangle-down': new D3SymbolVertexRenderer('triangle-down'),
       'triangle-up': new D3SymbolVertexRenderer('triangle-up'),
-      'query-vertex': new D3QueryVertexRenderer(),
       'image-vertex': new D3ImageVertexRenderer(),
       'query-result-vertex': new D3QueryResultVertexRenderer(),
-      'labeled-query-vertex' : new D3VertexLabelDecorator(new D3QueryVertexRenderer(), {
-        labelInside: true,
-        labelTop: true,
-        padding: 10,
-        labelPropertyKey: 'additionalLabel'
-      }),
       'labeled-image-vertex' : new D3VertexLabelDecorator(new D3ImageVertexRenderer(),{
         labelInside: true,
         labelTop: false,
         padding: 10,
         labelPropertyKey: 'additionalLabel'
       }),
-      'bordered-query-vertex' : new D3VertexBorderDecorator(new D3QueryVertexRenderer()),
       'bordered-image-vertex' : new D3VertexBorderDecorator(new D3ImageVertexRenderer())
     },
 

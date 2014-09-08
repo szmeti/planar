@@ -163,37 +163,6 @@
         v3.setProperty("imageUrl", "resources/orange.png");
         v3.setProperty("borderColor", "green");
 
-        var v4Filters = [
-            {
-                propertyKey: 'age',
-                value: 22,
-                predicate: 'LESS_THAN'
-            },
-            {
-                propertyKey: 'firstName',
-                value: 'peter',
-                predicate: 'EQUAL'
-            },
-            {
-                propertyKey: 'surname',
-                value: 'Smi',
-                predicate: 'CONTAINS'
-            },
-            {
-                propertyKey: 'surname',
-                referencedAlias: 'P3',
-                value: 'surname',
-                predicate: 'CONTAINS'
-            }
-        ];
-
-        var v4 = graph.addVertex();
-        v4.setProperty(planar.PROP_TYPE, "labeled-query-vertex");
-        v4.setProperty('alias', 'P1');
-        v4.setProperty('filters', v4Filters);
-        v4.setProperty('entityType', 'Person');
-        v4.setProperty('additionalLabel', 'abc');
-
         var v5 = graph.addVertex();
         v5.setProperty('additionalLabel', 'abc');
         v5.setProperty("imageUrl", "resources/orange.png");
@@ -219,17 +188,7 @@
         var e2 = graph.addEdge(null, v2, v3, "b");
         e2.setProperty(planar.PROP_TYPE, "curved-line");
 
-        var e3 = graph.addEdge(null, v3, v1, "c");
-        graph.addEdge(null, v3, v4, "d");
-        graph.addEdge(null, v4, v2, "e");
-
-        var vnFilters = [
-            {
-                propertyKey: 'age',
-                value: 22,
-                predicate: 'LESS_THAN'
-            }
-        ];
+        graph.addEdge(null, v3, v1, "c");
 
 //        for (var i = 0; i < 100; i++) {
 //            var vn = graph.addVertex();
