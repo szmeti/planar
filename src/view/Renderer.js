@@ -210,8 +210,19 @@ var Renderer = (function () {
       this.engine.stop();
     },
 
-    resize: function() {
+    resize: function () {
       resize(this);
+    },
+
+    setPosition: function (vertex, x, y) {
+      utils.checkExists(x, 'x coordinate must be specified');
+      utils.checkExists(y, 'y coordinate must be specified');
+
+      var uiVertex = this.verticesById[vertex.getId()];
+      if (uiVertex) {
+        uiVertex.x = x;
+        uiVertex.y = y;
+      }
     }
 
   });

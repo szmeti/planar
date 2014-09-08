@@ -30,12 +30,16 @@ var Vertex = (function () {
       this.graph.removeVertex(this);
     },
 
-    query: function() {
+    query: function () {
       return new VertexQuery(this);
     },
 
-    select: function() {
+    select: function () {
       this.graph.renderer.selectedVertex = this.graph.renderer.verticesById[this.id];
+    },
+
+    setPosition: function (x, y) {
+      this.graph.renderer.setPosition(this, x, y);
     }
 
   });

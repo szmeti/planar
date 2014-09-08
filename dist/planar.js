@@ -500,6 +500,9 @@
             },
             select: function() {
                 this.graph.renderer.selectedVertex = this.graph.renderer.verticesById[this.id];
+            },
+            setPosition: function(x, y) {
+                this.graph.renderer.setPosition(this, x, y);
             }
         });
         return Vertex;
@@ -3076,6 +3079,15 @@
             },
             resize: function() {
                 resize(this);
+            },
+            setPosition: function(vertex, x, y) {
+                utils.checkExists(x, "x coordinate must be specified");
+                utils.checkExists(y, "y coordinate must be specified");
+                var uiVertex = this.verticesById[vertex.getId()];
+                if (uiVertex) {
+                    uiVertex.x = x;
+                    uiVertex.y = y;
+                }
             }
         });
         return Renderer;
