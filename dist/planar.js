@@ -695,6 +695,9 @@
                     this.renderer = new Renderer(this, this.settings);
                     this.renderer.init();
                 }
+            },
+            resize: function() {
+                this.renderer.resize();
             }
         });
         return Graph;
@@ -3162,6 +3165,9 @@
                     this.timer = null;
                 }
                 this.engine.stop();
+            },
+            resize: function() {
+                resize(this);
             }
         });
         return Renderer;

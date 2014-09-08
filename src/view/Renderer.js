@@ -208,6 +208,10 @@ var Renderer = (function () {
         this.timer = null;
       }
       this.engine.stop();
+    },
+
+    resize: function() {
+      resize(this);
     }
 
   });

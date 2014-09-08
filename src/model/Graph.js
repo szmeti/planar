@@ -253,6 +253,10 @@ var Graph = (function () {
         this.renderer = new Renderer(this, this.settings);
         this.renderer.init();
       }
+    },
+
+    resize: function() {
+      this.renderer.resize();
     }
 
   });
