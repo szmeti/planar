@@ -26,6 +26,7 @@ exports.D3SymbolVertexRenderer = D3SymbolVertexRenderer;
 exports.D3QueryResultVertexRenderer = D3QueryResultVertexRenderer;
 exports.D3LineEdgeRenderer = D3LineEdgeRenderer;
 exports.D3DirectedLineEdgeRenderer = D3DirectedLineEdgeRenderer;
+exports.BoundingBoxCalculator = BoundingBoxCalculator;
 exports.RaphaelEngine = RaphaelEngine;
 exports.RaphaelRectangleVertexRenderer = RaphaelRectangleVertexRenderer;
 exports.Renderer = Renderer;
