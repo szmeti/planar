@@ -1459,7 +1459,8 @@
             beforeRender: function() {},
             initVertex: function() {},
             renderVertex: function() {},
-            stop: function() {}
+            stop: function() {},
+            moveVertexToFront: function() {}
         };
     }();
     var D3SvgImageDownloader = function() {
@@ -1906,6 +1907,10 @@
             stop: function() {
                 d3.select(this.settings.container).selectAll("*").remove();
                 d3.select(this.settings.navigatorContainer).selectAll("*").remove();
+            },
+            moveVertexToFront: function(uiVertex) {
+                var vertexNode = uiVertex.node();
+                vertexNode.parentNode.appendChild(vertexNode);
             }
         });
         function bindData(svg, type, elements) {
@@ -1929,6 +1934,9 @@
                 elementRenderer.init(uiElement, uiElement.g);
             });
             element.on("click", function(uiElement) {
+                if (d3.event.defaultPrevented) {
+                    return;
+                }
                 var graph = uiElement[type].getGraph();
                 graph.trigger(type + "Clicked", uiElement);
             });
@@ -2912,7 +2920,7 @@
             this.settings = instanceSettings;
             this.layoutId = this.settings.defaultLayout;
             reset(this);
-            setUpEventHandlers(graph, this);
+            setUpEventHandlers(graph, this, this.engine);
         }
         function reset(renderer) {
             renderer.initialized = false;
@@ -2953,7 +2961,7 @@
             utils.remove(uiEdge, renderer.edges);
             delete renderer.edgesById[uiEdge.id];
         }
-        function setUpEventHandlers(graph, renderer) {
+        function setUpEventHandlers(graph, renderer, engine) {
             graph.on("vertexAdded", function(event, vertex) {
                 addVertex(vertex, renderer);
             });
@@ -2967,11 +2975,11 @@
                 removeEdge(edge, renderer);
             });
             graph.on("vertexClicked", function(event, vertex) {
-                this.renderer.selectedVertex = vertex;
+                renderer.selectedVertex = vertex;
             });
             graph.on("vertexDragStart", function(event, vertex) {
-                vertex.uiElement.remove();
-                this.renderer.selectedVertex = vertex;
+                engine.moveVertexToFront(vertex.uiElement);
+                renderer.selectedVertex = vertex;
             });
             if (!renderer.settings.width) {
                 var timeOfLastResizeEvent;

@@ -62,6 +62,11 @@ var D3Engine = (function () {
     stop: function () {
       d3.select(this.settings.container).selectAll('*').remove();
       d3.select(this.settings.navigatorContainer).selectAll('*').remove();
+    },
+
+    moveVertexToFront: function (uiVertex) {
+      var vertexNode = uiVertex.node();
+      vertexNode.parentNode.appendChild(vertexNode);
     }
 
   });
@@ -93,6 +98,10 @@ var D3Engine = (function () {
     });
 
     element.on('click', function (uiElement) {
+      if (d3.event.defaultPrevented) {
+        return;
+      }
+
       var graph = uiElement[type].getGraph();
       graph.trigger(type + 'Clicked', uiElement);
     });

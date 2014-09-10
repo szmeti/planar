@@ -11,7 +11,7 @@ var Renderer = (function () {
     this.settings = instanceSettings;
     this.layoutId = this.settings.defaultLayout;
     reset(this);
-    setUpEventHandlers(graph, this);
+    setUpEventHandlers(graph, this, this.engine);
   }
 
   function reset(renderer) {
@@ -56,7 +56,7 @@ var Renderer = (function () {
     delete renderer.edgesById[uiEdge.id];
   }
 
-  function setUpEventHandlers(graph, renderer) {
+  function setUpEventHandlers(graph, renderer, engine) {
     graph.on('vertexAdded', function (event, vertex) {
       addVertex(vertex, renderer);
     });
@@ -74,12 +74,12 @@ var Renderer = (function () {
     });
 
     graph.on('vertexClicked', function (event, vertex) {
-      this.renderer.selectedVertex = vertex;
+      renderer.selectedVertex = vertex;
     });
 
     graph.on('vertexDragStart', function (event, vertex) {
-      vertex.uiElement.remove();
-      this.renderer.selectedVertex = vertex;
+      engine.moveVertexToFront(vertex.uiElement);
+      renderer.selectedVertex = vertex;
     });
 
     if (!renderer.settings.width) {

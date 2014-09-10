@@ -21,7 +21,10 @@ var Engine = (function () {
     renderVertex: function () {
     },
 
-    stop: function() {
+    stop: function () {
+    },
+
+    moveVertexToFront: function () {
     }
 
   };
