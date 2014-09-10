@@ -1597,9 +1597,10 @@
                         }
                         if (settings.drag.enabled) {
                             var topBound = -settings.height * this.scale + settings.height, bottomBound = 0, leftBound = -settings.width * this.scale + settings.width, rightBound = 0;
-                            this.translation = d3.event ? d3.event.translate : [ 0, 0 ];
-                            this.translation = [ Math.max(Math.min(this.translation[0], rightBound), leftBound), Math.max(Math.min(this.translation[1], bottomBound), topBound) ];
+                            var newTranslation = d3.event && this.scale !== 1 ? d3.event.translate : [ 0, 0 ];
+                            this.translation = [ Math.max(Math.min(newTranslation[0], rightBound), leftBound), Math.max(Math.min(newTranslation[1], bottomBound), topBound) ];
                         }
+                        console.log(this.translation);
                         d3.select(".panCanvas, .panCanvas .bg").attr("transform", "translate(" + this.translation + ")" + " scale(" + this.scale + ")");
                     };
                 }();
@@ -1608,12 +1609,8 @@
                 this.navigator = initNavigator(this.zoom, this.settings, this.graph);
                 initZoomPanControl(this.svg, this.zoom, this.settings, this.graph);
             },
-            zoom: function(value) {
-                if (!arguments.length) {
-                    return this.zoom;
-                }
-                this.zoom = value;
-                return this;
+            getZoom: function() {
+                return this.zoom;
             },
             getNavigator: function() {
                 return this.navigator;
@@ -1652,25 +1649,37 @@
         return D3ZoomPanManager;
     }();
     var D3VertexManager = function() {
-        function D3VertexManager(element, instanceSettings) {
+        function D3VertexManager(element, instanceSettings, zoom) {
             this.element = element;
             this.instanceSettings = instanceSettings;
+            this.zoom = zoom;
         }
         utils.mixin(D3VertexManager.prototype, {
             addDragToVertices: function() {
                 var drag = d3.behavior.drag();
                 var dragStartTime;
+                var instanceSettings = this.instanceSettings;
+                var zoom = this.zoom;
+                var dragOffsetX;
+                var dragOffsetY;
                 drag.on("dragstart", function(uiVertex) {
+                    var scale = zoom.scale();
+                    var translate = zoom.translate();
+                    var sourceEvent = d3.event.sourceEvent;
+                    var translatedMouseX = sourceEvent.offsetX - translate[0];
+                    var translatedMouseY = sourceEvent.offsetY - translate[1];
+                    dragOffsetX = translatedMouseX / scale - uiVertex.x;
+                    dragOffsetY = translatedMouseY / scale - uiVertex.y;
                     dragStartTime = new Date().valueOf();
-                    d3.event.sourceEvent.stopPropagation();
+                    sourceEvent.stopPropagation();
                     var graph = uiVertex.vertex.getGraph();
                     graph.trigger("vertexDragStart", uiVertex);
                 });
                 drag.on("drag", function(uiVertex) {
                     var now = new Date().valueOf();
-                    if (now - dragStartTime > this.instanceSettings.drag.delay) {
-                        uiVertex.x = d3.event.x;
-                        uiVertex.y = d3.event.y;
+                    if (now - dragStartTime > instanceSettings.drag.delay) {
+                        uiVertex.x = d3.event.x - dragOffsetX;
+                        uiVertex.y = d3.event.y - dragOffsetY;
                         var graph = uiVertex.vertex.getGraph();
                         graph.trigger("vertexDrag", uiVertex);
                     }
@@ -1898,7 +1907,7 @@
                 var vertexSet = bindData(this.zoomPanManager.getGraphContainer(), "vertex", vertices);
                 var vertexEnter = addEnterSection("vertex", vertexSet);
                 translateVertices(vertexSet);
-                var vertexManager = new D3VertexManager(vertexEnter);
+                var vertexManager = new D3VertexManager(vertexEnter, this.settings, this.zoomPanManager.getZoom());
                 vertexManager.addDragToVertices();
                 updateEdgePositions(edgeSet);
                 var navigator = this.zoomPanManager.getNavigator();
@@ -3193,7 +3202,7 @@
         },
         drag: {
             enabled: true,
-            delay: 200
+            delay: 100
         },
         navigator: {
             enabled: true,

@@ -1,28 +1,43 @@
 /* global D3VertexManager: true */
 var D3VertexManager = (function () {
 
-  function D3VertexManager(element, instanceSettings) {
+  function D3VertexManager(element, instanceSettings, zoom) {
     this.element = element;
     this.instanceSettings = instanceSettings;
+    this.zoom = zoom;
   }
 
   utils.mixin(D3VertexManager.prototype, {
     addDragToVertices: function () {
       var drag = d3.behavior.drag();
       var dragStartTime;
+      var instanceSettings = this.instanceSettings;
+      var zoom = this.zoom;
+      var dragOffsetX;
+      var dragOffsetY;
 
       drag.on('dragstart', function (uiVertex) {
+        var scale = zoom.scale();
+        var translate = zoom.translate();
+
+        var sourceEvent = d3.event.sourceEvent;
+        var translatedMouseX = sourceEvent.offsetX - translate[0];
+        var translatedMouseY = sourceEvent.offsetY - translate[1];
+        dragOffsetX = translatedMouseX / scale - uiVertex.x;
+        dragOffsetY = translatedMouseY / scale - uiVertex.y;
+
         dragStartTime = new Date().valueOf();
-        d3.event.sourceEvent.stopPropagation();
+
+        sourceEvent.stopPropagation();
         var graph = uiVertex.vertex.getGraph();
         graph.trigger('vertexDragStart', uiVertex);
       });
 
       drag.on('drag', function (uiVertex) {
         var now = new Date().valueOf();
-        if (now - dragStartTime > this.instanceSettings.drag.delay) {
-          uiVertex.x = d3.event.x;
-          uiVertex.y = d3.event.y;
+        if (now - dragStartTime > instanceSettings.drag.delay) {
+          uiVertex.x = d3.event.x - dragOffsetX;
+          uiVertex.y = d3.event.y - dragOffsetY;
           var graph = uiVertex.vertex.getGraph();
           graph.trigger('vertexDrag', uiVertex);
         }

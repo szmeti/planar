@@ -36,13 +36,14 @@ var D3ZoomPanManager = (function () {
               bottomBound = 0,
               leftBound = -settings.width * this.scale + settings.width,
               rightBound = 0;
-            // limit translation to thresholds
-            this.translation = d3.event ? d3.event.translate : [0, 0];
+            // limit newTranslation to thresholds
+            var newTranslation = d3.event && this.scale !== 1 ? d3.event.translate : [0, 0];
             this.translation = [
-              Math.max(Math.min(this.translation[0], rightBound), leftBound),
-              Math.max(Math.min(this.translation[1], bottomBound), topBound)
+              Math.max(Math.min(newTranslation[0], rightBound), leftBound),
+              Math.max(Math.min(newTranslation[1], bottomBound), topBound)
             ];
           }
+          console.log(this.translation);
 
           d3.select('.panCanvas, .panCanvas .bg')
             .attr('transform', 'translate(' + this.translation + ')' + ' scale(' + this.scale + ')');
@@ -61,12 +62,8 @@ var D3ZoomPanManager = (function () {
       initZoomPanControl(this.svg, this.zoom, this.settings, this.graph);
     },
 
-    zoom: function (value) {
-      if (!arguments.length) {
-        return this.zoom;
-      }
-      this.zoom = value;
-      return this;
+    getZoom: function() {
+      return this.zoom;
     },
 
     getNavigator: function () {
