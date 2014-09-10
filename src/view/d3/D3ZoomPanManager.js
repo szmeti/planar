@@ -43,7 +43,6 @@ var D3ZoomPanManager = (function () {
               Math.max(Math.min(newTranslation[1], bottomBound), topBound)
             ];
           }
-          console.log(this.translation);
 
           d3.select('.panCanvas, .panCanvas .bg')
             .attr('transform', 'translate(' + this.translation + ')' + ' scale(' + this.scale + ')');

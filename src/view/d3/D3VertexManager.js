@@ -20,6 +20,10 @@ var D3VertexManager = (function () {
         var scale = zoom.scale();
         var translate = zoom.translate();
 
+        if (scale === 1) {
+          translate = [0, 0];
+        }
+
         var sourceEvent = d3.event.sourceEvent;
         var translatedMouseX = sourceEvent.offsetX - translate[0];
         var translatedMouseY = sourceEvent.offsetY - translate[1];

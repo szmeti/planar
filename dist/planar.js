@@ -1600,7 +1600,6 @@
                             var newTranslation = d3.event && this.scale !== 1 ? d3.event.translate : [ 0, 0 ];
                             this.translation = [ Math.max(Math.min(newTranslation[0], rightBound), leftBound), Math.max(Math.min(newTranslation[1], bottomBound), topBound) ];
                         }
-                        console.log(this.translation);
                         d3.select(".panCanvas, .panCanvas .bg").attr("transform", "translate(" + this.translation + ")" + " scale(" + this.scale + ")");
                     };
                 }();
@@ -1665,6 +1664,9 @@
                 drag.on("dragstart", function(uiVertex) {
                     var scale = zoom.scale();
                     var translate = zoom.translate();
+                    if (scale === 1) {
+                        translate = [ 0, 0 ];
+                    }
                     var sourceEvent = d3.event.sourceEvent;
                     var translatedMouseX = sourceEvent.offsetX - translate[0];
                     var translatedMouseY = sourceEvent.offsetY - translate[1];
