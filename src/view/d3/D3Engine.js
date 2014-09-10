@@ -44,7 +44,7 @@ var D3Engine = (function () {
       var vertexSet = bindData(this.zoomPanManager.getGraphContainer(), 'vertex', vertices);
       var vertexEnter = addEnterSection('vertex', vertexSet);
       translateVertices(vertexSet);
-      var vertexManager = new D3VertexManager(vertexEnter, this.settings, this.zoomPanManager.getZoom());
+      var vertexManager = new D3VertexManager(vertexEnter, this.settings);
       vertexManager.addDragToVertices();
       updateEdgePositions(edgeSet);
 

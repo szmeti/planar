@@ -1648,10 +1648,9 @@
         return D3ZoomPanManager;
     }();
     var D3VertexManager = function() {
-        function D3VertexManager(element, instanceSettings, zoom) {
+        function D3VertexManager(element, instanceSettings) {
             this.element = element;
             this.instanceSettings = instanceSettings;
-            this.zoom = zoom;
         }
         utils.mixin(D3VertexManager.prototype, {
             addDragToVertices: function() {
@@ -1899,7 +1898,7 @@
                 var vertexSet = bindData(this.zoomPanManager.getGraphContainer(), "vertex", vertices);
                 var vertexEnter = addEnterSection("vertex", vertexSet);
                 translateVertices(vertexSet);
-                var vertexManager = new D3VertexManager(vertexEnter, this.settings, this.zoomPanManager.getZoom());
+                var vertexManager = new D3VertexManager(vertexEnter, this.settings);
                 vertexManager.addDragToVertices();
                 updateEdgePositions(edgeSet);
                 var navigator = this.zoomPanManager.getNavigator();

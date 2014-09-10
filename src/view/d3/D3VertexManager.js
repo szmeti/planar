@@ -1,10 +1,9 @@
 /* global D3VertexManager: true */
 var D3VertexManager = (function () {
 
-  function D3VertexManager(element, instanceSettings, zoom) {
+  function D3VertexManager(element, instanceSettings) {
     this.element = element;
     this.instanceSettings = instanceSettings;
-    this.zoom = zoom;
   }
 
   utils.mixin(D3VertexManager.prototype, {
