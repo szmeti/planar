@@ -68,7 +68,8 @@ var settings = {
   },
 
   drag: {
-    enabled: true
+    enabled: true,
+    delay: 200
   },
 
   navigator: {
