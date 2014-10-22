@@ -33,9 +33,9 @@ var ElementRendererDecorator = (function () {
 
     },
 
-    initDefs: function (defs) {
-      this.elementRenderer.initDefs(defs);
-      this.doInitDefs(defs);
+    initDefs: function (defs, settings) {
+      this.elementRenderer.initDefs(defs, settings);
+      this.doInitDefs(defs, settings);
     },
 
     updatePosition: function (uiEdge) {

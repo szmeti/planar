@@ -120,7 +120,7 @@ module.exports = function (grunt) {
       options: {
         singleRun: true,
         frameworks: ['jasmine'],
-        port: 8080,
+        port: 8087,
         runnerPort: 9100,
         browsers: ['Chrome'],
         captureTimeout: 10000,

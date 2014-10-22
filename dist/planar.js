@@ -1355,9 +1355,9 @@
                     this.doInit(element, container);
                 }
             },
-            initDefs: function(defs) {
-                this.elementRenderer.initDefs(defs);
-                this.doInitDefs(defs);
+            initDefs: function(defs, settings) {
+                this.elementRenderer.initDefs(defs, settings);
+                this.doInitDefs(defs, settings);
             },
             updatePosition: function(uiEdge) {
                 this.elementRenderer.updatePosition(uiEdge);
@@ -1400,29 +1400,60 @@
     }();
     var D3VertexIconDecorator = function() {
         var ICON_SIZE = 16;
+        var MARGIN = 3;
         var PADDING = 2;
         function D3VertexIconDecorator(rendererToBeDecorated) {
             this.decorateRenderer(rendererToBeDecorated);
+        }
+        function createOverlay(iconGroup, iconId, borderRadius) {
+            var size = ICON_SIZE + 2 * PADDING;
+            return iconGroup.append("rect").attr("class", "vertex-icon-overlay vertex-icon-overlay-" + iconId).attr("rx", borderRadius).attr("ry", borderRadius).attr("width", size).attr("height", size);
+        }
+        function createIcon(iconGroup, icon, iconId) {
+            return iconGroup.append("use").attr("class", "vertex-icon vertex-icon-" + iconId).attr("transform", "translate(" + PADDING + ", " + PADDING + ")").attr("xlink:href", "#" + icon.id);
         }
         utils.mixin(D3VertexIconDecorator.prototype, ElementRendererDecorator);
         utils.mixin(D3VertexIconDecorator.prototype, {
             doInit: function(uiElement, container) {
                 var vertex = uiElement.vertex;
-                var instanceSettings = vertex.getGraph().getSettings();
-                var icons = vertex.getProperty(instanceSettings.vertex.vertexIconsPropertyKey);
+                var graph = vertex.getGraph();
+                var instanceSettings = graph.getSettings();
+                var icons = vertex.getProperty(instanceSettings.vertex.icons.propertyKey);
+                var createClickHandler = function(iconId) {
+                    return function() {
+                        graph.trigger("vertexIconClicked", vertex, iconId);
+                    };
+                };
                 if (utils.isArray(icons)) {
                     var containerBox = container.node().getBBox();
-                    var startX = -containerBox.width / 2 + PADDING;
+                    var startX = -containerBox.width / 2;
                     for (var i = 0; i < icons.length; i++) {
                         var icon = icons[i];
-                        var fillColor = icon.color || instanceSettings.vertex.iconDefaultColor;
-                        container.append("use").attr("xlink:href", "#" + icon.id).attr("x", startX + i * (ICON_SIZE + PADDING)).attr("y", containerBox.height / 2 - ICON_SIZE - PADDING).attr("fill", fillColor);
+                        var insideVertex = icon.insideVertex || instanceSettings.vertex.icons.insideVertex;
+                        var borderRadius = icon.borderRadius || instanceSettings.vertex.icons.borderRadius;
+                        var iconGroup = container.append("g").attr("class", "vertex-icon-group");
+                        createOverlay(iconGroup, icon.id, borderRadius);
+                        createIcon(iconGroup, icon, icon.id);
+                        var translateX = startX + i * (ICON_SIZE + 2 * PADDING + MARGIN);
+                        var translateY = containerBox.height / 2;
+                        translateY += insideVertex ? -ICON_SIZE - 2 * PADDING : 0;
+                        iconGroup.attr("transform", "translate(" + translateX + ", " + translateY + ")");
+                        iconGroup.on("click", createClickHandler(icon.id));
                     }
                 }
             },
-            doInitDefs: function(defs) {
-                defs.append("path").attr("id", "icon-spam").attr("d", "M16 11.5l-4.5-11.5h-7l-4.5 4.5v7l4.5 " + "4.5h7l4.5-4.5v-7l-4.5-4.5zM9 13h-2v-2h2v2zM9 9h-2v-6h2v6z");
-                defs.append("path").attr("id", "icon-airplane").attr("d", "M12 9.999l-2.857-2.857 6.857-5.143-2-2-8.571 " + "3.429-2.698-2.699c-0.778-0.778-1.864-0.964-2.414-0.414s-0.364 1.636 0.414 " + "2.414l2.698 2.698-3.429 8.572 2 2 5.144-6.857 2.857 2.857v4h2l1-3 3-1v-2l-4 0z");
+            doInitDefs: function(defs, settings) {
+                for (var i = 0; i < settings.icons.activeIcons.length; i++) {
+                    var icon = settings.icons.activeIcons[i];
+                    var definition = settings.icons.iconSet[icon];
+                    if (definition) {
+                        defs.append("path").attr("id", icon).attr("d", definition);
+                    } else {
+                        throw {
+                            message: "Could not find the specified icon in the icon set: " + icon
+                        };
+                    }
+                }
             }
         });
         return D3VertexIconDecorator;
@@ -1888,7 +1919,7 @@
                 var d3Renderers = ElementRendererProvider.getAll("d3", settings);
                 for (var i = 0; i < d3Renderers.length; i++) {
                     if (typeof d3Renderers[i].initDefs === "function") {
-                        d3Renderers[i].initDefs(defs);
+                        d3Renderers[i].initDefs(defs, settings);
                     }
                 }
             },
@@ -3216,14 +3247,25 @@
             borderWeight: 2,
             borderRadius: 0,
             borderPadding: 5,
-            vertexIconsPropertyKey: "icons",
-            iconDefaultColor: "#000000"
+            icons: {
+                propertyKey: "icons",
+                insideVertex: true,
+                borderRadius: 0
+            }
         },
         edge: {
             lineWeightPropertyKey: "strength",
             defaultLineWeight: 2,
             useArrows: true,
             aggregatedByPropertyKey: "aggregatedBy"
+        },
+        icons: {
+            activeIcons: [],
+            iconSet: {
+                spam: "M16 11.5l-4.5-11.5h-7l-4.5 4.5v7l4.5 4.5h7l4.5-4.5v-7l-4.5-4.5zM9 13h-2v-2h2v2zM9 9h-2v-6h2v6z",
+                airplane: "M12 9.999l-2.857-2.857 6.857-5.143-2-2-8.571 3.429-2.698-2.699c-0.778-0.778-1.864-0.964-2.414" + "-0.414s-0.364 1.636 0.414 2.414l2.698 2.698-3.429 8.572 2 2 5.144-6.857 2.857 2.857v4h2l1-3 3-1v-2l-4 0z",
+                share: "M13.5 11c-0.706 0-1.342 0.293-1.797 0.763l-6.734-3.367c0.021-0.129 0.032-0.261 " + "0.032-0.396s-0.011-0.267-0.032-0.396l6.734-3.367c0.455 0.47 1.091 0.763 1.797 0.763 1.381 0 " + "2.5-1.119 2.5-2.5s-1.119-2.5-2.5-2.5-2.5 1.119-2.5 2.5c0 0.135 0.011 0.267 0.031 0.396l-6.734 " + "3.367c-0.455-0.47-1.091-0.763-1.797-0.763-1.381 0-2.5 1.119-2.5 2.5s1.119 2.5 2.5 2.5c0.706 0 " + "1.343-0.293 1.797-0.763l6.734 3.367c-0.021 0.129-0.031 0.261-0.031 0.396 0 1.381 1.119 2.5 2.5 " + "2.5s2.5-1.119 2.5-2.5c0-1.381-1.119-2.5-2.5-2.5z"
+            }
         }
     };
     var ElementFilterManager = function() {

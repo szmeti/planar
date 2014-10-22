@@ -32,7 +32,7 @@ var D3Engine = (function () {
 
       for (var i = 0; i < d3Renderers.length; i++) {
         if (typeof d3Renderers[i].initDefs === 'function') {
-          d3Renderers[i].initDefs(defs);
+          d3Renderers[i].initDefs(defs, settings);
         }
       }
     },
