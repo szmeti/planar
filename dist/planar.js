@@ -300,6 +300,10 @@
     var EDGE_FILTER = "edge";
     var BOTH_FILTER = "both";
     var NODE_WIDTH = 75;
+    var TOP_LEFT = 0;
+    var TOP_RIGHT = 1;
+    var BOTTOM_RIGHT = 2;
+    var BOTTOM_LEFT = 3;
     var EventEmitter = function() {
         return {
             on: function(eventType, callback) {
@@ -1400,17 +1404,15 @@
     }();
     var D3VertexIconDecorator = function() {
         var ICON_SIZE = 16;
-        var MARGIN = 3;
-        var PADDING = 2;
         function D3VertexIconDecorator(rendererToBeDecorated) {
             this.decorateRenderer(rendererToBeDecorated);
         }
-        function createOverlay(iconGroup, iconId, borderRadius) {
-            var size = ICON_SIZE + 2 * PADDING;
+        function createOverlay(iconGroup, iconId, borderRadius, iconPadding) {
+            var size = ICON_SIZE + 2 * iconPadding;
             return iconGroup.append("rect").attr("class", "vertex-icon-overlay vertex-icon-overlay-" + iconId).attr("rx", borderRadius).attr("ry", borderRadius).attr("width", size).attr("height", size);
         }
-        function createIcon(iconGroup, icon, iconId) {
-            return iconGroup.append("use").attr("class", "vertex-icon vertex-icon-" + iconId).attr("transform", "translate(" + PADDING + ", " + PADDING + ")").attr("xlink:href", "#" + icon.id);
+        function createIcon(iconGroup, icon, iconId, iconPadding) {
+            return iconGroup.append("use").attr("class", "vertex-icon vertex-icon-" + iconId).attr("transform", "translate(" + iconPadding + ", " + iconPadding + ")").attr("xlink:href", "#" + icon.id);
         }
         utils.mixin(D3VertexIconDecorator.prototype, ElementRendererDecorator);
         utils.mixin(D3VertexIconDecorator.prototype, {
@@ -1419,6 +1421,12 @@
                 var graph = vertex.getGraph();
                 var instanceSettings = graph.getSettings();
                 var icons = vertex.getProperty(instanceSettings.vertex.icons.propertyKey);
+                var horizontalMargin = instanceSettings.vertex.icons.horizontalMargin;
+                var iconSetMargin = instanceSettings.vertex.icons.iconSetMargin;
+                var iconPadding = instanceSettings.vertex.icons.iconPadding;
+                var positioning = instanceSettings.vertex.icons.positioning;
+                var top = positioning === TOP_LEFT || positioning === TOP_RIGHT;
+                var leftToRight = positioning === TOP_LEFT || positioning === BOTTOM_LEFT;
                 var createClickHandler = function(iconId) {
                     return function() {
                         graph.trigger("vertexIconClicked", vertex, iconId);
@@ -1426,17 +1434,22 @@
                 };
                 if (utils.isArray(icons)) {
                     var containerBox = container.node().getBBox();
-                    var startX = -containerBox.width / 2;
+                    var halfContainerWidth = containerBox.width / 2;
+                    var halfContainerHeight = containerBox.height / 2;
+                    var fullIconWidth = ICON_SIZE + 2 * iconPadding + horizontalMargin;
+                    var fullIconHeight = ICON_SIZE + 2 * iconPadding;
+                    var startX = leftToRight ? -halfContainerWidth : halfContainerWidth - icons.length * fullIconWidth;
                     for (var i = 0; i < icons.length; i++) {
                         var icon = icons[i];
                         var insideVertex = icon.insideVertex || instanceSettings.vertex.icons.insideVertex;
                         var borderRadius = icon.borderRadius || instanceSettings.vertex.icons.borderRadius;
                         var iconGroup = container.append("g").attr("class", "vertex-icon-group");
-                        createOverlay(iconGroup, icon.id, borderRadius);
-                        createIcon(iconGroup, icon, icon.id);
-                        var translateX = startX + i * (ICON_SIZE + 2 * PADDING + MARGIN);
-                        var translateY = containerBox.height / 2;
-                        translateY += insideVertex ? -ICON_SIZE - 2 * PADDING : 0;
+                        createOverlay(iconGroup, icon.id, borderRadius, iconPadding);
+                        createIcon(iconGroup, icon, icon.id, iconPadding);
+                        var translateX = startX + i * fullIconWidth;
+                        var translateY = top ? -halfContainerHeight - fullIconHeight - iconSetMargin : halfContainerHeight + iconSetMargin;
+                        var multiplier = top ? 1 : -1;
+                        translateY += insideVertex ? multiplier * fullIconHeight : 0;
                         iconGroup.attr("transform", "translate(" + translateX + ", " + translateY + ")");
                         iconGroup.on("click", createClickHandler(icon.id));
                     }
@@ -3250,7 +3263,11 @@
             icons: {
                 propertyKey: "icons",
                 insideVertex: true,
-                borderRadius: 0
+                borderRadius: 0,
+                horizontalMargin: 3,
+                iconSetMargin: 2,
+                iconPadding: 2,
+                positioning: TOP_RIGHT
             }
         },
         edge: {
@@ -3628,6 +3645,10 @@
     exports.VERTEX_FILTER = VERTEX_FILTER;
     exports.EDGE_FILTER = EDGE_FILTER;
     exports.NODE_WIDTH = NODE_WIDTH;
+    exports.TOP_LEFT = TOP_LEFT;
+    exports.TOP_RIGHT = TOP_RIGHT;
+    exports.BOTTOM_LEFT = BOTTOM_LEFT;
+    exports.BOTTOM_RIGHT = BOTTOM_RIGHT;
     exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
     exports.GraphSONReader = GraphSONReader;
     exports.Tween = Tween;

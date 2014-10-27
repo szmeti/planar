@@ -8,6 +8,10 @@
 /* global EDGE_FILTER: true */
 /* global BOTH_FILTER: true */
 /* global NODE_WIDTH: true */
+/* global TOP_LEFT: true */
+/* global TOP_RIGHT: true */
+/* global BOTTOM_RIGHT: true */
+/* global BOTTOM_LEFT: true */
 var OUT = 1;
 var IN = 2;
 var BOTH = 3;
@@ -18,3 +22,7 @@ var VERTEX_FILTER = 'vertex';
 var EDGE_FILTER = 'edge';
 var BOTH_FILTER = 'both';
 var NODE_WIDTH = 75;
+var TOP_LEFT = 0;
+var TOP_RIGHT = 1;
+var BOTTOM_RIGHT = 2;
+var BOTTOM_LEFT = 3;

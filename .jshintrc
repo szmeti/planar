@@ -80,6 +80,10 @@
     "EDGE_FILTER": false,
     "BOTH_FILTER": false,
     "NODE_WIDTH": false,
+    "TOP_LEFT": false,
+    "TOP_RIGHT": false,
+    "BOTTOM_RIGHT": false,
+    "BOTTOM_LEFT": false,
 
     "describe": false,
     "it": false,

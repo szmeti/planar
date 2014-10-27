@@ -98,7 +98,11 @@ var settings = {
     icons: {
       propertyKey: 'icons',
       insideVertex: true,
-      borderRadius: 0
+      borderRadius: 0,
+      horizontalMargin: 3,
+      iconSetMargin: 2,
+      iconPadding: 2,
+      positioning: TOP_RIGHT
     }
   },
 

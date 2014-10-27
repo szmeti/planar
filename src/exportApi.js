@@ -45,6 +45,10 @@ exports.BOTH_FILTER = BOTH_FILTER;
 exports.VERTEX_FILTER = VERTEX_FILTER;
 exports.EDGE_FILTER = EDGE_FILTER;
 exports.NODE_WIDTH = NODE_WIDTH;
+exports.TOP_LEFT = TOP_LEFT;
+exports.TOP_RIGHT = TOP_RIGHT;
+exports.BOTTOM_LEFT = BOTTOM_LEFT;
+exports.BOTTOM_RIGHT = BOTTOM_RIGHT;
 
 exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
 exports.GraphSONReader = GraphSONReader;

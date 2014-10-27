@@ -37,11 +37,11 @@
             stroke-width: 1px;
         }
 
-        .vertex-icon-group:hover .vertex-icon-spam {
+        .vertex-icon-holder:hover .vertex-icon-spam {
             fill: #0000ff;
         }
 
-        .vertex-icon-group:hover .vertex-icon-overlay {
+        .vertex-icon-holder:hover .vertex-icon-overlay {
             fill: #cccccc;
             fill-opacity: 1;
         }
@@ -78,7 +78,8 @@
             vertex: {
                 icons: {
                     insideVertex: false,
-                    borderRadius: 2
+                    borderRadius: 2,
+                    positioning: planar.BOTTOM_LEFT
                 }
             }
         });
