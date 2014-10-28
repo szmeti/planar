@@ -1427,9 +1427,21 @@
                 var positioning = instanceSettings.vertex.icons.positioning;
                 var top = positioning === TOP_LEFT || positioning === TOP_RIGHT;
                 var leftToRight = positioning === TOP_LEFT || positioning === BOTTOM_LEFT;
-                var createClickHandler = function(iconId) {
+                var lastMouseDown = null;
+                var createMouseDownHandler = function() {
                     return function() {
-                        graph.trigger("vertexIconClicked", vertex, iconId);
+                        lastMouseDown = new Date().getTime();
+                    };
+                };
+                var createMouseUpHandler = function(iconId) {
+                    return function() {
+                        if (d3.event.defaultPrevented) {
+                            return;
+                        }
+                        var now = new Date().getTime();
+                        if (now - lastMouseDown <= 250) {
+                            graph.trigger("vertexIconClicked", vertex, iconId);
+                        }
                     };
                 };
                 if (utils.isArray(icons)) {
@@ -1451,7 +1463,8 @@
                         var multiplier = top ? 1 : -1;
                         translateY += insideVertex ? multiplier * fullIconHeight : 0;
                         iconGroup.attr("transform", "translate(" + translateX + ", " + translateY + ")");
-                        iconGroup.on("click", createClickHandler(icon.id));
+                        iconGroup.on("mousedown", createMouseDownHandler());
+                        iconGroup.on("mouseup", createMouseUpHandler(icon.id));
                     }
                 }
             },

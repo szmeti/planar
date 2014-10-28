@@ -38,10 +38,25 @@ var D3VertexIconDecorator = (function () {
       var positioning = instanceSettings.vertex.icons.positioning;
       var top = positioning === TOP_LEFT || positioning === TOP_RIGHT;
       var leftToRight = positioning === TOP_LEFT || positioning === BOTTOM_LEFT;
+      var lastMouseDown = null;
 
-      var createClickHandler = function (iconId) {
+      var createMouseDownHandler = function () {
         return function () {
-          graph.trigger('vertexIconClicked', vertex, iconId);
+          lastMouseDown = new Date().getTime();
+        };
+      };
+
+      var createMouseUpHandler = function (iconId) {
+        return function () {
+          if (d3.event.defaultPrevented) {
+            return;
+          }
+
+          var now = new Date().getTime();
+
+          if (now - lastMouseDown <= 250) {
+            graph.trigger('vertexIconClicked', vertex, iconId);
+          }
         };
       };
 
@@ -69,7 +84,9 @@ var D3VertexIconDecorator = (function () {
           translateY += insideVertex ? multiplier * fullIconHeight : 0;
           iconGroup.attr('transform', 'translate(' + translateX + ', ' + translateY + ')');
 
-          iconGroup.on('click', createClickHandler(icon.id));
+          // click event does not always trigger, so we have to use mousedown and mouseup
+          iconGroup.on('mousedown', createMouseDownHandler());
+          iconGroup.on('mouseup', createMouseUpHandler(icon.id));
         }
       }
     },
