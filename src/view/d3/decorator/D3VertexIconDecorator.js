@@ -79,9 +79,16 @@ var D3VertexIconDecorator = (function () {
           createIcon(iconGroup, icon, icon.id, iconPadding);
 
           var translateX = startX + i * fullIconWidth;
-          var translateY = top ? -halfContainerHeight - fullIconHeight - iconSetMargin : halfContainerHeight + iconSetMargin;
-          var multiplier = top ? 1 : -1;
-          translateY += insideVertex ? multiplier * fullIconHeight : 0;
+
+          var multiplier = top ? -1 : 1;
+          // move to top or bottom edge
+          var translateY = multiplier * halfContainerHeight;
+          // apply icon set margin and icon height
+          translateY += top === insideVertex ? iconSetMargin : -iconSetMargin - fullIconHeight;
+
+//          var translateY = top ? -halfContainerHeight - fullIconHeight - iconSetMargin : halfContainerHeight + iconSetMargin;
+//          var multiplier = top ? 1 : -1;
+//          translateY += insideVertex ? multiplier * fullIconHeight : 0;
           iconGroup.attr('transform', 'translate(' + translateX + ', ' + translateY + ')');
 
           // click event does not always trigger, so we have to use mousedown and mouseup

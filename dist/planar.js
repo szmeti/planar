@@ -1459,9 +1459,9 @@
                         createOverlay(iconGroup, icon.id, borderRadius, iconPadding);
                         createIcon(iconGroup, icon, icon.id, iconPadding);
                         var translateX = startX + i * fullIconWidth;
-                        var translateY = top ? -halfContainerHeight - fullIconHeight - iconSetMargin : halfContainerHeight + iconSetMargin;
-                        var multiplier = top ? 1 : -1;
-                        translateY += insideVertex ? multiplier * fullIconHeight : 0;
+                        var multiplier = top ? -1 : 1;
+                        var translateY = multiplier * halfContainerHeight;
+                        translateY += top === insideVertex ? iconSetMargin : -iconSetMargin - fullIconHeight;
                         iconGroup.attr("transform", "translate(" + translateX + ", " + translateY + ")");
                         iconGroup.on("mousedown", createMouseDownHandler());
                         iconGroup.on("mouseup", createMouseUpHandler(icon.id));
