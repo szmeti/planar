@@ -105,6 +105,7 @@
     "GridLayout": false,
     "NodeLinkTreeLayout": false,
     "FruchtermanReingoldLayout": false,
+    "FixedLayout": false,
     "LayoutUtils": false,
     "Easing": false,
 

@@ -2944,6 +2944,17 @@
         };
         return FruchtermanReingoldLayout;
     }();
+    var FixedLayout = function() {
+        function FixedLayout() {
+            this.name = "fixed";
+        }
+        utils.mixin(FixedLayout.prototype, {
+            step: function() {
+                return false;
+            }
+        });
+        return FixedLayout;
+    }();
     var LayoutUtils = {
         setScale: function(scale) {
             d3.select("#graphElements").attr("transform", "scale(" + scale + ")");
@@ -3208,7 +3219,8 @@
             wheel: WheelLayout,
             grid: GridLayout,
             tree: NodeLinkTreeLayout,
-            fruchtermanReingold: FruchtermanReingoldLayout
+            fruchtermanReingold: FruchtermanReingoldLayout,
+            fixed: FixedLayout
         },
         animationDuration: 1e3,
         easing: Easing.expoInOut,

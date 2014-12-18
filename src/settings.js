@@ -15,7 +15,8 @@ var settings = {
     'wheel': WheelLayout,
     'grid': GridLayout,
     'tree': NodeLinkTreeLayout,
-    'fruchtermanReingold': FruchtermanReingoldLayout
+    'fruchtermanReingold': FruchtermanReingoldLayout,
+    'fixed': FixedLayout
   },
 
   animationDuration: 1000,

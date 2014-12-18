@@ -129,6 +129,7 @@
         <button id="treeLayout">Tree</button>
         <button id="fruchtermanReingoldLayout">Fruchterman-Reingold</button>
         <button id="random">Random</button>
+        <button id="fixed">Fixed</button>
     </div>
     <div style="width: 100%">
         <div id="graphCanvas" style="width: 75%"></div>
@@ -342,6 +343,10 @@
 
         $('#random').on('click', function () {
             graph.renderer.changeLayout('random');
+        });
+
+        $('#fixed').on('click', function () {
+            graph.renderer.changeLayout('fixed');
         });
     });
 </script>
