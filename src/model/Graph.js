@@ -224,39 +224,18 @@ var Graph = (function () {
       delete this.edgePropertyFilters[predicateName];
     },
 
-    render: function () {
-      this.renderer.render();
-    },
-
-    saveAsImage: function () {
-      this.renderer.saveAsImage();
+    filteredView: function () {
+      return new ElementFilterManager(this);
     },
 
     getSettings: function () {
       return this.settings;
     },
 
-    filteredView: function() {
-      return new ElementFilterManager(this);
-    },
-
-    destroy: function () {
-      this.renderer.stop();
-    },
-
-    updateSettings: function(instanceSettings) {
+    updateSettings: function (instanceSettings) {
       instanceSettings = instanceSettings || {};
       this.settings = utils.mixin({}, settings);
       this.settings = utils.deepMixin(this.settings, instanceSettings);
-
-      if (utils.exists(this.settings.container) && utils.exists(this.settings.engine)) {
-        this.renderer = new Renderer(this, this.settings);
-        this.renderer.init();
-      }
-    },
-
-    resize: function() {
-      this.renderer.resize();
     }
 
   });

@@ -191,7 +191,7 @@ describe('FilterManager', function () {
     var filterManager = graph.filteredView();
     filterManager.addFilter().interval('age', 19, 34).type(VERTEX_FILTER);
 
-    var aggregated = filterManager.getAggragatedGraph();
+    var aggregated = filterManager.getAggregatedGraph();
     expect(aggregated.query().edges().length).toBe(1);
     expect(aggregated.query().vertices().length).toBe(2);
 

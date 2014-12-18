@@ -40,7 +40,7 @@ var ElementFilterManager = (function () {
       return this.normalGraph;
     },
 
-    getAggragatedGraph: function () {
+    getAggregatedGraph: function () {
       if (!this.executed) {
         filterGraph(this);
       }
@@ -195,7 +195,7 @@ var ElementFilterManager = (function () {
 
     if (!hasEdgeBetweenVertices(inVertex, outVertex)) {
       var newEdge = context.aggregatedGraph.addEdge(null, outVertex, inVertex);
-      //TODO: In this case allways the first edge properties win. Replace it with more general solution.
+      //TODO: In this case always the first edge properties win. Replace it with more general solution.
       edge.copyPropertiesTo(newEdge);
       newEdge.setProperty(settings.edge.lineWeightPropertyKey, strength);
       newEdge.setProperty(settings.edge.aggregatedByPropertyKey, [edge.getId()]);

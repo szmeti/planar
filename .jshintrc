@@ -23,6 +23,7 @@
     "Edge": false,
     "Vertex": false,
     "Graph": false,
+    "VisualGraph": false,
     "InternalPropertyFilter": false,
     "Index": false,
     "IndexManager": false,

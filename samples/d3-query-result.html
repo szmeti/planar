@@ -5,21 +5,21 @@
 
     <meta http-equiv="content-type" content="text/html; charset=UTF8">
 
-    <link rel="stylesheet" href="../dist/planar.css" />
+    <link rel="stylesheet" href="../dist/planar.css"/>
 
     <style type="text/css">
-        body{
-            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             font-size: 14px;
             color: #666666;
             text-shadow: 0 1px 0 #ffffff;
         }
 
         .query-vertex-box {
-            fill:url(#queryVertexDefaultFillScheme);
-            fill-opacity:1;
+            fill: url(#queryVertexDefaultFillScheme);
+            fill-opacity: 1;
             stroke: #b3b3b3;
-            stroke-width:1;
+            stroke-width: 1;
         }
 
         .query-vertex-ref-label {
@@ -51,7 +51,7 @@
     $(document).ready(function () {
         var queryGraph = new planar.Graph();
 
-        var graph = new planar.Graph({container: '#graphCanvas', navigator: {enabled: false}});
+        var graph = new planar.VisualGraph(new planar.Graph({container: '#graphCanvas', navigator: {enabled: false}}));
 
 
         var v1 = graph.addVertex();

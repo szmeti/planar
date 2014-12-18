@@ -69,7 +69,7 @@
 
         planar.settings.d3.vertexRenderers['image-vertex-with-icons'] = new planar.D3VertexIconDecorator(new planar.D3ImageVertexRenderer());
 
-        var graph = new planar.Graph({
+        var graph = new planar.VisualGraph(new planar.Graph({
             container: '#graphCanvas',
             navigatorContainer: '#navigatorContainer',
             icons: {
@@ -82,7 +82,7 @@
                     positioning: planar.BOTTOM_LEFT
                 }
             }
-        });
+        }));
 
         var v1 = graph.addVertex();
         v1.setProperty(planar.PROP_TYPE, "bordered-image-vertex");
