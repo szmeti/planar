@@ -130,6 +130,7 @@
         <button id="fruchtermanReingoldLayout">Fruchterman-Reingold</button>
         <button id="random">Random</button>
         <button id="fixed">Fixed</button>
+        <button id="redraw">Redraw</button>
     </div>
     <div style="width: 100%">
         <div id="graphCanvas" style="width: 75%"></div>
@@ -347,6 +348,10 @@
 
         $('#fixed').on('click', function () {
             graph.renderer.changeLayout('fixed');
+        });
+
+        $('#redraw').on('click', function () {
+            graph.redraw();
         });
     });
 </script>

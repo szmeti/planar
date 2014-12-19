@@ -157,6 +157,10 @@ var VisualGraph = (function () {
 
     resize: function () {
       this.renderer.resize();
+    },
+
+    redraw: function () {
+      this.renderer.redraw();
     }
 
   });

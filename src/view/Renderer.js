@@ -223,6 +223,12 @@ var Renderer = (function () {
         uiVertex.x = x;
         uiVertex.y = y;
       }
+    },
+
+    redraw: function () {
+      this.stop();
+      this.initialized = false;
+      this.render();
     }
 
   });

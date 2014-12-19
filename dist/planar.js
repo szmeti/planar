@@ -1474,6 +1474,9 @@
             },
             resize: function() {
                 this.renderer.resize();
+            },
+            redraw: function() {
+                this.renderer.redraw();
             }
         });
         return VisualGraph;
@@ -3276,6 +3279,11 @@
                     uiVertex.x = x;
                     uiVertex.y = y;
                 }
+            },
+            redraw: function() {
+                this.stop();
+                this.initialized = false;
+                this.render();
             }
         });
         return Renderer;
