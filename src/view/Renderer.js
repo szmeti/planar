@@ -225,6 +225,13 @@ var Renderer = (function () {
       }
     },
 
+    select: function (vertex) {
+      var uiVertex = this.verticesById[vertex.getId()];
+      if (uiVertex) {
+        this.selectedVertex = uiVertex;
+      }
+    },
+
     redraw: function () {
       this.stop();
       this.initialized = false;

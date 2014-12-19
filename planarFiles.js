@@ -29,7 +29,7 @@ planarFiles = {
     'src/view/layout/RandomLayout.js',
     'src/view/layout/ForceDirectedLayout.js',
     'src/view/ElementRendererDecorator.js',
-    'src/view/VisualGraph.js',
+    'src/view/model/VisualGraph.js',
     'src/view/d3/decorator/{,*/}*.js',
     'src/view/Engine.js',
     'src/view/d3/D3SvgImageDownloader.js',

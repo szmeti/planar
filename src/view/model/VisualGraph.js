@@ -161,6 +161,14 @@ var VisualGraph = (function () {
 
     redraw: function () {
       this.renderer.redraw();
+    },
+
+    select: function (vertex) {
+      this.renderer.select(vertex);
+    },
+
+    setPosition: function (vertex, x, y) {
+      this.renderer.setPosition(vertex, x, y);
     }
 
   });

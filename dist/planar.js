@@ -501,12 +501,6 @@
             },
             query: function() {
                 return new VertexQuery(this);
-            },
-            select: function() {
-                this.graph.renderer.selectedVertex = this.graph.renderer.verticesById[this.id];
-            },
-            setPosition: function(x, y) {
-                this.graph.renderer.setPosition(this, x, y);
             }
         });
         return Vertex;
@@ -1477,6 +1471,12 @@
             },
             redraw: function() {
                 this.renderer.redraw();
+            },
+            select: function(vertex) {
+                this.renderer.select(vertex);
+            },
+            setPosition: function(vertex, x, y) {
+                this.renderer.setPosition(vertex, x, y);
             }
         });
         return VisualGraph;
@@ -3278,6 +3278,12 @@
                 if (uiVertex) {
                     uiVertex.x = x;
                     uiVertex.y = y;
+                }
+            },
+            select: function(vertex) {
+                var uiVertex = this.verticesById[vertex.getId()];
+                if (uiVertex) {
+                    this.selectedVertex = uiVertex;
                 }
             },
             redraw: function() {
