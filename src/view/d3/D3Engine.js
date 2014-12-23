@@ -67,6 +67,18 @@ var D3Engine = (function () {
     moveVertexToFront: function (uiVertex) {
       var vertexNode = uiVertex.node();
       vertexNode.parentNode.appendChild(vertexNode);
+    },
+
+    vertexPropertyUpdated: function (uiVertex) {
+      if (uiVertex.g) {
+        uiVertex.g.remove();
+      }
+    },
+
+    vertexPropertyRemoved: function (uiVertex) {
+      if (uiVertex.g) {
+        uiVertex.g.remove();
+      }
     }
 
   });

@@ -25,6 +25,22 @@ var Engine = (function () {
     },
 
     moveVertexToFront: function () {
+    },
+
+    vertexPropertyUpdated: function () {
+
+    },
+
+    edgePropertyUpdated: function () {
+
+    },
+
+    vertexPropertyRemoved: function () {
+
+    },
+
+    edgePropertyRemoved: function () {
+
     }
 
   };

@@ -378,6 +378,7 @@
                 var oldValue = this.properties[key];
                 this.properties[key] = value;
                 this.graph.indexManager.updateKeyIndexValue(key, value, oldValue, this);
+                this.graph.trigger("propertyUpdated", this, key, value, oldValue);
             },
             getProperty: function(key) {
                 if (checkPropertyAccess(this.graph, this, key, Array.prototype.splice.call(arguments, 1))) {
@@ -412,6 +413,7 @@
                 var value = this.getProperty(key);
                 delete this.properties[key];
                 this.graph.indexManager.removeKeyIndexValue(key, value, this);
+                this.graph.trigger("propertyRemoved", this, key, value);
                 return value;
             },
             copyPropertiesTo: function(to) {
@@ -1626,7 +1628,11 @@
             initVertex: function() {},
             renderVertex: function() {},
             stop: function() {},
-            moveVertexToFront: function() {}
+            moveVertexToFront: function() {},
+            vertexPropertyUpdated: function() {},
+            edgePropertyUpdated: function() {},
+            vertexPropertyRemoved: function() {},
+            edgePropertyRemoved: function() {}
         };
     }();
     var D3SvgImageDownloader = function() {
@@ -1735,7 +1741,7 @@
     }();
     var D3ZoomPanManager = function() {
         function D3ZoomPanManager(container, defs, settings, graph) {
-            this.scale = 1;
+            this.scale = settings.zoom.defaultScale;
             this.translation = [ 0, 0 ];
             this.xScale = getXScale(settings);
             this.yScale = getYScale(settings);
@@ -1757,16 +1763,16 @@
                             return;
                         }
                         if (d3.event) {
-                            this.scale = d3.event.scale;
+                            context.scale = d3.event.scale;
                         } else {
-                            this.scale = newScale;
+                            context.scale = newScale;
                         }
                         if (settings.drag.enabled) {
-                            var topBound = -settings.height * this.scale + settings.height, bottomBound = 0, leftBound = -settings.width * this.scale + settings.width, rightBound = 0;
-                            var newTranslation = d3.event && this.scale !== 1 ? d3.event.translate : [ 0, 0 ];
-                            this.translation = [ Math.max(Math.min(newTranslation[0], rightBound), leftBound), Math.max(Math.min(newTranslation[1], bottomBound), topBound) ];
+                            var topBound = -settings.height * context.scale + settings.height, bottomBound = 0, leftBound = -settings.width * context.scale + settings.width, rightBound = 0;
+                            var newTranslation = d3.event && context.scale !== 1 ? d3.event.translate : [ 0, 0 ];
+                            context.translation = [ Math.max(Math.min(newTranslation[0], rightBound), leftBound), Math.max(Math.min(newTranslation[1], bottomBound), topBound) ];
                         }
-                        d3.select(".panCanvas, .panCanvas .bg").attr("transform", "translate(" + this.translation + ")" + " scale(" + this.scale + ")");
+                        d3.select(".panCanvas, .panCanvas .bg").attr("transform", "translate(" + context.translation + ")" + " scale(" + context.scale + ")");
                     };
                 }();
                 this.zoom = d3.behavior.zoom().x(this.xScale).y(this.yScale).scaleExtent([ this.settings.zoom.minScale, this.settings.zoom.maxScale ]).on("zoom.canvas", zoomCallback);
@@ -1809,7 +1815,7 @@
             innerWrapper.append("rect").attr("class", "background").attr("width", context.settings.width).attr("height", context.settings.height);
             var panCanvas = innerWrapper.append("g").attr("id", "panCanvas").attr("class", "panCanvas").attr("width", context.settings.width).attr("height", context.settings.height).attr("transform", "translate(0,0)");
             panCanvas.append("rect").attr("class", "background").attr("width", context.settings.width).attr("height", context.settings.height);
-            context.graphContainer = panCanvas.append("g").attr("id", "graphElements").attr("transform", "scale(" + context.settings.zoom.defaultScale + ")");
+            context.graphContainer = panCanvas.append("g").attr("id", "graphElements").attr("transform", "scale(" + context.scale + ")");
         }
         return D3ZoomPanManager;
     }();
@@ -2083,6 +2089,16 @@
             moveVertexToFront: function(uiVertex) {
                 var vertexNode = uiVertex.node();
                 vertexNode.parentNode.appendChild(vertexNode);
+            },
+            vertexPropertyUpdated: function(uiVertex) {
+                if (uiVertex.g) {
+                    uiVertex.g.remove();
+                }
+            },
+            vertexPropertyRemoved: function(uiVertex) {
+                if (uiVertex.g) {
+                    uiVertex.g.remove();
+                }
             }
         });
         function bindData(svg, type, elements) {
@@ -3163,6 +3179,20 @@
             graph.on("vertexDragStart", function(event, vertex) {
                 engine.moveVertexToFront(vertex.uiElement);
                 renderer.selectedVertex = vertex;
+            });
+            graph.on("propertyUpdated", function(event, element, key, newValue, oldValue) {
+                if (utils.isOfType(element, Vertex)) {
+                    engine.vertexPropertyUpdated(renderer.verticesById[element.getId()], key, newValue, oldValue);
+                } else {
+                    engine.edgePropertyUpdated(renderer.edgesById[element.getId()], key, newValue, oldValue);
+                }
+            });
+            graph.on("propertyRemoved", function(event, element, key, oldValue) {
+                if (utils.isOfType(element, Vertex)) {
+                    engine.vertexPropertyRemoved(renderer.verticesById[element.getId()], key, oldValue);
+                } else {
+                    engine.edgePropertyRemoved(renderer.edgesById[element.getId()], key, oldValue);
+                }
             });
             if (!renderer.settings.width) {
                 var timeOfLastResizeEvent;

@@ -82,6 +82,22 @@ var Renderer = (function () {
       renderer.selectedVertex = vertex;
     });
 
+    graph.on('propertyUpdated', function (event, element, key, newValue, oldValue) {
+      if (utils.isOfType(element, Vertex)) {
+        engine.vertexPropertyUpdated(renderer.verticesById[element.getId()], key, newValue, oldValue);
+      } else {
+        engine.edgePropertyUpdated(renderer.edgesById[element.getId()], key, newValue, oldValue);
+      }
+    });
+
+    graph.on('propertyRemoved', function (event, element, key, oldValue) {
+      if (utils.isOfType(element, Vertex)) {
+        engine.vertexPropertyRemoved(renderer.verticesById[element.getId()], key, oldValue);
+      } else {
+        engine.edgePropertyRemoved(renderer.edgesById[element.getId()], key, oldValue);
+      }
+    });
+
     if (!renderer.settings.width) {
       var timeOfLastResizeEvent;
       var timeout = false;
@@ -230,12 +246,6 @@ var Renderer = (function () {
       if (uiVertex) {
         this.selectedVertex = uiVertex;
       }
-    },
-
-    redraw: function () {
-      this.stop();
-      this.initialized = false;
-      this.render();
     }
 
   });

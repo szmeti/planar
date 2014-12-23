@@ -38,6 +38,7 @@ var Element = (function () {
       var oldValue = this.properties[key];
       this.properties[key] = value;
       this.graph.indexManager.updateKeyIndexValue(key, value, oldValue, this);
+      this.graph.trigger('propertyUpdated', this, key, value, oldValue);
     },
 
     getProperty: function (key) {
@@ -80,12 +81,13 @@ var Element = (function () {
       var value = this.getProperty(key);
       delete this.properties[key];
       this.graph.indexManager.removeKeyIndexValue(key, value, this);
+      this.graph.trigger('propertyRemoved', this, key, value);
       return value;
     },
 
-    copyPropertiesTo: function(to) {
+    copyPropertiesTo: function (to) {
       var propertyKeys = this.getPropertyKeys();
-      for(var i = 0;  i < propertyKeys.length; i++) {
+      for (var i = 0; i < propertyKeys.length; i++) {
         var key = propertyKeys[i];
         var value = this.getProperty(key);
         to.setProperty(key, value);

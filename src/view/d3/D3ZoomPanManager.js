@@ -2,7 +2,7 @@
 var D3ZoomPanManager = (function () {
 
   function D3ZoomPanManager(container, defs, settings, graph) {
-    this.scale = 1;
+    this.scale = settings.zoom.defaultScale;
     this.translation = [0, 0];
     this.xScale = getXScale(settings);
     this.yScale = getYScale(settings);
@@ -27,25 +27,25 @@ var D3ZoomPanManager = (function () {
             return;
           }
           if (d3.event) {
-            this.scale = d3.event.scale;
+            context.scale = d3.event.scale;
           } else {
-            this.scale = newScale;
+            context.scale = newScale;
           }
           if (settings.drag.enabled) {
-            var topBound = -settings.height * this.scale + settings.height,
+            var topBound = -settings.height * context.scale + settings.height,
               bottomBound = 0,
-              leftBound = -settings.width * this.scale + settings.width,
+              leftBound = -settings.width * context.scale + settings.width,
               rightBound = 0;
             // limit newTranslation to thresholds
-            var newTranslation = d3.event && this.scale !== 1 ? d3.event.translate : [0, 0];
-            this.translation = [
+            var newTranslation = d3.event && context.scale !== 1 ? d3.event.translate : [0, 0];
+            context.translation = [
               Math.max(Math.min(newTranslation[0], rightBound), leftBound),
               Math.max(Math.min(newTranslation[1], bottomBound), topBound)
             ];
           }
 
           d3.select('.panCanvas, .panCanvas .bg')
-            .attr('transform', 'translate(' + this.translation + ')' + ' scale(' + this.scale + ')');
+            .attr('transform', 'translate(' + context.translation + ')' + ' scale(' + context.scale + ')');
         };
       })();
 
@@ -147,7 +147,7 @@ var D3ZoomPanManager = (function () {
 
     context.graphContainer = panCanvas.append('g')
       .attr('id', 'graphElements')
-      .attr('transform', 'scale(' + context.settings.zoom.defaultScale + ')');
+      .attr('transform', 'scale(' + context.scale + ')');
   }
 
   return D3ZoomPanManager;
