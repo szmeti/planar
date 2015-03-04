@@ -1531,7 +1531,7 @@
                 var vertex = uiElement.vertex;
                 var graph = vertex.getGraph();
                 var instanceSettings = graph.getSettings();
-                var icons = vertex.getProperty(instanceSettings.vertex.icons.propertyKey);
+                var icons = vertex.getPropertyUnfiltered(instanceSettings.vertex.icons.propertyKey);
                 var horizontalMargin = instanceSettings.vertex.icons.horizontalMargin;
                 var iconSetMargin = instanceSettings.vertex.icons.iconSetMargin;
                 var iconPadding = instanceSettings.vertex.icons.iconPadding;
@@ -3315,11 +3315,6 @@
                 if (uiVertex) {
                     this.selectedVertex = uiVertex;
                 }
-            },
-            redraw: function() {
-                this.stop();
-                this.initialized = false;
-                this.render();
             }
         });
         return Renderer;
