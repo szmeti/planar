@@ -49,6 +49,7 @@ planarFiles = {
     'src/view/layout/NodeLinkTreeLayout.js',
     'src/view/layout/FruchtermanReingoldLayout.js',
     'src/view/layout/FixedLayout.js',
+    'src/view/layout/PositionCorrectorLayout.js',
     'src/view/layout/LayoutUtils.js',
     'src/view/Easing.js',
     'src/view/Renderer.js',

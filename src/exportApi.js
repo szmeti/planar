@@ -60,6 +60,7 @@ exports.WheelLayout = WheelLayout;
 exports.GridLayout = GridLayout;
 exports.NodeLinkTreeLayout = NodeLinkTreeLayout;
 exports.FruchtermanReingoldLayout = FruchtermanReingoldLayout;
+exports.PositionCorrectorLayout = PositionCorrectorLayout;
 exports.LayoutUtils = LayoutUtils;
 exports.Easing = Easing;
 exports.Compare = Compare;

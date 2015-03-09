@@ -16,7 +16,8 @@ var settings = {
     'grid': GridLayout,
     'tree': NodeLinkTreeLayout,
     'fruchtermanReingold': FruchtermanReingoldLayout,
-    'fixed': FixedLayout
+    'fixed': FixedLayout,
+    'positionCorrector': PositionCorrectorLayout
   },
 
   animationDuration: 1000,

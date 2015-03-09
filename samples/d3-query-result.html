@@ -51,7 +51,7 @@
     $(document).ready(function () {
         var queryGraph = new planar.Graph();
 
-        var graph = new planar.VisualGraph(new planar.Graph({container: '#graphCanvas', navigator: {enabled: false}}));
+        var graph = new planar.VisualGraph(new planar.Graph({container: '#graphCanvas', navigator: {enabled: false}, defaultLayout: 'positionCorrector'}));
 
 
         var v1 = graph.addVertex();
@@ -62,17 +62,23 @@
         v1.setProperty('firstName', 'John');
         v1.setProperty('surname', 'Smith');
         v1.setProperty('gender', 'male');
+        v1.setProperty('_beginX', 390);
+        v1.setProperty('_beginY', 320);
 
         var v2 = graph.addVertex();
         v2.setProperty(planar.PROP_TYPE, "query-result-vertex");
         v2.setProperty('_queryVertexReference', "F1");
         v2.setProperty('entityType', "Flight");
+        v2.setProperty('_beginX', 305);
+        v2.setProperty('_beginY', 365);
 
         var v3 = graph.addVertex();
         v3.setProperty(planar.PROP_TYPE, "query-result-vertex");
         v3.setProperty('_queryVertexReference', "P2");
         v3.setProperty('entityType', "Person");
         v3.setProperty('age', 10);
+        v3.setProperty('_beginX', 310);
+        v3.setProperty('_beginY', 283);
 
         graph.addEdge(null, v1, v2, "knows");
         graph.addEdge(null, v2, v3, "knows");
