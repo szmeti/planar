@@ -3080,53 +3080,67 @@
         });
         return FixedLayout;
     }();
-    var PositionCorrectorLayout = function() {
-        function PositionCorrectorLayout(duration, easing) {
+    var TossToBorderLayout = function() {
+        function TossToBorderLayout(duration, easing) {
             this.running = true;
             this.tween = new Tween(duration, easing);
-            this.name = "positionCorrector";
+            this.name = "tossToBorder";
         }
         var PADDING = 20;
-        var calculateEndPoint = function(vertices, currentVertex, currentBeginX, currentBeginY, centerX, centerY, width, height) {
-            currentVertex.endX = currentBeginX;
-            currentVertex.endY = currentBeginY;
-            var currentWidth = SvgUtils.widthOf(currentVertex);
-            var currentHeight = SvgUtils.heightOf(currentVertex);
+        var calculateEndPoint = function(vertices, currentUiVertex, currentBeginX, currentBeginY, currentWidth, currentHeight, drawingArea, pointsOnLine) {
+            var overlapArea = 0;
             for (var i = 0; i < vertices.length; i++) {
-                var vertex = vertices[i];
-                if (vertex.id === currentVertex.id) {
+                var uiVertex = vertices[i];
+                if (uiVertex.id === currentUiVertex.id) {
                     continue;
                 }
-                var vertexWidth = SvgUtils.widthOf(vertex);
-                var vertexHeight = SvgUtils.heightOf(vertex);
-                var beginX = vertex.vertex.getPropertyUnfiltered("_beginX");
-                var beginY = vertex.vertex.getPropertyUnfiltered("_beginY");
-                moveVertex(currentVertex, vertex, currentBeginX, currentBeginY, currentWidth, currentHeight, beginX, beginY, vertexWidth, vertexHeight, centerX, centerY, width, height);
-                currentBeginX = currentVertex.vertex.getPropertyUnfiltered("_beginX");
-                currentBeginY = currentVertex.vertex.getPropertyUnfiltered("_beginY");
+                var vertexWidth = SvgUtils.widthOf(uiVertex);
+                var vertexHeight = SvgUtils.heightOf(uiVertex);
+                var beginX = uiVertex.vertex.getPropertyUnfiltered("_beginX");
+                var beginY = uiVertex.vertex.getPropertyUnfiltered("_beginY");
+                overlapArea += calculateOverlapArea(currentBeginX, currentBeginY, currentWidth, currentHeight, beginX, beginY, vertexWidth, vertexHeight);
             }
-        };
-        var moveVertex = function(currentVertex, vertex, currentBeginX, currentBeginY, currentWidth, currentHeight, beginX, beginY, vertexWidth, vertexHeight, centerX, centerY, width, height) {
-            var wrongX = currentBeginX + (currentWidth + PADDING) / 2 >= beginX - vertexWidth / 2 && currentBeginX - (currentWidth + PADDING) / 2 <= beginX + vertexWidth / 2;
-            var wrongY = currentBeginY + (currentHeight + PADDING) / 2 >= beginY - vertexHeight / 2 && currentBeginY - (currentHeight + PADDING) / 2 <= beginY + vertexHeight / 2;
-            var lessThanXThreshold = currentBeginX > PADDING + currentWidth && currentBeginX < width - PADDING - currentWidth;
-            var lessThanYThreshold = currentBeginY > PADDING + currentHeight && currentBeginY < height - PADDING - currentHeight;
-            if (wrongX && wrongY && lessThanXThreshold && lessThanYThreshold) {
-                var x = currentBeginX - centerX > 0 ? currentBeginX + 1 : currentBeginX - 1;
-                var y = (currentBeginY - centerY) * (x - centerX) / (currentBeginX - centerX) + centerY;
-                currentVertex.endX = x;
-                currentVertex.endY = y;
-                currentVertex.vertex.setPropertyUnfiltered("_beginX", x);
-                currentVertex.vertex.setPropertyUnfiltered("_beginY", y);
-                moveVertex(currentVertex, vertex, x, y, currentWidth, currentHeight, beginX, beginY, vertexWidth, vertexHeight, centerX, centerY, width, height);
+            pointsOnLine[overlapArea] = {
+                x: currentBeginX,
+                y: currentBeginY
+            };
+            var xInsideDrawingArea = currentBeginX > PADDING + currentWidth / 2 && currentBeginX < drawingArea.width - PADDING - currentWidth / 2;
+            var yInsideDrawingArea = currentBeginY > PADDING + currentHeight / 2 && currentBeginY < drawingArea.height - PADDING - currentHeight / 2;
+            if (overlapArea > 0 && xInsideDrawingArea && yInsideDrawingArea) {
+                moveVertex(currentUiVertex, currentBeginX, currentBeginY, currentWidth, currentHeight, drawingArea);
+                calculateEndPoint(vertices, currentUiVertex, currentUiVertex.vertex.getPropertyUnfiltered("_beginX"), currentUiVertex.vertex.getPropertyUnfiltered("_beginY"), currentWidth, currentHeight, drawingArea, pointsOnLine);
             }
+            return pointsOnLine;
         };
-        utils.mixin(PositionCorrectorLayout.prototype, {
+        var moveVertex = function(currentUiVertex, currentBeginX, currentBeginY, currentWidth, currentHeight, drawingArea) {
+            var x = currentBeginX - drawingArea.centerX > 0 ? currentBeginX + 1 : currentBeginX - 1;
+            var y = (currentBeginY - drawingArea.centerY) * (x - drawingArea.centerX) / (currentBeginX - drawingArea.centerX) + drawingArea.centerY;
+            currentUiVertex.vertex.setPropertyUnfiltered("_beginX", x);
+            currentUiVertex.vertex.setPropertyUnfiltered("_beginY", y);
+        };
+        var calculateOverlapArea = function(currentBeginX, currentBeginY, currentWidth, currentHeight, beginX, beginY, vertexWidth, vertexHeight) {
+            var x11 = currentBeginX - currentWidth / 2 - PADDING;
+            var y11 = currentBeginY - currentHeight / 2 - PADDING;
+            var x12 = currentBeginX + currentWidth / 2 + PADDING;
+            var y12 = currentBeginY + currentHeight / 2 + PADDING;
+            var x21 = beginX - vertexWidth / 2;
+            var y21 = beginY - vertexHeight / 2;
+            var x22 = beginX + vertexWidth / 2;
+            var y22 = beginY + vertexHeight / 2;
+            var xOverlap = Math.max(0, Math.min(x12, x22) - Math.max(x11, x21));
+            var yOverlap = Math.max(0, Math.min(y12, y22) - Math.max(y11, y21));
+            return xOverlap * yOverlap;
+        };
+        utils.mixin(TossToBorderLayout.prototype, {
             step: function(vertices, edges, width, height) {
                 var finishedVertices = vertices.length;
                 var scale = 1;
-                var centerX = width * (.5 / scale);
-                var centerY = height * (.5 / scale);
+                var drawingArea = {
+                    centerX: width * (.5 / scale),
+                    centerY: height * (.5 / scale),
+                    width: width,
+                    height: height
+                };
                 if (this.running) {
                     finishedVertices = 0;
                     for (var i = 0; i < vertices.length; i++) {
@@ -3142,8 +3156,20 @@
                         } else {
                             var beginX = uiVertex.vertex.getPropertyUnfiltered("_beginX");
                             var beginY = uiVertex.vertex.getPropertyUnfiltered("_beginY");
-                            PositionCorrectorLayout.setBeginPoint(uiVertex, beginX, beginY);
-                            calculateEndPoint(vertices, uiVertex, beginX, beginY, centerX, centerY, width, height);
+                            TossToBorderLayout.setBeginPoint(uiVertex, beginX, beginY);
+                            uiVertex.endX = beginX;
+                            uiVertex.endY = beginY;
+                            var currentWidth = SvgUtils.widthOf(uiVertex);
+                            var currentHeight = SvgUtils.heightOf(uiVertex);
+                            var pointsOnLine = calculateEndPoint(vertices, uiVertex, beginX, beginY, currentWidth, currentHeight, drawingArea, {});
+                            var minimumOverlap = null;
+                            for (var overlap in pointsOnLine) {
+                                if (minimumOverlap === null || overlap < minimumOverlap) {
+                                    minimumOverlap = overlap;
+                                    uiVertex.endX = pointsOnLine[minimumOverlap].x;
+                                    uiVertex.endY = pointsOnLine[minimumOverlap].y;
+                                }
+                            }
                             this.tween.start(uiVertex, scale);
                         }
                     }
@@ -3155,7 +3181,7 @@
                 return this.running;
             }
         });
-        PositionCorrectorLayout.setBeginPoint = function(uiVertex, beginX, beginY) {
+        TossToBorderLayout.setBeginPoint = function(uiVertex, beginX, beginY) {
             if (utils.isUndefined(uiVertex.x) || utils.isUndefined(uiVertex.y)) {
                 uiVertex.beginX = beginX;
                 uiVertex.beginY = beginY;
@@ -3166,7 +3192,7 @@
                 uiVertex.beginY = uiVertex.y;
             }
         };
-        return PositionCorrectorLayout;
+        return TossToBorderLayout;
     }();
     var LayoutUtils = {
         setScale: function(scale) {
@@ -3454,7 +3480,7 @@
             tree: NodeLinkTreeLayout,
             fruchtermanReingold: FruchtermanReingoldLayout,
             fixed: FixedLayout,
-            positionCorrector: PositionCorrectorLayout
+            tossToBorder: TossToBorderLayout
         },
         animationDuration: 1e3,
         easing: Easing.expoInOut,
@@ -3923,7 +3949,7 @@
     exports.GridLayout = GridLayout;
     exports.NodeLinkTreeLayout = NodeLinkTreeLayout;
     exports.FruchtermanReingoldLayout = FruchtermanReingoldLayout;
-    exports.PositionCorrectorLayout = PositionCorrectorLayout;
+    exports.TossToBorderLayout = TossToBorderLayout;
     exports.LayoutUtils = LayoutUtils;
     exports.Easing = Easing;
     exports.Compare = Compare;

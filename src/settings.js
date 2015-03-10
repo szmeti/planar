@@ -17,7 +17,7 @@ var settings = {
     'tree': NodeLinkTreeLayout,
     'fruchtermanReingold': FruchtermanReingoldLayout,
     'fixed': FixedLayout,
-    'positionCorrector': PositionCorrectorLayout
+    'tossToBorder': TossToBorderLayout
   },
 
   animationDuration: 1000,

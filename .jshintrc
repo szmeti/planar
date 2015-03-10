@@ -107,7 +107,7 @@
     "NodeLinkTreeLayout": false,
     "FruchtermanReingoldLayout": false,
     "FixedLayout": false,
-    "PositionCorrectorLayout": false,
+    "TossToBorderLayout": false,
     "LayoutUtils": false,
     "Easing": false,
 
