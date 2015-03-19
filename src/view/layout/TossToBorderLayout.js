@@ -9,7 +9,7 @@ var TossToBorderLayout = (function () {
 
   var PADDING = 20;
 
-  var calculateEndPoint = function (vertices, currentUiVertex, currentBeginX, currentBeginY, currentWidth, currentHeight, drawingArea, pointsOnLine) {
+  var calculateEndPoint = function (vertices, currentUiVertex, currentUiVertexDrawingData, drawingArea, pointsOnLine) {
     var overlapArea = 0;
 
     for (var i = 0; i < vertices.length; i++) {
@@ -18,45 +18,56 @@ var TossToBorderLayout = (function () {
       if (uiVertex.id === currentUiVertex.id) {
         continue;
       }
-      var vertexWidth = SvgUtils.widthOf(uiVertex);
-      var vertexHeight = SvgUtils.heightOf(uiVertex);
-      var beginX = uiVertex.vertex.getPropertyUnfiltered('_beginX');
-      var beginY = uiVertex.vertex.getPropertyUnfiltered('_beginY');
 
-      overlapArea += calculateOverlapArea(currentBeginX, currentBeginY, currentWidth, currentHeight, beginX, beginY, vertexWidth, vertexHeight);
+      var uiVertexDrawingData = {
+        width: SvgUtils.widthOf(uiVertex),
+        height: SvgUtils.heightOf(uiVertex),
+        beginX: uiVertex.vertex.getPropertyUnfiltered('_beginX'),
+        beginY: uiVertex.vertex.getPropertyUnfiltered('_beginY')
+      };
+
+      overlapArea += calculateOverlapArea(currentUiVertexDrawingData, uiVertexDrawingData);
     }
-    pointsOnLine[overlapArea] = {x: currentBeginX, y: currentBeginY};
+    pointsOnLine[overlapArea] = {
+      x: currentUiVertexDrawingData.beginX,
+      y: currentUiVertexDrawingData.beginY
+    };
 
-    var xInsideDrawingArea = currentBeginX > PADDING + currentWidth / 2 && currentBeginX < drawingArea.width - PADDING - currentWidth / 2;
-    var yInsideDrawingArea = currentBeginY > PADDING + currentHeight / 2 && currentBeginY < drawingArea.height - PADDING - currentHeight / 2;
+    var xInsideDrawingArea = currentUiVertexDrawingData.beginX > PADDING + currentUiVertexDrawingData.width / 2 &&
+      currentUiVertexDrawingData.beginX < drawingArea.width - PADDING - currentUiVertexDrawingData.width / 2;
+
+    var yInsideDrawingArea = currentUiVertexDrawingData.beginY > PADDING + currentUiVertexDrawingData.height / 2 &&
+      currentUiVertexDrawingData.beginY < drawingArea.height - PADDING - currentUiVertexDrawingData.height / 2;
 
     if (overlapArea > 0 && xInsideDrawingArea && yInsideDrawingArea) {
-      moveVertex(currentUiVertex, currentBeginX, currentBeginY, currentWidth, currentHeight, drawingArea);
-      calculateEndPoint(vertices, currentUiVertex, currentUiVertex.vertex.getPropertyUnfiltered('_beginX'), currentUiVertex.vertex.getPropertyUnfiltered('_beginY'), currentWidth, currentHeight, drawingArea, pointsOnLine);
+      moveVertex(currentUiVertex, currentUiVertexDrawingData, drawingArea);
+      currentUiVertexDrawingData.beginX = currentUiVertex.vertex.getPropertyUnfiltered('_beginX');
+      currentUiVertexDrawingData.beginY = currentUiVertex.vertex.getPropertyUnfiltered('_beginY');
+      calculateEndPoint(vertices, currentUiVertex, currentUiVertexDrawingData, drawingArea, pointsOnLine);
     }
 
     return pointsOnLine;
   };
 
-  var moveVertex = function (currentUiVertex, currentBeginX, currentBeginY, currentWidth, currentHeight, drawingArea) {
-    var x = currentBeginX - drawingArea.centerX > 0 ? currentBeginX + 1 : currentBeginX - 1;
+  var moveVertex = function (currentUiVertex, currentUiVertexDrawingData, drawingArea) {
+    var x = currentUiVertexDrawingData.beginX - drawingArea.centerX > 0 ? currentUiVertexDrawingData.beginX + 1 : currentUiVertexDrawingData.beginX - 1;
     // based on two-point form equation of a line
-    var y = ((currentBeginY - drawingArea.centerY) * (x - drawingArea.centerX)) / (currentBeginX - drawingArea.centerX) + drawingArea.centerY;
+    var y = ((currentUiVertexDrawingData.beginY - drawingArea.centerY) * (x - drawingArea.centerX)) / (currentUiVertexDrawingData.beginX - drawingArea.centerX) + drawingArea.centerY;
 
     currentUiVertex.vertex.setPropertyUnfiltered('_beginX', x);
     currentUiVertex.vertex.setPropertyUnfiltered('_beginY', y);
   };
 
-  var calculateOverlapArea = function (currentBeginX, currentBeginY, currentWidth, currentHeight, beginX, beginY, vertexWidth, vertexHeight) {
-    var x11 = currentBeginX - (currentWidth / 2) - PADDING;
-    var y11 = currentBeginY - (currentHeight / 2) - PADDING;
-    var x12 = currentBeginX + (currentWidth / 2) + PADDING;
-    var y12 = currentBeginY + (currentHeight / 2) + PADDING;
+  var calculateOverlapArea = function (currentUiVertexDrawingData, uiVertexDrawingData) {
+    var x11 = currentUiVertexDrawingData.beginX - (currentUiVertexDrawingData.width / 2) - PADDING;
+    var y11 = currentUiVertexDrawingData.beginY - (currentUiVertexDrawingData.height / 2) - PADDING;
+    var x12 = currentUiVertexDrawingData.beginX + (currentUiVertexDrawingData.width / 2) + PADDING;
+    var y12 = currentUiVertexDrawingData.beginY + (currentUiVertexDrawingData.height / 2) + PADDING;
 
-    var x21 = beginX - (vertexWidth / 2);
-    var y21 = beginY - (vertexHeight / 2);
-    var x22 = beginX + (vertexWidth / 2);
-    var y22 = beginY + (vertexHeight / 2);
+    var x21 = uiVertexDrawingData.beginX - (uiVertexDrawingData.width / 2);
+    var y21 = uiVertexDrawingData.beginY - (uiVertexDrawingData.height / 2);
+    var x22 = uiVertexDrawingData.beginX + (uiVertexDrawingData.width / 2);
+    var y22 = uiVertexDrawingData.beginY + (uiVertexDrawingData.height / 2);
 
     var xOverlap = Math.max(0, Math.min(x12, x22) - Math.max(x11, x21));
     var yOverlap = Math.max(0, Math.min(y12, y22) - Math.max(y11, y21));
@@ -95,16 +106,18 @@ var TossToBorderLayout = (function () {
               finishedVertices++;
             }
           } else {
-            var beginX = uiVertex.vertex.getPropertyUnfiltered('_beginX');
-            var beginY = uiVertex.vertex.getPropertyUnfiltered('_beginY');
-            TossToBorderLayout.setBeginPoint(uiVertex, beginX, beginY);
+            var uiVertexDrawingData = {
+              beginX: uiVertex.vertex.getPropertyUnfiltered('_beginX'),
+              beginY: uiVertex.vertex.getPropertyUnfiltered('_beginY'),
+              width: SvgUtils.widthOf(uiVertex),
+              height: SvgUtils.heightOf(uiVertex)
+            };
+            TossToBorderLayout.setBeginPoint(uiVertex, uiVertexDrawingData);
 
-            uiVertex.endX = beginX;
-            uiVertex.endY = beginY;
-            var currentWidth = SvgUtils.widthOf(uiVertex);
-            var currentHeight = SvgUtils.heightOf(uiVertex);
+            uiVertex.endX = uiVertexDrawingData.beginX;
+            uiVertex.endY = uiVertexDrawingData.beginY;
 
-            var pointsOnLine = calculateEndPoint(vertices, uiVertex, beginX, beginY, currentWidth, currentHeight, drawingArea, {});
+            var pointsOnLine = calculateEndPoint(vertices, uiVertex, uiVertexDrawingData, drawingArea, {});
 
             var minimumOverlap = null;
 
@@ -132,10 +145,10 @@ var TossToBorderLayout = (function () {
 
   });
 
-  TossToBorderLayout.setBeginPoint = function (uiVertex, beginX, beginY) {
+  TossToBorderLayout.setBeginPoint = function (uiVertex, uiVertexDrawingData) {
     if (utils.isUndefined(uiVertex.x) || utils.isUndefined(uiVertex.y)) {
-      uiVertex.beginX = beginX;
-      uiVertex.beginY = beginY;
+      uiVertex.beginX = uiVertexDrawingData.beginX;
+      uiVertex.beginY = uiVertexDrawingData.beginY;
       uiVertex.x = uiVertex.beginX;
       uiVertex.y = uiVertex.beginY;
     } else {

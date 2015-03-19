@@ -97,7 +97,7 @@ module.exports = function (grunt) {
       jsmin: {
         options: {
           mangle: true,
-          compress: true
+          compress: {}
         },
         src: planarFiles.mergeFilesFor('planarDist'),
         dest: '<%= planar.dist %>/planar.min.js'
