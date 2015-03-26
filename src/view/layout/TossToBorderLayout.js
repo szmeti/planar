@@ -7,7 +7,8 @@ var TossToBorderLayout = (function () {
     this.name = 'tossToBorder';
   }
 
-  var PADDING = 20;
+  var PADDING_FROM_BORDER = 20;
+  var PADDING_BETWEEN_VERTICES = 70;
 
   var calculateEndPoint = function (vertices, currentUiVertex, currentUiVertexDrawingData, drawingArea, pointsOnLine) {
     var overlapArea = 0;
@@ -33,11 +34,11 @@ var TossToBorderLayout = (function () {
       y: currentUiVertexDrawingData.beginY
     };
 
-    var xInsideDrawingArea = currentUiVertexDrawingData.beginX > PADDING + currentUiVertexDrawingData.width / 2 &&
-      currentUiVertexDrawingData.beginX < drawingArea.width - PADDING - currentUiVertexDrawingData.width / 2;
+    var xInsideDrawingArea = currentUiVertexDrawingData.beginX > PADDING_FROM_BORDER + currentUiVertexDrawingData.width / 2 &&
+      currentUiVertexDrawingData.beginX < drawingArea.width - PADDING_FROM_BORDER - currentUiVertexDrawingData.width / 2;
 
-    var yInsideDrawingArea = currentUiVertexDrawingData.beginY > PADDING + currentUiVertexDrawingData.height / 2 &&
-      currentUiVertexDrawingData.beginY < drawingArea.height - PADDING - currentUiVertexDrawingData.height / 2;
+    var yInsideDrawingArea = currentUiVertexDrawingData.beginY > PADDING_FROM_BORDER + currentUiVertexDrawingData.height / 2 &&
+      currentUiVertexDrawingData.beginY < drawingArea.height - PADDING_FROM_BORDER - currentUiVertexDrawingData.height / 2;
 
     if (overlapArea > 0 && xInsideDrawingArea && yInsideDrawingArea) {
       moveVertex(currentUiVertex, currentUiVertexDrawingData, drawingArea);
@@ -59,10 +60,10 @@ var TossToBorderLayout = (function () {
   };
 
   var calculateOverlapArea = function (currentUiVertexDrawingData, uiVertexDrawingData) {
-    var x11 = currentUiVertexDrawingData.beginX - (currentUiVertexDrawingData.width / 2) - PADDING;
-    var y11 = currentUiVertexDrawingData.beginY - (currentUiVertexDrawingData.height / 2) - PADDING;
-    var x12 = currentUiVertexDrawingData.beginX + (currentUiVertexDrawingData.width / 2) + PADDING;
-    var y12 = currentUiVertexDrawingData.beginY + (currentUiVertexDrawingData.height / 2) + PADDING;
+    var x11 = currentUiVertexDrawingData.beginX - (currentUiVertexDrawingData.width / 2) - PADDING_BETWEEN_VERTICES;
+    var y11 = currentUiVertexDrawingData.beginY - (currentUiVertexDrawingData.height / 2) - PADDING_BETWEEN_VERTICES;
+    var x12 = currentUiVertexDrawingData.beginX + (currentUiVertexDrawingData.width / 2) + PADDING_BETWEEN_VERTICES;
+    var y12 = currentUiVertexDrawingData.beginY + (currentUiVertexDrawingData.height / 2) + PADDING_BETWEEN_VERTICES;
 
     var x21 = uiVertexDrawingData.beginX - (uiVertexDrawingData.width / 2);
     var y21 = uiVertexDrawingData.beginY - (uiVertexDrawingData.height / 2);
