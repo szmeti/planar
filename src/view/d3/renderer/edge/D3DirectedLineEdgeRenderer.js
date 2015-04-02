@@ -18,10 +18,6 @@ var D3DirectedLineEdgeRenderer = (function () {
         .attr('class', 'directed-edge arrow')
         .attr('marker-end', markerEnd)
         .attr('style', 'stroke-width: ' + lineWeight + 'px;');
-
-      if (edge.label === 'references') {
-        uiEdge.uiElement.attr('stroke-dasharray', '5,5');
-      }
     },
 
     initDefs: function (defs) {

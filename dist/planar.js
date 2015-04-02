@@ -2233,9 +2233,6 @@
         var lineWeight = edge.getProperty(instanceSettings.edge.lineWeightPropertyKey) || instanceSettings.edge.defaultLineWeight;
         var markerEnd = instanceSettings.edge.useArrows ? "url(#arrow)" : "";
         uiEdge.uiElement = element.append("path").attr("id", "edgeLabel").attr("class", "directed-edge arrow").attr("marker-end", markerEnd).attr("style", "stroke-width: " + lineWeight + "px;");
-        if (edge.label === "references") {
-          uiEdge.uiElement.attr("stroke-dasharray", "5,5");
-        }
       },
       initDefs: function (defs) {
         defs.append("marker").attr("id", "arrow").attr("refX", 10).attr("refY", 2).attr("markerWidth", 10).attr("markerHeight", 4).attr("orient", "auto").append("path").attr("d", "M0,0L10,2L0,4");
