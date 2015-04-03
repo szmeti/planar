@@ -56,7 +56,8 @@ planarFiles = {
     'src/io/GraphSONReader.js',
     'src/settings.js',
     'src/search/filter/element/ElementFilterManager.js',
-    'src/search/filter/element/ElementFilter.js'
+    'src/search/filter/element/ElementFilter.js',
+    'src/io/GraphSONWriter.js'
   ],
 
   'planarApi': [

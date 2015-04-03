@@ -51,6 +51,10 @@ exports.TOP_LEFT = TOP_LEFT;
 exports.TOP_RIGHT = TOP_RIGHT;
 exports.BOTTOM_LEFT = BOTTOM_LEFT;
 exports.BOTTOM_RIGHT = BOTTOM_RIGHT;
+exports.ID = ID;
+exports.IN_V = IN_V;
+exports.OUT_V = OUT_V;
+exports.LABEL = LABEL;
 
 exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
 exports.GraphSONReader = GraphSONReader;
@@ -65,3 +69,4 @@ exports.LayoutUtils = LayoutUtils;
 exports.Easing = Easing;
 exports.Compare = Compare;
 exports.Contains = Contains;
+exports.GraphSONWriter = GraphSONWriter;

@@ -85,6 +85,10 @@
     "TOP_RIGHT": false,
     "BOTTOM_RIGHT": false,
     "BOTTOM_LEFT": false,
+    "ID": false,
+    "IN_V": false,
+    "OUT_V": false,
+    "LABEL": false,
 
     "describe": false,
     "it": false,
@@ -110,6 +114,7 @@
     "TossToBorderLayout": false,
     "LayoutUtils": false,
     "Easing": false,
+    "GraphSONWriter": false,
 
 
     "requestAnimationFrame": false
