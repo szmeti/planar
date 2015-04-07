@@ -12,19 +12,27 @@ describe('GraphSONReader', function () {
         vertices: [
           {
             _id: 1,
+            _type: 'vertex',
+            _beginX: 123,
+            _beginY: 111,
             name: 'name 1'
           },
           {
             _id: 2,
+            _type: 'vertex',
+            _beginX: 145,
+            _beginY: 222,
             name: 'name 2'
           }
         ],
         edges: [
           {
             _id: 1,
+            _type: 'edge',
             _outV: 1,
             _inV: 2,
             _label: 'label',
+            _property: 'not reserved',
             property: 'edge property'
           }
         ]
@@ -33,17 +41,26 @@ describe('GraphSONReader', function () {
 
     expect(graph.getVertex(1).getProperty('name')).toEqual('name 1');
     expect(graph.getVertex(1).getProperty('_id')).toEqual(null);
+    expect(graph.getVertex(1).getProperty('_type')).toEqual(null);
+    expect(graph.getVertex(1).getProperty('_beginX')).toEqual(123);
+    expect(graph.getVertex(1).getProperty('_beginY')).toEqual(111);
+
     expect(graph.getVertex(2).getProperty('name')).toEqual('name 2');
     expect(graph.getVertex(2).getProperty('_id')).toEqual(null);
+    expect(graph.getVertex(2).getProperty('_type')).toEqual(null);
+    expect(graph.getVertex(2).getProperty('_beginX')).toEqual(145);
+    expect(graph.getVertex(2).getProperty('_beginY')).toEqual(222);
 
     expect(graph.getEdge(1).getOutVertex().id).toEqual(1);
     expect(graph.getEdge(1).getInVertex().id).toEqual(2);
     expect(graph.getEdge(1).getLabel()).toEqual('label');
     expect(graph.getEdge(1).getProperty('property')).toEqual('edge property');
     expect(graph.getEdge(1).getProperty('_id')).toEqual(null);
+    expect(graph.getEdge(1).getProperty('_type')).toEqual(null);
     expect(graph.getEdge(1).getProperty('_outV')).toEqual(null);
     expect(graph.getEdge(1).getProperty('_inV')).toEqual(null);
     expect(graph.getEdge(1).getProperty('_label')).toEqual(null);
+    expect(graph.getEdge(1).getProperty('_property')).toEqual('not reserved');
 
   });
 
