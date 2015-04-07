@@ -3553,12 +3553,14 @@
     return Renderer;
   }();
   var GraphSONReader = function () {
+    var RESERVED_KEYS = [ "_id", "_type", "_label", "_outV", "_inV" ];
+
     function GraphSONReader() {
     }
 
     var copyProperties = function (from, to) {
       for (var property in from) {
-        if (property.indexOf("_") !== 0) {
+        if (RESERVED_KEYS.indexOf(property) === -1) {
           to.setProperty(property, from[property]);
         }
       }
