@@ -1527,7 +1527,11 @@
             return iconGroup.append("rect").attr("class", "vertex-icon-overlay vertex-icon-overlay-" + iconId).attr("rx", borderRadius).attr("ry", borderRadius).attr("width", size).attr("height", size);
         }
         function createIcon(iconGroup, icon, iconId, iconPadding) {
-            return iconGroup.append("use").attr("class", "vertex-icon vertex-icon-" + iconId).attr("transform", "translate(" + iconPadding + ", " + iconPadding + ")").attr("xlink:href", "#" + icon.id);
+            var iconSvg = iconGroup.append("use").attr("class", "vertex-icon vertex-icon-" + iconId).attr("transform", "translate(" + iconPadding + ", " + iconPadding + ")").attr("xlink:href", "#" + icon.id);
+            if (icon.color) {
+                iconSvg.attr("style", "fill:" + icon.color);
+            }
+            return iconSvg;
         }
         utils.mixin(D3VertexIconDecorator.prototype, ElementRendererDecorator);
         utils.mixin(D3VertexIconDecorator.prototype, {
