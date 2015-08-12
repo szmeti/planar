@@ -2966,13 +2966,11 @@
             var vertexCount = vertices.length;
             self.temp = width / 10;
             self.forceConstant = 1.2 * Math.sqrt(height * width / vertexCount);
-            var scaleW = ALPHA * width / 2;
-            var scaleH = ALPHA * height / 2;
             for (var i = 0; i < vertices.length; i++) {
                 var uiVertex = vertices[i];
                 FruchtermanReingoldLayout.setBeginPoint(uiVertex, width, height);
-                uiVertex.endX = width / 2 + utils.randomDouble(0, 42) * scaleW;
-                uiVertex.endY = height / 2 + utils.randomDouble(0, 42) * scaleH;
+                uiVertex.endX = utils.randomInteger(0, width);
+                uiVertex.endY = utils.randomInteger(0, height);
             }
         };
         var calcRepulsion = function(vertices, UiVertex, self) {
