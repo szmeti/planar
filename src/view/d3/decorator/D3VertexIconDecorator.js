@@ -18,10 +18,16 @@ var D3VertexIconDecorator = (function () {
   }
 
   function createIcon(iconGroup, icon, iconId, iconPadding) {
-    return iconGroup.append('use').
+    var iconSvg = iconGroup.append('use').
       attr('class', 'vertex-icon vertex-icon-' + iconId).
       attr('transform', 'translate(' + iconPadding + ', ' + iconPadding + ')').
       attr('xlink:href', '#' + icon.id);
+
+    if (icon.color) {
+      iconSvg.attr('style', 'fill:'+icon.color);
+    }
+
+    return iconSvg;
   }
 
   utils.mixin(D3VertexIconDecorator.prototype, ElementRendererDecorator);
