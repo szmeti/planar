@@ -73,4 +73,4 @@ exports.GraphSONReaderBase = GraphSONReaderBase;
 exports.LegacyGraphSONReader = LegacyGraphSONReader;
 exports.LegacyGraphSONWriter = LegacyGraphSONWriter;
 exports.GraphSONWriter = GraphSONWriter;
-exports.GraphSONReader = GraphSONWriter;
+exports.GraphSONReader = GraphSONReader;
