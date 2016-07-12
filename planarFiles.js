@@ -53,11 +53,15 @@ planarFiles = {
     'src/view/layout/LayoutUtils.js',
     'src/view/Easing.js',
     'src/view/Renderer.js',
-    'src/io/GraphSONReader.js',
     'src/settings.js',
     'src/search/filter/element/ElementFilterManager.js',
     'src/search/filter/element/ElementFilter.js',
-    'src/io/GraphSONWriter.js'
+    'src/io/GraphSONWriterBase.js',
+    'src/io/GraphSONReaderBase.js',
+    'src/io/LegacyGraphSONWriter.js',
+    'src/io/LegacyGraphSONReader.js',
+    'src/io/GraphSONWriter.js',
+    'src/io/GraphSONReader.js'
   ],
 
   'planarApi': [

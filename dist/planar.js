@@ -3476,9 +3476,9 @@
         });
         return Renderer;
     }();
-    var GraphSONReader = function() {
+    var LegacyGraphSONReader = function() {
         var RESERVED_KEYS = [ "_id", "_type", "_label", "_outV", "_inV" ];
-        function GraphSONReader() {}
+        function LegacyGraphSONReader() {}
         var copyProperties = function(from, to) {
             for (var property in from) {
                 if (RESERVED_KEYS.indexOf(property) === -1) {
@@ -3486,7 +3486,7 @@
                 }
             }
         };
-        utils.mixin(GraphSONReader.prototype, {
+        utils.mixin(LegacyGraphSONReader.prototype, {
             read: function(graph, graphSON) {
                 for (var i = 0; i < graphSON.graph.vertices.length; i++) {
                     var graphSONVertex = graphSON.graph.vertices[i];
@@ -3509,7 +3509,7 @@
                 return graph;
             }
         });
-        return GraphSONReader;
+        return LegacyGraphSONReader;
     }();
     var settings = {
         container: null,
@@ -3932,8 +3932,8 @@
         });
         return ElementFilter;
     }();
-    var GraphSONWriter = function() {
-        function GraphSONWriter() {}
+    var LegacyGraphSONWriter = function() {
+        function LegacyGraphSONWriter() {}
         function copyProperties(element, graphSONElement, excludedProperties) {
             var propertyKeys = element.getPropertyKeys();
             for (var j = 0; j < propertyKeys.length; j++) {
@@ -3967,7 +3967,7 @@
                 graphSON.edges.push(graphSONEdge);
             }
         }
-        utils.mixin(GraphSONWriter.prototype, {
+        utils.mixin(LegacyGraphSONWriter.prototype, {
             write: function(graph, excludedVertexProperties, excludedEdgeProperties, mode) {
                 if (!utils.exists(excludedVertexProperties)) {
                     excludedVertexProperties = [];
@@ -3988,7 +3988,7 @@
                 return graphSON;
             }
         });
-        return GraphSONWriter;
+        return LegacyGraphSONWriter;
     }();
     exports.settings = settings;
     exports.Edge = Edge;
@@ -4048,7 +4048,7 @@
     exports.OUT_V = OUT_V;
     exports.LABEL = LABEL;
     exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
-    exports.GraphSONReader = GraphSONReader;
+    exports.LegacyGraphSONReader = LegacyGraphSONReader;
     exports.Tween = Tween;
     exports.CircleLayout = CircleLayout;
     exports.WheelLayout = WheelLayout;
@@ -4060,7 +4060,7 @@
     exports.Easing = Easing;
     exports.Compare = Compare;
     exports.Contains = Contains;
-    exports.GraphSONWriter = GraphSONWriter;
+    exports.LegacyGraphSONWriter = LegacyGraphSONWriter;
 })({}, function() {
     return this;
 }());

@@ -1,69 +1,39 @@
 'use strict';
 
-describe('GraphSONReader', function () {
+describe('LegacyGraphSONReader', function () {
 
   it('should add elements to empty graph', function () {
     var graph = new Graph();
-    var graphSONReader = new GraphSONReader();
+    var graphSONReader = new LegacyGraphSONReader();
 
     graph = graphSONReader.read(graph, {
       graph: {
-        'vertices': [
+        mode: 'NORMAL',
+        vertices: [
           {
-            'id': 1,
-            'label': 'vertex',
-            'outE': {
-              'label': [{
-                'id': 1,
-                'inV': 2,
-                'properties': {
-                  '_property': 'not reserved',
-                  'property': 'edge property'
-                }
-              }]
-            },
-            'properties': {
-              '_beginX': [{
-                'id': 0,
-                'value': 123
-              }],
-              '_beginY': [{
-                'id': 1,
-                'value': 111
-              }],
-              'name': [{
-                'id': 2,
-                'value': 'name 1'
-              }]
-            }
+            _id: 1,
+            _type: 'vertex',
+            _beginX: 123,
+            _beginY: 111,
+            name: 'name 1'
           },
           {
-            'id': 2,
-            'label': 'vertex',
-            'inE': {
-              'label': [{
-                'id': 1,
-                'outV': 1,
-                'properties': {
-                  '_property': 'not reserved',
-                  'property': 'edge property'
-                }
-              }]
-            },
-            'properties': {
-              '_beginX': [{
-                'id': 3,
-                'value': 145
-              }],
-              '_beginY': [{
-                'id': 4,
-                'value': 222
-              }],
-              'name': [{
-                'id': 5,
-                'value': 'name 2'
-              }]
-            }
+            _id: 2,
+            _type: 'vertex',
+            _beginX: 145,
+            _beginY: 222,
+            name: 'name 2'
+          }
+        ],
+        edges: [
+          {
+            _id: 1,
+            _type: 'edge',
+            _outV: 1,
+            _inV: 2,
+            _label: 'label',
+            _property: 'not reserved',
+            property: 'edge property'
           }
         ]
       }
@@ -91,6 +61,7 @@ describe('GraphSONReader', function () {
     expect(graph.getEdge(1).getProperty('_inV')).toEqual(null);
     expect(graph.getEdge(1).getProperty('_label')).toEqual(null);
     expect(graph.getEdge(1).getProperty('_property')).toEqual('not reserved');
+
   });
 
   it('should add elements to non-empty graph', function () {
@@ -104,66 +75,35 @@ describe('GraphSONReader', function () {
 
     graph.addEdge(2, v2, v3, 'label 2');
 
-    var graphSONReader = new GraphSONReader();
+    var graphSONReader = new LegacyGraphSONReader();
 
     graph = graphSONReader.read(graph, {
       graph: {
-        'vertices': [
+        mode: 'NORMAL',
+        vertices: [
           {
-            'id': '1',
-            'label': 'vertex',
-            'outE': {
-              'label': [{
-                'id': '1',
-                'inV': '2',
-                'properties': {
-                  '_property': 'not reserved',
-                  'property': 'edge property'
-                }
-              }]
-            },
-            'properties': {
-              '_beginX': [{
-                'id': 0,
-                'value': 123
-              }],
-              '_beginY': [{
-                'id': 1,
-                'value': 111
-              }],
-              'name': [{
-                'id': 2,
-                'value': 'name 1'
-              }]
-            }
+            _id: 1,
+            name: 'name 1'
           },
           {
-            'id': '2',
-            'label': 'vertex',
-            'inE': {
-              'label': [{
-                'id': '1',
-                'outV': '1',
-                'properties': {
-                  '_property': 'not reserved',
-                  'property': 'edge property'
-                }
-              }]
-            },
-            'properties': {
-              '_beginX': [{
-                'id': 3,
-                'value': 145
-              }],
-              '_beginY': [{
-                'id': 4,
-                'value': 222
-              }],
-              'name': [{
-                'id': 5,
-                'value': 'name 2'
-              }]
-            }
+            _id: 2,
+            name: 'updated name 2'
+          }
+        ],
+        edges: [
+          {
+            _id: 1,
+            _outV: 1,
+            _inV: 2,
+            _label: 'label 1',
+            property: 'edge property 1'
+          },
+          {
+            _id: 3,
+            _outV: 3,
+            _inV: 2,
+            _label: 'label 3',
+            property: 'edge property 3'
           }
         ]
       }

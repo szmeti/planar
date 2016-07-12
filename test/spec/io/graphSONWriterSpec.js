@@ -68,84 +68,199 @@ describe('GraphSONWriter', function () {
 
     var writer = new GraphSONWriter();
 
-    var graphSON = writer.write(graph, ['age', 'surname'], ['property1'], 'MODE');
+    var graphSON = writer.write(graph, ['age', 'surname'], ['property1']);
 
-    expect(graphSON).toEqual({
-      mode: 'MODE',
-      vertices: [
-        {
-          _id: 1,
-          _type: 'query-result-vertex',
-          _queryVertexReference: 'P1',
-          entityType: 'Person',
-          firstName: 'John',
-          gender: 'male',
-          _beginX: 547,
-          _beginY: 238
-        },
-        {
-          _id: 2,
-          _type: 'query-result-vertex',
-          _queryVertexReference: 'F1',
-          entityType: 'Flight',
-          _beginX: 305,
-          _beginY: 365
-        },
-        {
-          _id: 3,
-          _type: 'query-result-vertex',
-          _queryVertexReference: 'P2',
-          entityType: 'Person',
-          _beginX: 310,
-          _beginY: 283,
-          nestedObject: {
-            a: 1,
-            b: {
-              c: 2,
-              d: 'string',
-              e: [
-                {
-                  f: 'array'
+    expect(graphSON).toEqual(
+      {
+        'vertices': [
+          {
+            'id': 1,
+            'label': 'vertex',
+            'inE': {
+              'knows': [{
+                'id': 3,
+                'outV': 3,
+                'properties': {
+                  'property4': 'something'
                 }
-              ]
+              }]
+            },
+            'outE': {
+              'knows': [{
+                'id': 1,
+                'inV': 2,
+                'properties': {
+                  'property2': 'something'
+                }
+              }]
+            },
+            'properties': {
+              '_elementType': [{
+                'id': 0,
+                'value': 'query-result-vertex'
+              }],
+              '_queryVertexReference': [{
+                'id': 1,
+                'value': 'P1'
+              }],
+              'entityType': [{
+                'id': 2,
+                'value': 'Person'
+              }],
+              'firstName': [{
+                'id': 3,
+                'value': 'John'
+              }],
+              'gender': [{
+                'id': 4,
+                'value': 'male'
+              }],
+              '_beginX': [{
+                'id': 5,
+                'value': 547
+              }],
+              '_beginY': [{
+                'id': 6,
+                'value': 238
+              }]
+            }
+          },
+          {
+            'id': 2,
+            'label': 'vertex',
+            'inE': {
+              'knows': [{
+                'id': 1,
+                'outV': 1,
+                'properties': {
+                  'property2': 'something'
+                }
+              }]
+            },
+            'outE': {
+              'friends': [{
+                'id': 2,
+                'inV': 3,
+                'properties': {
+                  'property3': 'something'
+                }
+              }]
+            },
+            'properties': {
+              '_elementType': [{
+                'id': 7,
+                'value': 'query-result-vertex'
+              }],
+              '_queryVertexReference': [{
+                'id': 8,
+                'value': 'F1'
+              }],
+              'entityType': [{
+                'id': 9,
+                'value': 'Flight'
+              }],
+              '_beginX': [{
+                'id': 10,
+                'value': 305
+              }],
+              '_beginY': [{
+                'id': 11,
+                'value': 365
+              }]
+            }
+          },
+          {
+            'id': 3,
+            'label': 'vertex',
+            'inE': {
+              'friends': [{
+                'id': 2,
+                'outV': 2,
+                'properties': {
+                  'property3': 'something'
+                }
+              }]
+            },
+            'outE': {
+              'knows': [{
+                'id': 3,
+                'inV': 1,
+                'properties': {
+                  'property4': 'something'
+                }
+              }]
+            },
+            'properties': {
+              '_elementType': [{
+                'id': 12,
+                'value': 'query-result-vertex'
+              }],
+              '_queryVertexReference': [{
+                'id': 13,
+                'value': 'P2'
+              }],
+              'entityType': [{
+                'id': 14,
+                'value': 'Person'
+              }],
+              '_beginX': [{
+                'id': 15,
+                'value': 310
+              }],
+              '_beginY': [{
+                'id': 16,
+                'value': 283
+              }],
+              'nestedObject': [{
+                'id': 17,
+                'value': {
+                  'a': 1,
+                  'b': {
+                    'c': 2,
+                    'd': 'string',
+                    'e': [{
+                      'f': 'array'
+                    }]
+                  }
+                }
+              }]
+            }
+          },
+          {
+            'id': 4,
+            'label': 'vertex',
+            'properties': {
+              '_elementType': [{
+                'id': 18,
+                'value': 'query-result-vertex'
+              }],
+              '_queryVertexReference': [{
+                'id': 19,
+                'value': 'P3'
+              }],
+              'entityType': [{
+                'id': 20,
+                'value': 'Person'
+              }],
+              'firstName': [{
+                'id': 21,
+                'value': 'John'
+              }],
+              'gender': [{
+                'id': 22,
+                'value': 'male'
+              }],
+              '_beginX': [{
+                'id': 23,
+                'value': 390
+              }],
+              '_beginY': [{
+                'id': 24,
+                'value': 320
+              }]
             }
           }
-        },
-        {
-          _id: 4,
-          _type: 'query-result-vertex',
-          _queryVertexReference: 'P3',
-          entityType: 'Person',
-          firstName: 'John',
-          gender: 'male',
-          _beginX: 390,
-          _beginY: 320
-        }
-      ],
-      edges: [
-        {
-          _id: 1,
-          _label: 'knows',
-          _inV: 2,
-          _outV: 1,
-          property2: 'something'
-        },
-        {
-          _id: 2,
-          _label: 'friends',
-          _inV: 3,
-          _outV: 2,
-          property3: 'something'
-        },
-        {
-          _id: 3,
-          _label: 'knows',
-          _inV: 1,
-          _outV: 3,
-          property4: 'something'
-        }
-      ]
-    });
+        ]
+      });
   });
-
 });

@@ -103,7 +103,6 @@
 
 
     "QueryResultVertexPropertyPredicate": false,
-    "GraphSONReader": false,
     "Tween": false,
     "CircleLayout": false,
     "WheelLayout": false,
@@ -114,8 +113,12 @@
     "TossToBorderLayout": false,
     "LayoutUtils": false,
     "Easing": false,
+    "GraphSONWriterBase": false,
+    "GraphSONReaderBase": false,
+    "LegacyGraphSONReader": false,
+    "LegacyGraphSONWriter": false,
     "GraphSONWriter": false,
-
+    "GraphSONReader": false,
 
     "requestAnimationFrame": false
   }

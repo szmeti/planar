@@ -57,7 +57,6 @@ exports.OUT_V = OUT_V;
 exports.LABEL = LABEL;
 
 exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
-exports.GraphSONReader = GraphSONReader;
 exports.Tween = Tween;
 exports.CircleLayout = CircleLayout;
 exports.WheelLayout = WheelLayout;
@@ -69,4 +68,9 @@ exports.LayoutUtils = LayoutUtils;
 exports.Easing = Easing;
 exports.Compare = Compare;
 exports.Contains = Contains;
+exports.GraphSONWriterBase = GraphSONWriterBase;
+exports.GraphSONReaderBase = GraphSONReaderBase;
+exports.LegacyGraphSONReader = LegacyGraphSONReader;
+exports.LegacyGraphSONWriter = LegacyGraphSONWriter;
 exports.GraphSONWriter = GraphSONWriter;
+exports.GraphSONReader = GraphSONWriter;

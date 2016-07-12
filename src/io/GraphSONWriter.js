@@ -1,70 +1,73 @@
 /* global GraphSONWriter: true */
 var GraphSONWriter = (function () {
   function GraphSONWriter() {
+    this.generateId = (function () {
+      var id = 0;
+      return function () {
+        return id++;
+      };
+    })();
   }
 
-  function copyProperties(element, graphSONElement, excludedProperties) {
-    var propertyKeys = element.getPropertyKeys();
+  function copyEdges(writer, sourceVertex, direction, oppositeDirection, graphSONVertex, edgesKey, otherVertexKey, excludedProperties) {
+    var edges = sourceVertex.getEdges(direction);
+
+    if (edges.length > 0) {
+      graphSONVertex[edgesKey] = {};
+    }
+
+    for (var i = 0; i < edges.length; i++) {
+      var edge = edges[i];
+      var label = edge.getLabel();
+
+      graphSONVertex[edgesKey][label] = graphSONVertex[edgesKey][label] || [];
+
+      var graphSONEdge = {};
+      graphSONEdge.id = edge.getId();
+      graphSONEdge[otherVertexKey] = edge.getVertex(oppositeDirection).getId();
+      graphSONEdge.properties = {};
+      writer.copyProperties(edge, graphSONEdge.properties, excludedProperties);
+
+      graphSONVertex[edgesKey][label].push(graphSONEdge);
+    }
+  }
+
+  function copyVertexProperties(writer, sourceVertex, graphSONVertex, excludedVertexProperties) {
+    graphSONVertex.properties = {};
+
+    var propertyKeys = sourceVertex.getPropertyKeys();
 
     for (var j = 0; j < propertyKeys.length; j++) {
       var propertyKey = propertyKeys[j];
-      var property = element.getPropertyUnfiltered(propertyKey);
 
-      if (excludedProperties.indexOf(propertyKey) === -1) {
-        graphSONElement[propertyKey] = property;
+      if (excludedVertexProperties.indexOf(propertyKey) === -1) {
+        var property = sourceVertex.getPropertyUnfiltered(propertyKey);
+
+        graphSONVertex.properties[propertyKey] = graphSONVertex.properties[propertyKey] || [];
+        var graphSONProperty = {id: writer.generateId(), value: property};
+        graphSONVertex.properties[propertyKey].push(graphSONProperty);
       }
     }
   }
 
-  function addGraphSONVertices(graph, graphSON, excludedProperties) {
-    var vertices = graph.getVertices();
-    for (var i = 0; i < vertices.length; i++) {
-      var vertex = vertices[i];
-      var graphSONVertex = {};
-      graphSONVertex[ID] = vertex.id;
-      copyProperties(vertex, graphSONVertex, excludedProperties);
-      graphSON.vertices.push(graphSONVertex);
-    }
-  }
-
-  function addGraphSONEdges(graph, graphSON, excludedProperties) {
-    var edges = graph.getEdges();
-    for (var i = 0; i < edges.length; i++) {
-      var edge = edges[i];
-      var graphSONEdge = {};
-      graphSONEdge[ID] = edge.id;
-      graphSONEdge[LABEL] = edge.label;
-      graphSONEdge[IN_V] = edge.getVertex(IN).id;
-      graphSONEdge[OUT_V] = edge.getVertex(OUT).id;
-      copyProperties(edge, graphSONEdge, excludedProperties);
-      graphSON.edges.push(graphSONEdge);
-    }
-  }
-
+  utils.mixin(GraphSONWriter.prototype, GraphSONWriterBase);
   utils.mixin(GraphSONWriter.prototype, {
-    write: function (graph, excludedVertexProperties, excludedEdgeProperties, mode) {
-      if (!utils.exists(excludedVertexProperties)) {
-        excludedVertexProperties = [];
-      }
-
-      if (!utils.exists(excludedEdgeProperties)) {
-        excludedEdgeProperties = [];
-      }
-
-      if (!utils.exists(mode)) {
-        mode = 'NORMAL';
-      }
-
-      var graphSON = {
-        mode: mode,
-        vertices: [],
-        edges: []
+    getTemplate: function () {
+      return {
+        vertices: []
       };
+    },
 
-      addGraphSONVertices(graph, graphSON, excludedVertexProperties);
-      addGraphSONEdges(graph, graphSON, excludedEdgeProperties);
+    writeVertex: function (sourceVertex, graphSONVertex, excludedVertexProperties, excludedEdgeProperties) {
+      graphSONVertex.id = sourceVertex.getId();
+      graphSONVertex.label = 'vertex';
+      copyEdges(this, sourceVertex, IN, OUT, graphSONVertex, 'inE', 'outV', excludedEdgeProperties);
+      copyEdges(this, sourceVertex, OUT, IN, graphSONVertex, 'outE', 'inV', excludedEdgeProperties);
+      copyVertexProperties(this, sourceVertex, graphSONVertex, excludedVertexProperties);
+    },
 
-      return graphSON;
+    writeEdge: function (sourceEdge, graphSONEdge, excludedVertexProperties, excludedEdgeProperties) {
+
     }
   });
 
