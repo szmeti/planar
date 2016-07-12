@@ -293,7 +293,7 @@
     var OUT = 1;
     var IN = 2;
     var BOTH = 3;
-    var PROP_TYPE = "_type";
+    var PROP_TYPE = "_elementType";
     var AND = "and";
     var OR = "or";
     var VERTEX_FILTER = "vertex";
@@ -3476,41 +3476,6 @@
         });
         return Renderer;
     }();
-    var LegacyGraphSONReader = function() {
-        var RESERVED_KEYS = [ "_id", "_type", "_label", "_outV", "_inV" ];
-        function LegacyGraphSONReader() {}
-        var copyProperties = function(from, to) {
-            for (var property in from) {
-                if (RESERVED_KEYS.indexOf(property) === -1) {
-                    to.setProperty(property, from[property]);
-                }
-            }
-        };
-        utils.mixin(LegacyGraphSONReader.prototype, {
-            read: function(graph, graphSON) {
-                for (var i = 0; i < graphSON.graph.vertices.length; i++) {
-                    var graphSONVertex = graphSON.graph.vertices[i];
-                    var vertex = graph.getVertex(graphSONVertex._id);
-                    if (!utils.exists(vertex)) {
-                        vertex = graph.addVertex(graphSONVertex._id);
-                    }
-                    copyProperties(graphSONVertex, vertex);
-                }
-                for (i = 0; i < graphSON.graph.edges.length; i++) {
-                    var graphSONEdge = graphSON.graph.edges[i];
-                    var edge = graph.getEdge(graphSONEdge._id);
-                    if (!utils.exists(edge)) {
-                        var outV = graph.getVertex(graphSONEdge._outV);
-                        var inV = graph.getVertex(graphSONEdge._inV);
-                        edge = graph.addEdge(graphSONEdge._id, outV, inV, graphSONEdge._label);
-                    }
-                    copyProperties(graphSONEdge, edge);
-                }
-                return graph;
-            }
-        });
-        return LegacyGraphSONReader;
-    }();
     var settings = {
         container: null,
         navigatorContainer: null,
@@ -3932,42 +3897,28 @@
         });
         return ElementFilter;
     }();
-    var LegacyGraphSONWriter = function() {
-        function LegacyGraphSONWriter() {}
-        function copyProperties(element, graphSONElement, excludedProperties) {
-            var propertyKeys = element.getPropertyKeys();
-            for (var j = 0; j < propertyKeys.length; j++) {
-                var propertyKey = propertyKeys[j];
-                var property = element.getPropertyUnfiltered(propertyKey);
-                if (excludedProperties.indexOf(propertyKey) === -1) {
-                    graphSONElement[propertyKey] = property;
-                }
-            }
-        }
-        function addGraphSONVertices(graph, graphSON, excludedProperties) {
+    var GraphSONWriterBase = function() {
+        function addGraphSONVertices(writer, graph, graphSON, excludedVertexProperties, excludedEdgeProperties) {
             var vertices = graph.getVertices();
             for (var i = 0; i < vertices.length; i++) {
                 var vertex = vertices[i];
                 var graphSONVertex = {};
-                graphSONVertex[ID] = vertex.id;
-                copyProperties(vertex, graphSONVertex, excludedProperties);
+                writer.writeVertex(vertex, graphSONVertex, excludedVertexProperties, excludedEdgeProperties);
                 graphSON.vertices.push(graphSONVertex);
             }
         }
-        function addGraphSONEdges(graph, graphSON, excludedProperties) {
+        function addGraphSONEdges(writer, graph, graphSON, excludedVertexProperties, excludedEdgeProperties) {
             var edges = graph.getEdges();
             for (var i = 0; i < edges.length; i++) {
                 var edge = edges[i];
                 var graphSONEdge = {};
-                graphSONEdge[ID] = edge.id;
-                graphSONEdge[LABEL] = edge.label;
-                graphSONEdge[IN_V] = edge.getVertex(IN).id;
-                graphSONEdge[OUT_V] = edge.getVertex(OUT).id;
-                copyProperties(edge, graphSONEdge, excludedProperties);
-                graphSON.edges.push(graphSONEdge);
+                writer.writeEdge(edge, graphSONEdge, excludedVertexProperties, excludedEdgeProperties);
+                if (graphSON.edges) {
+                    graphSON.edges.push(graphSONEdge);
+                }
             }
         }
-        utils.mixin(LegacyGraphSONWriter.prototype, {
+        return {
             write: function(graph, excludedVertexProperties, excludedEdgeProperties, mode) {
                 if (!utils.exists(excludedVertexProperties)) {
                     excludedVertexProperties = [];
@@ -3978,17 +3929,199 @@
                 if (!utils.exists(mode)) {
                     mode = "NORMAL";
                 }
-                var graphSON = {
+                var graphSON = this.getTemplate(mode);
+                addGraphSONVertices(this, graph, graphSON, excludedVertexProperties, excludedEdgeProperties);
+                addGraphSONEdges(this, graph, graphSON, excludedVertexProperties, excludedEdgeProperties);
+                return graphSON;
+            },
+            getTemplate: function(mode) {},
+            writeVertex: function(sourceVertex, graphSONVertex, excludedVertexProperties, excludedEdgeProperties) {},
+            writeEdge: function(sourceEdge, graphSONEdge, excludedVertexProperties, excludedEdgeProperties) {},
+            copyProperties: function(element, graphSONElement, excludedProperties) {
+                var propertyKeys = element.getPropertyKeys();
+                for (var j = 0; j < propertyKeys.length; j++) {
+                    var propertyKey = propertyKeys[j];
+                    var property = element.getPropertyUnfiltered(propertyKey);
+                    if (excludedProperties.indexOf(propertyKey) === -1) {
+                        graphSONElement[propertyKey] = property;
+                    }
+                }
+            }
+        };
+    }();
+    var GraphSONReaderBase = function() {
+        return {
+            RESERVED_KEYS: [ "_id", "_type", "_label", "_outV", "_inV" ],
+            read: function(graph, graphSON) {
+                this.readVertices(graph, graphSON);
+                this.readEdges(graph, graphSON);
+                return graph;
+            },
+            readVertices: function(graph, graphSON) {
+                if (graphSON.graph.vertices) {
+                    for (var i = 0; i < graphSON.graph.vertices.length; i++) {
+                        var graphSONVertex = graphSON.graph.vertices[i];
+                        this.readVertex(graph, graphSONVertex);
+                    }
+                }
+            },
+            readVertex: function(graph, graphSONVertex) {},
+            readEdges: function(graph, graphSON) {
+                if (graphSON.graph.edges) {
+                    for (var i = 0; i < graphSON.graph.edges.length; i++) {
+                        var graphSONEdge = graphSON.graph.edges[i];
+                        this.readEdge(graph, graphSONEdge);
+                    }
+                }
+            },
+            readEdge: function(graph, graphSONEdge) {},
+            getVertex: function(graph, id) {
+                var vertex = graph.getVertex(id);
+                if (!utils.exists(vertex)) {
+                    vertex = graph.addVertex(id);
+                }
+                return vertex;
+            },
+            copyProperties: function(from, to) {
+                for (var property in from) {
+                    if (this.RESERVED_KEYS.indexOf(property) === -1) {
+                        to.setProperty(property, from[property]);
+                    }
+                }
+            }
+        };
+    }();
+    var LegacyGraphSONWriter = function() {
+        function LegacyGraphSONWriter() {}
+        utils.mixin(LegacyGraphSONWriter.prototype, GraphSONWriterBase);
+        utils.mixin(LegacyGraphSONWriter.prototype, {
+            getTemplate: function(mode) {
+                return {
                     mode: mode,
                     vertices: [],
                     edges: []
                 };
-                addGraphSONVertices(graph, graphSON, excludedVertexProperties);
-                addGraphSONEdges(graph, graphSON, excludedEdgeProperties);
-                return graphSON;
+            },
+            writeVertex: function(sourceVertex, graphSONVertex, excludedVertexProperties) {
+                graphSONVertex[ID] = sourceVertex.id;
+                this.copyProperties(sourceVertex, graphSONVertex, excludedVertexProperties);
+            },
+            writeEdge: function(sourceEdge, graphSONEdge, excludedVertexProperties, excludedEdgeProperties) {
+                graphSONEdge[ID] = sourceEdge.id;
+                graphSONEdge[LABEL] = sourceEdge.label;
+                graphSONEdge[IN_V] = sourceEdge.getVertex(IN).id;
+                graphSONEdge[OUT_V] = sourceEdge.getVertex(OUT).id;
+                this.copyProperties(sourceEdge, graphSONEdge, excludedEdgeProperties);
             }
         });
         return LegacyGraphSONWriter;
+    }();
+    var LegacyGraphSONReader = function() {
+        function LegacyGraphSONReader() {}
+        utils.mixin(LegacyGraphSONReader.prototype, GraphSONReaderBase);
+        utils.mixin(LegacyGraphSONReader.prototype, {
+            readVertex: function(graph, graphSONVertex) {
+                var vertex = this.getVertex(graph, graphSONVertex._id);
+                this.copyProperties(graphSONVertex, vertex);
+            },
+            readEdge: function(graph, graphSONEdge) {
+                var edge = graph.getEdge(graphSONEdge._id);
+                if (!utils.exists(edge)) {
+                    var outV = graph.getVertex(graphSONEdge._outV);
+                    var inV = graph.getVertex(graphSONEdge._inV);
+                    edge = graph.addEdge(graphSONEdge._id, outV, inV, graphSONEdge._label);
+                }
+                this.copyProperties(graphSONEdge, edge);
+            }
+        });
+        return LegacyGraphSONReader;
+    }();
+    var GraphSONWriter = function() {
+        function GraphSONWriter() {
+            this.generateId = function() {
+                var id = 0;
+                return function() {
+                    return id++;
+                };
+            }();
+        }
+        function copyEdges(writer, sourceVertex, direction, oppositeDirection, graphSONVertex, edgesKey, otherVertexKey, excludedProperties) {
+            var edges = sourceVertex.getEdges(direction);
+            if (edges.length > 0) {
+                graphSONVertex[edgesKey] = {};
+            }
+            for (var i = 0; i < edges.length; i++) {
+                var edge = edges[i];
+                var label = edge.getLabel();
+                graphSONVertex[edgesKey][label] = graphSONVertex[edgesKey][label] || [];
+                var graphSONEdge = {};
+                graphSONEdge.id = edge.getId();
+                graphSONEdge[otherVertexKey] = edge.getVertex(oppositeDirection).getId();
+                graphSONEdge.properties = {};
+                writer.copyProperties(edge, graphSONEdge.properties, excludedProperties);
+                graphSONVertex[edgesKey][label].push(graphSONEdge);
+            }
+        }
+        function copyVertexProperties(writer, sourceVertex, graphSONVertex, excludedVertexProperties) {
+            graphSONVertex.properties = {};
+            var propertyKeys = sourceVertex.getPropertyKeys();
+            for (var j = 0; j < propertyKeys.length; j++) {
+                var propertyKey = propertyKeys[j];
+                if (excludedVertexProperties.indexOf(propertyKey) === -1) {
+                    var property = sourceVertex.getPropertyUnfiltered(propertyKey);
+                    graphSONVertex.properties[propertyKey] = graphSONVertex.properties[propertyKey] || [];
+                    var graphSONProperty = {
+                        id: writer.generateId(),
+                        value: property
+                    };
+                    graphSONVertex.properties[propertyKey].push(graphSONProperty);
+                }
+            }
+        }
+        utils.mixin(GraphSONWriter.prototype, GraphSONWriterBase);
+        utils.mixin(GraphSONWriter.prototype, {
+            getTemplate: function() {
+                return {
+                    vertices: []
+                };
+            },
+            writeVertex: function(sourceVertex, graphSONVertex, excludedVertexProperties, excludedEdgeProperties) {
+                graphSONVertex.id = sourceVertex.getId();
+                graphSONVertex.label = "vertex";
+                copyEdges(this, sourceVertex, IN, OUT, graphSONVertex, "inE", "outV", excludedEdgeProperties);
+                copyEdges(this, sourceVertex, OUT, IN, graphSONVertex, "outE", "inV", excludedEdgeProperties);
+                copyVertexProperties(this, sourceVertex, graphSONVertex, excludedVertexProperties);
+            },
+            writeEdge: function(sourceEdge, graphSONEdge, excludedVertexProperties, excludedEdgeProperties) {}
+        });
+        return GraphSONWriter;
+    }();
+    var GraphSONReader = function() {
+        function GraphSONReader() {}
+        var copyVertexProperties = function(reader, from, to) {
+            for (var property in from) {
+                if (reader.RESERVED_KEYS.indexOf(property) === -1) {
+                    to.setProperty(property, from[property][0].value);
+                }
+            }
+        };
+        utils.mixin(GraphSONReader.prototype, GraphSONReaderBase);
+        utils.mixin(GraphSONReader.prototype, {
+            readVertex: function(graph, graphSONVertex) {
+                var vertex = this.getVertex(graph, graphSONVertex.id);
+                copyVertexProperties(this, graphSONVertex.properties, vertex);
+                if (graphSONVertex.outE) {
+                    for (var label in graphSONVertex.outE) {
+                        for (var i = 0; i < graphSONVertex.outE[label].length; i++) {
+                            var graphSONEdge = graphSONVertex.outE[label][i];
+                            var edge = graph.addEdge(graphSONEdge.id, vertex, this.getVertex(graph, graphSONEdge.inV), label);
+                            this.copyProperties(graphSONEdge.properties, edge);
+                        }
+                    }
+                }
+            }
+        });
+        return GraphSONReader;
     }();
     exports.settings = settings;
     exports.Edge = Edge;
@@ -4048,7 +4181,6 @@
     exports.OUT_V = OUT_V;
     exports.LABEL = LABEL;
     exports.QueryResultVertexPropertyPredicate = QueryResultVertexPropertyPredicate;
-    exports.LegacyGraphSONReader = LegacyGraphSONReader;
     exports.Tween = Tween;
     exports.CircleLayout = CircleLayout;
     exports.WheelLayout = WheelLayout;
@@ -4060,7 +4192,12 @@
     exports.Easing = Easing;
     exports.Compare = Compare;
     exports.Contains = Contains;
+    exports.GraphSONWriterBase = GraphSONWriterBase;
+    exports.GraphSONReaderBase = GraphSONReaderBase;
+    exports.LegacyGraphSONReader = LegacyGraphSONReader;
     exports.LegacyGraphSONWriter = LegacyGraphSONWriter;
+    exports.GraphSONWriter = GraphSONWriter;
+    exports.GraphSONReader = GraphSONReader;
 })({}, function() {
     return this;
 }());
