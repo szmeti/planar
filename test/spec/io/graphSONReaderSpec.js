@@ -10,7 +10,7 @@ describe('GraphSONReader', function () {
       graph: {
         'vertices': [
           {
-            'id': 1,
+            'id': 342,
             'label': 'vertex',
             'outE': {
               'label': [{
@@ -69,19 +69,19 @@ describe('GraphSONReader', function () {
       }
     });
 
-    expect(graph.getVertex(1).getProperty('name')).toEqual('name 1');
-    expect(graph.getVertex(1).getProperty('_id')).toEqual(null);
-    expect(graph.getVertex(1).getProperty('_type')).toEqual(null);
-    expect(graph.getVertex(1).getProperty('_beginX')).toEqual(123);
-    expect(graph.getVertex(1).getProperty('_beginY')).toEqual(111);
+    expect(graph.getVertex(342).getProperty('name')).toEqual('name 1');
+    expect(graph.getVertex(342).getProperty('id')).toEqual(null);
+    expect(graph.getVertex(342).getProperty('label')).toEqual(null);
+    expect(graph.getVertex(342).getProperty('_beginX')).toEqual(123);
+    expect(graph.getVertex(342).getProperty('_beginY')).toEqual(111);
 
     expect(graph.getVertex(2).getProperty('name')).toEqual('name 2');
-    expect(graph.getVertex(2).getProperty('_id')).toEqual(null);
-    expect(graph.getVertex(2).getProperty('_type')).toEqual(null);
+    expect(graph.getVertex(2).getProperty('id')).toEqual(null);
+    expect(graph.getVertex(2).getProperty('label')).toEqual(null);
     expect(graph.getVertex(2).getProperty('_beginX')).toEqual(145);
     expect(graph.getVertex(2).getProperty('_beginY')).toEqual(222);
 
-    expect(graph.getEdge(1).getOutVertex().id).toEqual(1);
+    expect(graph.getEdge(1).getOutVertex().id).toEqual(342);
     expect(graph.getEdge(1).getInVertex().id).toEqual(2);
     expect(graph.getEdge(1).getLabel()).toEqual('label');
     expect(graph.getEdge(1).getProperty('property')).toEqual('edge property');

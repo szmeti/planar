@@ -90,7 +90,7 @@ var D3Engine = (function () {
   }
 
   function addEnterSection(type, elementSet) {
-    var element = elementSet.length > 0 ? elementSet[0] : elementSet.enter().append("g");
+    var element = elementSet.enter().append("g");
     
     element.attr('class', function (uiElement) {
       var elementType = uiElement[type].getPropertyUnfiltered(PROP_TYPE);

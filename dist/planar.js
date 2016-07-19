@@ -2148,7 +2148,7 @@
             });
         }
         function addEnterSection(type, elementSet) {
-            var element = elementSet.length > 0 ? elementSet[0] : elementSet.enter().append("g");
+            var element = elementSet.enter().append("g");
             element.attr("class", function(uiElement) {
                 var elementType = uiElement[type].getPropertyUnfiltered(PROP_TYPE);
                 var clazz = type;
@@ -4107,6 +4107,7 @@
         };
         utils.mixin(GraphSONReader.prototype, GraphSONReaderBase);
         utils.mixin(GraphSONReader.prototype, {
+            RESERVED_KEYS: [ "id", "label", "outV", "inV" ],
             readVertex: function(graph, graphSONVertex) {
                 var vertex = this.getVertex(graph, graphSONVertex.id);
                 copyVertexProperties(this, graphSONVertex.properties, vertex);

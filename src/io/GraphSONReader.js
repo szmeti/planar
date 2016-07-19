@@ -1,6 +1,6 @@
 /* global GraphSONReader: true */
 var GraphSONReader = (function () {
-
+  
   function GraphSONReader() {
   }
 
@@ -14,6 +14,7 @@ var GraphSONReader = (function () {
 
   utils.mixin(GraphSONReader.prototype, GraphSONReaderBase);
   utils.mixin(GraphSONReader.prototype, {
+    RESERVED_KEYS: ['id', 'label', 'outV', 'inV'],
     readVertex: function (graph, graphSONVertex) {
       var vertex = this.getVertex(graph, graphSONVertex.id);
 
