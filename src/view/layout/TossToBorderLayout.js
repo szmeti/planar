@@ -5,6 +5,7 @@ var TossToBorderLayout = (function () {
     this.running = true;
     this.tween = new Tween(duration, easing);
     this.name = 'tossToBorder';
+    this.started = false;
   }
 
   var PADDING_FROM_BORDER = 20;
@@ -103,28 +104,23 @@ var TossToBorderLayout = (function () {
         height: height
       };
 
-      var centerOfGraph = calculateCenterOfGraph(vertices);
 
       if (this.running) {
 
-        finishedVertices = 0;
+        if (!this.started) {
+          var centerOfGraph = calculateCenterOfGraph(vertices);
 
-        for (var i = 0; i < vertices.length; i++) {
-          var uiVertex = vertices[i];
-
-          if (uiVertex.g === undefined) {
-            return true;
+          for (var i = 0; i < vertices.length; i++) {
+            var uiVertex = vertices[i];
+            uiVertex.vertex.setPropertyUnfiltered('_beginX', uiVertex.vertex.getPropertyUnfiltered('_beginX') - (drawingArea.centerX - centerOfGraph.x));
+            uiVertex.vertex.setPropertyUnfiltered('_beginY', uiVertex.vertex.getPropertyUnfiltered('_beginY') - (drawingArea.centerY - centerOfGraph.y));
           }
 
-          if (uiVertex.started) {
-            this.tween.runFrame(uiVertex, scale);
-            if (uiVertex.finished) {
-              finishedVertices++;
-            }
-          } else {
+          for (i = 0; i < vertices.length; i++) {
+            uiVertex = vertices[i];
             var uiVertexDrawingData = {
-              beginX: uiVertex.vertex.getPropertyUnfiltered('_beginX') - centerOfGraph.x,
-              beginY: uiVertex.vertex.getPropertyUnfiltered('_beginY') - centerOfGraph.y,
+              beginX: uiVertex.vertex.getPropertyUnfiltered('_beginX'),
+              beginY: uiVertex.vertex.getPropertyUnfiltered('_beginY'),
               width: SvgUtils.widthOf(uiVertex),
               height: SvgUtils.heightOf(uiVertex)
             };
@@ -147,8 +143,25 @@ var TossToBorderLayout = (function () {
 
             this.tween.start(uiVertex, scale);
           }
+          
+          this.started = true;
         }
 
+        finishedVertices = 0;
+        for (i = 0; i < vertices.length; i++) {
+          uiVertex = vertices[i];
+
+          if (uiVertex.g === undefined) {
+            return true;
+          }
+
+          if (uiVertex.started) {
+            this.tween.runFrame(uiVertex, scale);
+            if (uiVertex.finished) {
+              finishedVertices++;
+            }
+          }
+        }
       }
 
       if (this.running && finishedVertices === vertices.length && vertices.length > 0) {
