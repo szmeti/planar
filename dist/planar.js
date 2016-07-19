@@ -3202,6 +3202,9 @@
                         var centerOfGraph = calculateCenterOfGraph(vertices);
                         for (var i = 0; i < vertices.length; i++) {
                             var uiVertex = vertices[i];
+                            if (uiVertex.g === undefined) {
+                                return true;
+                            }
                             uiVertex.vertex.setPropertyUnfiltered("_beginX", uiVertex.vertex.getPropertyUnfiltered("_beginX") - (drawingArea.centerX - centerOfGraph.x));
                             uiVertex.vertex.setPropertyUnfiltered("_beginY", uiVertex.vertex.getPropertyUnfiltered("_beginY") - (drawingArea.centerY - centerOfGraph.y));
                         }
@@ -3232,9 +3235,6 @@
                     finishedVertices = 0;
                     for (i = 0; i < vertices.length; i++) {
                         uiVertex = vertices[i];
-                        if (uiVertex.g === undefined) {
-                            return true;
-                        }
                         if (uiVertex.started) {
                             this.tween.runFrame(uiVertex, scale);
                             if (uiVertex.finished) {
