@@ -75,6 +75,19 @@ var TossToBorderLayout = (function () {
 
     return xOverlap * yOverlap;
   };
+  
+  var calculateCenterOfGraph = function (vertices) {
+    var centerOfGraph = {x: 0, y: 0};
+    for (var i = 0; i < vertices.length; i++) {
+      var uiVertex = vertices[i];
+      centerOfGraph.x += uiVertex.vertex.getPropertyUnfiltered('_beginX');
+      centerOfGraph.y += uiVertex.vertex.getPropertyUnfiltered('_beginY');
+    }
+    
+    centerOfGraph.x = centerOfGraph.x / vertices.length;
+    centerOfGraph.y = centerOfGraph.y / vertices.length;
+    return centerOfGraph;
+  };
 
   utils.mixin(TossToBorderLayout.prototype, {
 
@@ -89,6 +102,8 @@ var TossToBorderLayout = (function () {
         width: width,
         height: height
       };
+
+      var centerOfGraph = calculateCenterOfGraph(vertices);
 
       if (this.running) {
 
@@ -108,8 +123,8 @@ var TossToBorderLayout = (function () {
             }
           } else {
             var uiVertexDrawingData = {
-              beginX: uiVertex.vertex.getPropertyUnfiltered('_beginX'),
-              beginY: uiVertex.vertex.getPropertyUnfiltered('_beginY'),
+              beginX: uiVertex.vertex.getPropertyUnfiltered('_beginX') - centerOfGraph.x,
+              beginY: uiVertex.vertex.getPropertyUnfiltered('_beginY') - centerOfGraph.y,
               width: SvgUtils.widthOf(uiVertex),
               height: SvgUtils.heightOf(uiVertex)
             };
