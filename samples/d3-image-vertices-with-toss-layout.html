@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 sample</title>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF8">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../dist/planar.css"/>
+    <style type="text/css">
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            color: #666666;
+            text-shadow: 0 1px 0 #ffffff;
+        }
+
+        #container {
+            /*background-color: #eceaf3;*/
+            clear: both;
+        }
+
+        #graphCanvas {
+            float: left;
+        }
+
+        #navigatorContainer {
+            margin-left: 20px;
+            float: left;
+        }
+
+        .vertex-icon-spam {
+            fill: #ff0000;
+        }
+
+        .vertex-icon-overlay {
+            stroke: #000000;
+            stroke-width: 1px;
+        }
+
+        .vertex-icon-group:hover .vertex-icon-spam {
+            fill: #0000ff;
+        }
+
+        .vertex-icon-group:hover .vertex-icon-overlay {
+            fill: #cccccc;
+            fill-opacity: 1;
+        }
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script type="text/javascript" src="../bower_components/d3/d3.js"></script>
+    <script type="text/javascript" src="../dist/planar.js"></script>
+</head>
+<body>
+
+<div id="container">
+    <div id="graphCanvas" style="width: 1000px"></div>
+    <div id="navigatorContainer"></div>
+    <button id="saveAsImage">Save as Image</button>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        planar.settings.d3.vertexRenderers['labeled-bordered-image-vertex'] = new planar.D3VertexLabelDecorator(new planar.D3VertexBorderDecorator(new planar.D3ImageVertexRenderer()), {
+            labelInside: false,
+            labelTop: false,
+            padding: 12,
+            labelPropertyKey: 'additionalLabel'
+        });
+
+        planar.settings.d3.vertexRenderers['image-vertex-with-icons'] = new planar.D3VertexIconDecorator(new planar.D3ImageVertexRenderer());
+
+        var graph = new planar.VisualGraph(new planar.Graph({
+            container: '#graphCanvas',
+            navigatorContainer: '#navigatorContainer',
+            defaultLayout: 'tossToBorder',
+            icons: {
+                activeIcons: ['spam', 'airplane', 'share']
+            },
+            vertex: {
+                icons: {
+                    insideVertex: false,
+                    borderRadius: 2,
+                    positioning: planar.BOTTOM_LEFT
+                }
+            }
+        }));
+
+        var v1 = graph.addVertex();
+        v1.setProperty(planar.PROP_TYPE, "bordered-image-vertex");
+        v1.setProperty("imageUrl", "resources/apple.png");
+        v1.setProperty("borderColor", "red");
+        v1.setProperty("borderWeight", "5");
+        v1.setProperty("_beginX", 0);
+        v1.setProperty("_beginY", 0);
+
+        var v2 = graph.addVertex();
+        v2.setProperty(planar.PROP_TYPE, "bordered-image-vertex");
+        v2.setProperty("imageUrl", "resources/bananas.png");
+        v2.setProperty("borderColor", "blue");
+        v2.setProperty("borderWeight", "8");
+        v2.setProperty("borderRadius", "8");
+        v2.setProperty("_beginX", 0);
+        v2.setProperty("_beginY", 419);
+
+        var v3 = graph.addVertex();
+        v3.setProperty(planar.PROP_TYPE, "bordered-image-vertex");
+        v3.setProperty("imageUrl", "resources/orange.png");
+        v3.setProperty("borderColor", "green");
+        v3.setProperty("_beginX", 311);
+        v3.setProperty("_beginY", 286);
+
+        var v5 = graph.addVertex();
+        v5.setProperty('additionalLabel', 'abc');
+        v5.setProperty("imageUrl", "resources/orange.png");
+        v5.setProperty(planar.PROP_TYPE, "labeled-bordered-image-vertex");
+        v5.setProperty("_beginX", 319);
+        v5.setProperty("_beginY", 209);
+
+        var v6 = graph.addVertex();
+        v6.setProperty(planar.PROP_TYPE, "image-vertex-with-icons");
+        v6.setProperty("imageUrl", "resources/orange.png");
+        v6.setProperty("icons", [
+            {
+                id: 'spam'
+            },
+            {
+                id: 'airplane'
+            },
+            {
+                id: 'share'
+            },
+            {
+                id: 'share',
+                color: 'red'
+            }
+        ]);
+        v6.setProperty("_beginX", 373);
+        v6.setProperty("_beginY", 212);
+        
+
+        var e1 = graph.addEdge(null, v1, v2, "a");
+        e1.setProperty('lineWeight', 5);
+        e1.setProperty(planar.PROP_TYPE, "labeled-curved-line");
+
+        var e2 = graph.addEdge(null, v2, v3, "b");
+        e2.setProperty(planar.PROP_TYPE, "curved-line");
+
+        graph.addEdge(null, v3, v1, "c");
+
+//        for (var i = 0; i < 100; i++) {
+//            var vn = graph.addVertex();
+//            vn.setProperty(planar.PROP_TYPE, "labeled-image-vertex");
+//            vn.setProperty("imageUrl", "https://raw.githubusercontent.com/szmeti/planar/master/samples/resources/apple.png");
+//            graph.addEdge(null, vn, v2, Math.floor((Math.random() * 10) + 1));
+//        }
+
+
+        graph.render();
+
+        $('#saveAsImage').click(function () {
+            graph.saveAsImage();
+        });
+
+    });
+</script>
+
+</body>
+</html>

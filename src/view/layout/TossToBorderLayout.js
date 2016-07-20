@@ -22,8 +22,8 @@ var TossToBorderLayout = (function () {
       }
 
       var uiVertexDrawingData = {
-        width: SvgUtils.widthOf(uiVertex),
-        height: SvgUtils.heightOf(uiVertex),
+        width: uiVertex.originalWidth,
+        height: uiVertex.originalHeight,
         beginX: uiVertex.vertex.getPropertyUnfiltered('_beginX'),
         beginY: uiVertex.vertex.getPropertyUnfiltered('_beginY')
       };
@@ -41,7 +41,12 @@ var TossToBorderLayout = (function () {
     var yInsideDrawingArea = currentUiVertexDrawingData.beginY > PADDING_FROM_BORDER + currentUiVertexDrawingData.height / 2 &&
       currentUiVertexDrawingData.beginY < drawingArea.height - PADDING_FROM_BORDER - currentUiVertexDrawingData.height / 2;
 
-    if (overlapArea > 0 && xInsideDrawingArea && yInsideDrawingArea) {
+    var hasPointChangedInLastRecursion = currentUiVertex.previousBeginX != currentUiVertex.vertex.getPropertyUnfiltered('_beginX') &&
+      currentUiVertex.previousBeginY != currentUiVertex.vertex.getPropertyUnfiltered('_beginY');
+
+    if (overlapArea > 0 && xInsideDrawingArea && yInsideDrawingArea && hasPointChangedInLastRecursion) {
+      currentUiVertex.previousBeginX = currentUiVertex.vertex.getPropertyUnfiltered('_beginX');
+      currentUiVertex.previousBeginY = currentUiVertex.vertex.getPropertyUnfiltered('_beginY');
       moveVertex(currentUiVertex, currentUiVertexDrawingData, drawingArea);
       currentUiVertexDrawingData.beginX = currentUiVertex.vertex.getPropertyUnfiltered('_beginX');
       currentUiVertexDrawingData.beginY = currentUiVertex.vertex.getPropertyUnfiltered('_beginY');
@@ -52,12 +57,24 @@ var TossToBorderLayout = (function () {
   };
 
   var moveVertex = function (currentUiVertex, currentUiVertexDrawingData, drawingArea) {
-    var x = currentUiVertexDrawingData.beginX - drawingArea.centerX > 0 ? currentUiVertexDrawingData.beginX + 1 : currentUiVertexDrawingData.beginX - 1;
-    // based on two-point form equation of a line
-    var y = ((currentUiVertexDrawingData.beginY - drawingArea.centerY) * (x - drawingArea.centerX)) / (currentUiVertexDrawingData.beginX - drawingArea.centerX) + drawingArea.centerY;
+    var xDistanceFromCenter = currentUiVertexDrawingData.beginX - drawingArea.centerX;
+    var x = xDistanceFromCenter > 0 ? currentUiVertexDrawingData.beginX + 1 : currentUiVertexDrawingData.beginX - 1;
 
-    currentUiVertex.vertex.setPropertyUnfiltered('_beginX', x);
-    currentUiVertex.vertex.setPropertyUnfiltered('_beginY', y);
+    var yDistanceFromCenter = currentUiVertexDrawingData.beginY - drawingArea.centerY;
+    var y = 0;
+    if (yDistanceFromCenter === 0 && xDistanceFromCenter === 0) {
+      //already in center keep it there
+      return;
+    } else if (xDistanceFromCenter === 0) {
+      //x point is already in center so move on y-axis
+      y = yDistanceFromCenter > 0 ? currentUiVertexDrawingData.beginY + 1 : currentUiVertexDrawingData.beginY - 1;
+    } else {
+      //move and keep the ratio from the center
+      y = yDistanceFromCenter * (x - drawingArea.centerX) / xDistanceFromCenter + drawingArea.centerY;
+    }
+
+    currentUiVertex.vertex.setPropertyUnfiltered("_beginX", x);
+    currentUiVertex.vertex.setPropertyUnfiltered("_beginY", y);
   };
 
   var calculateOverlapArea = function (currentUiVertexDrawingData, uiVertexDrawingData) {
@@ -76,7 +93,7 @@ var TossToBorderLayout = (function () {
 
     return xOverlap * yOverlap;
   };
-  
+
   var calculateCenterOfGraph = function (vertices) {
     var centerOfGraph = {x: 0, y: 0};
     for (var i = 0; i < vertices.length; i++) {
@@ -84,7 +101,7 @@ var TossToBorderLayout = (function () {
       centerOfGraph.x += uiVertex.vertex.getPropertyUnfiltered('_beginX');
       centerOfGraph.y += uiVertex.vertex.getPropertyUnfiltered('_beginY');
     }
-    
+
     centerOfGraph.x = centerOfGraph.x / vertices.length;
     centerOfGraph.y = centerOfGraph.y / vertices.length;
     return centerOfGraph;
@@ -113,21 +130,23 @@ var TossToBorderLayout = (function () {
           for (var i = 0; i < vertices.length; i++) {
             var uiVertex = vertices[i];
 
-            if (uiVertex.g === undefined) {
+            if (uiVertex.g === undefined || SvgUtils.widthOf(uiVertex) === 0) {
               return true;
             }
-            
-            uiVertex.vertex.setPropertyUnfiltered('_beginX', uiVertex.vertex.getPropertyUnfiltered('_beginX') - (drawingArea.centerX - centerOfGraph.x));
-            uiVertex.vertex.setPropertyUnfiltered('_beginY', uiVertex.vertex.getPropertyUnfiltered('_beginY') - (drawingArea.centerY - centerOfGraph.y));
+
+            uiVertex.originalWidth = SvgUtils.widthOf(uiVertex);
+            uiVertex.originalHeight = SvgUtils.heightOf(uiVertex);
+            uiVertex.vertex.setPropertyUnfiltered("_beginX", uiVertex.vertex.getPropertyUnfiltered("_beginX") + (drawingArea.centerX - centerOfGraph.x));
+            uiVertex.vertex.setPropertyUnfiltered("_beginY", uiVertex.vertex.getPropertyUnfiltered("_beginY") + (drawingArea.centerY - centerOfGraph.y));
           }
 
           for (i = 0; i < vertices.length; i++) {
             uiVertex = vertices[i];
             var uiVertexDrawingData = {
-              beginX: uiVertex.vertex.getPropertyUnfiltered('_beginX'),
-              beginY: uiVertex.vertex.getPropertyUnfiltered('_beginY'),
-              width: SvgUtils.widthOf(uiVertex),
-              height: SvgUtils.heightOf(uiVertex)
+              beginX: uiVertex.vertex.getPropertyUnfiltered("_beginX"),
+              beginY: uiVertex.vertex.getPropertyUnfiltered("_beginY"),
+              width: uiVertex.originalWidth,
+              height: uiVertex.originalHeight
             };
             TossToBorderLayout.setBeginPoint(uiVertex, uiVertexDrawingData);
 
@@ -148,7 +167,7 @@ var TossToBorderLayout = (function () {
 
             this.tween.start(uiVertex, scale);
           }
-          
+
           this.started = true;
         }
 
